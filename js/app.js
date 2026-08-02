@@ -34,6 +34,14 @@ const App = {
       new FindItGame(),
       new EChartGame(),
       new VirusGame(),
+      new WhackGame(),
+      new BubbleGame(),
+      new MemoryGame(),
+      new BasketGame(),
+      new SlashGame(),
+      new PuzzleGame(),
+      new MazeGame(),
+      new ColoringGame(),
     ];
 
     // 缓存DOM

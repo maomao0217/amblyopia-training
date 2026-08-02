@@ -96,16 +96,23 @@ html, body {
 .game-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  max-width: 600px;
-  padding: 10px 0 80px;
+  max-width: 700px;
+  padding: 10px 10px 90px;
   z-index: 1;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .game-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (min-width: 900px) {
+  .game-grid {
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
   }
 }
@@ -134,18 +141,22 @@ html, body {
 }
 
 .game-card-icon {
-  font-size: clamp(36px, 8vw, 52px);
+  font-size: clamp(32px, 7vw, 44px);
   line-height: 1;
 }
 
 .game-card-name {
-  font-size: clamp(13px, 2.8vw, 16px);
+  font-size: clamp(12px, 2.5vw, 14px);
   font-weight: 700;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .game-card-desc {
-  font-size: clamp(10px, 2vw, 12px);
+  font-size: clamp(9px, 1.8vw, 11px);
   color: var(--text-secondary);
 }
 
@@ -449,9 +460,11 @@ html, body {
   50% { opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
+
 </style>
 </head>
 <body>
+
   <!-- 条纹背景 -->
   <canvas id="stripe-bg"></canvas>
 
@@ -507,12 +520,35 @@ html, body {
     </div>
   </div>
 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
 <script>
 /**
- * 弱视训练条纹背景
- * - 黑白高对比度光栅条纹
- * - 支持垂直/水平滚动
- * - 速度、粗细、对比度可调
+ * 弱视训练背景系统
+ * - 双层背景：全局条纹层 + 游戏内动态背景
+ * - 游戏内背景周期性切换：条纹、纯色、棋盘格等
+ * - 高对比度刺激视觉皮层
  */
 class StripeBackground {
   constructor() {
@@ -522,11 +558,14 @@ class StripeBackground {
     this.speed = 0.8;
     this.stripeWidth = 30;
     this.contrast = 0.35;
-    this.direction = 'vertical'; // 'vertical' | 'horizontal'
+    this.direction = 'vertical';
     this.color1 = '#000000';
     this.color2 = '#ffffff';
     this.running = true;
     this.timer = null;
+    this.cycleColors = false;
+    this.colorPhase = 0;
+    this.frameCount = 0;
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -555,7 +594,6 @@ class StripeBackground {
   }
 
   setIntensity(level) {
-    // level: 1-5
     this.speed = 0.3 + level * 0.3;
     this.contrast = 0.15 + level * 0.08;
     this.stripeWidth = 40 - level * 4;
@@ -563,17 +601,31 @@ class StripeBackground {
 
   loop() {
     if (!this.running) return;
+    this.frameCount++;
 
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
     const sw = this.stripeWidth;
 
-    // 半透明覆盖实现条纹
+    // 周期性切换条纹颜色
+    if (this.cycleColors && this.frameCount % 300 === 0) {
+      this.colorPhase = (this.colorPhase + 1) % 3;
+      switch (this.colorPhase) {
+        case 0: this.color1 = '#000000'; this.color2 = '#ffffff'; break;
+        case 1: this.color1 = '#FF0000'; this.color2 = '#000000'; break;
+        case 2: this.color1 = '#0000FF'; this.color2 = '#FFFF00'; break;
+      }
+    }
+
+    // 每3秒切换条纹方向
+    if (this.frameCount % 180 === 0) {
+      this.direction = this.direction === 'vertical' ? 'horizontal' : 'vertical';
+    }
+
     ctx.clearRect(0, 0, w, h);
 
     if (this.direction === 'vertical') {
-      // 垂直条纹水平滚动
       this.offset = (this.offset + this.speed) % (sw * 2);
       let x = -this.offset;
       while (x < w) {
@@ -585,7 +637,6 @@ class StripeBackground {
         x += sw;
       }
     } else {
-      // 水平条纹垂直滚动
       this.offset = (this.offset + this.speed) % (sw * 2);
       let y = -this.offset;
       while (y < h) {
@@ -598,7 +649,6 @@ class StripeBackground {
       }
     }
 
-    // 降低整体不透明度
     ctx.fillStyle = `rgba(26, 26, 46, ${1 - this.contrast})`;
     ctx.fillRect(0, 0, w, h);
 
@@ -606,9 +656,181 @@ class StripeBackground {
   }
 }
 
+/**
+ * 游戏内动态背景
+ * 在每个游戏的画布中渲染，周期性切换背景类型
+ */
+const GameBackground = {
+  // 背景类型列表
+  types: [
+    'stripes_v',      // 黑白竖条纹
+    'stripes_h',      // 黑白横条纹
+    'solid_red',      // 红色背景
+    'solid_green',    // 绿色背景
+    'solid_blue',     // 蓝色背景
+    'checkerboard',   // 棋盘格
+    'stripes_v_red',  // 红黑竖条纹
+    'stripes_h_blue', // 蓝白横条纹
+    'gradient_warm',  // 暖色渐变
+    'dots',           // 点阵
+  ],
+
+  // 当前类型索引
+  _currentIndex: -1,
+  // 切换计时器
+  _switchTimer: 0,
+  // 切换间隔（帧数，60fps = 约3-5秒）
+  _switchInterval: 200,
+  // 条纹偏移（用于滚动动画）
+  _stripeOffset: 0,
+  // 当前背景色
+  _currentColor: null,
+
+  /**
+   * 获取下一个背景类型
+   * 不随机，按顺序循环确保多样性
+   */
+  next() {
+    this._currentIndex = (this._currentIndex + 1) % this.types.length;
+    this._stripeOffset = 0;
+    return this.types[this._currentIndex];
+  },
+
+  /** 重置状态 */
+  reset() {
+    this._currentIndex = -1;
+    this._switchTimer = 0;
+    this._stripeOffset = 0;
+    this._currentColor = null;
+  },
+
+  /**
+   * 在游戏画布上绘制动态背景
+   * @param {CanvasRenderingContext2D} ctx
+   * @param {number} width - 画布宽度
+   * @param {number} height - 画布高度
+   * @param {number} frameCount - 当前帧计数
+   */
+  draw(ctx, width, height, frameCount) {
+    // 检查是否需要切换背景类型
+    if (this._switchTimer === 0 || frameCount - this._switchTimer > this._switchInterval) {
+      this.next();
+      this._switchTimer = frameCount;
+      // 随机切换间隔（180-300帧 = 3-5秒）
+      this._switchInterval = 180 + Math.floor(Math.random() * 120);
+    }
+
+    this._stripeOffset += 1.5;
+    const type = this.types[this._currentIndex];
+    const offset = this._stripeOffset;
+
+    switch (type) {
+      case 'stripes_v':
+        this._drawStripes(ctx, width, height, offset, 'v', '#000000', '#ffffff');
+        break;
+      case 'stripes_h':
+        this._drawStripes(ctx, width, height, offset, 'h', '#000000', '#ffffff');
+        break;
+      case 'solid_red':
+        ctx.fillStyle = '#CC0000';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'solid_green':
+        ctx.fillStyle = '#009933';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'solid_blue':
+        ctx.fillStyle = '#0033CC';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'checkerboard':
+        this._drawCheckerboard(ctx, width, height, offset);
+        break;
+      case 'stripes_v_red':
+        this._drawStripes(ctx, width, height, offset, 'v', '#CC0000', '#000000');
+        break;
+      case 'stripes_h_blue':
+        this._drawStripes(ctx, width, height, offset, 'h', '#0033CC', '#ffffff');
+        break;
+      case 'gradient_warm':
+        this._drawGradient(ctx, width, height, frameCount);
+        break;
+      case 'dots':
+        this._drawDots(ctx, width, height, offset);
+        break;
+    }
+  },
+
+  _drawStripes(ctx, w, h, offset, dir, c1, c2) {
+    const sw = 28;
+    if (dir === 'v') {
+      const off = offset % (sw * 2);
+      let x = -off;
+      while (x < w) {
+        ctx.fillStyle = c1;
+        ctx.fillRect(x, 0, sw, h);
+        x += sw;
+        ctx.fillStyle = c2;
+        ctx.fillRect(x, 0, sw, h);
+        x += sw;
+      }
+    } else {
+      const off = offset % (sw * 2);
+      let y = -off;
+      while (y < h) {
+        ctx.fillStyle = c1;
+        ctx.fillRect(0, y, w, sw);
+        y += sw;
+        ctx.fillStyle = c2;
+        ctx.fillRect(0, y, w, sw);
+        y += sw;
+      }
+    }
+  },
+
+  _drawCheckerboard(ctx, w, h, offset) {
+    const size = 30;
+    const off = offset % (size * 2);
+    for (let y = -off; y < h + size; y += size) {
+      for (let x = -off; x < w + size; x += size) {
+        const cx = Math.floor((x + off) / size);
+        const cy = Math.floor((y + off) / size);
+        ctx.fillStyle = (cx + cy) % 2 === 0 ? '#000000' : '#ffffff';
+        ctx.fillRect(x, y, size, size);
+      }
+    }
+  },
+
+  _drawGradient(ctx, w, h, frameCount) {
+    const hue = (frameCount * 0.5) % 360;
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, `hsl(${hue}, 80%, 30%)`);
+    grad.addColorStop(0.5, `hsl(${(hue + 60) % 360}, 80%, 20%)`);
+    grad.addColorStop(1, `hsl(${(hue + 120) % 360}, 80%, 30%)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  },
+
+  _drawDots(ctx, w, h, offset) {
+    const spacing = 25;
+    const off = offset % spacing;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#ffffff';
+    for (let y = -off; y < h + spacing; y += spacing) {
+      for (let x = -off; x < w + spacing; x += spacing) {
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  },
+};
+
 // 全局实例
 const stripeBg = new StripeBackground();
 stripeBg.start();
+
 /**
  * 训练数据统计模块
  * - 使用 localStorage 存储训练记录
@@ -759,9 +981,10 @@ const StatsManager = {
     localStorage.removeItem(this.STORAGE_KEY);
   },
 };
+
 /**
  * 游戏基类 - 所有游戏继承此类
- * 提供通用功能：画布管理、得分、计时、结束逻辑
+ * 提供通用功能：画布管理、得分、计时、动态背景、触屏支持
  */
 class BaseGame {
   constructor(config) {
@@ -769,7 +992,7 @@ class BaseGame {
     this.name = config.name;
     this.description = config.description || '';
     this.icon = config.icon || '🎮';
-    this.duration = config.duration || 60; // 默认60秒
+    this.duration = config.duration || 60;
     this.canvasId = config.canvasId || 'game-canvas';
 
     this.canvas = null;
@@ -784,6 +1007,13 @@ class BaseGame {
     this.startTime = 0;
     this.timer = null;
     this.animFrame = null;
+    this.frameCount = 0;
+
+    // 动态背景
+    this.useDynamicBg = config.useDynamicBg !== false;
+
+    // 存储事件处理器用于清理
+    this._handlers = [];
 
     // 回调
     this.onScoreChange = null;
@@ -801,7 +1031,6 @@ class BaseGame {
     const maxW = container.clientWidth;
     const maxH = container.clientHeight;
 
-    // iPad 适配：使用合适比例
     const ratio = Math.min(maxW / 400, maxH / 700, 1.2);
     this.width = Math.floor(400 * ratio);
     this.height = Math.floor(700 * ratio);
@@ -814,6 +1043,37 @@ class BaseGame {
     this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   }
 
+  /**
+   * 安全绑定触摸事件（自动清理）
+   * @param {string} event - 事件名
+   * @param {function} handler - 处理函数
+   * @param {object} options - 选项
+   */
+  bindTouch(event, handler, options = {}) {
+    const wrapped = (e) => {
+      if (!this.isRunning) return;
+      e.preventDefault();
+      handler(e);
+    };
+    this.canvas.addEventListener(event, wrapped, { passive: false, ...options });
+    this._handlers.push({ event, handler: wrapped });
+    return wrapped;
+  }
+
+  /** 安全绑定鼠标事件（同时支持触摸） */
+  bindInput(event, handler) {
+    return this.bindTouch(event, handler);
+  }
+
+  /** 清理所有事件 */
+  _cleanupEvents() {
+    if (!this.canvas) return;
+    for (const { event, handler } of this._handlers) {
+      this.canvas.removeEventListener(event, handler);
+    }
+    this._handlers = [];
+  }
+
   /** 开始游戏 */
   start() {
     this.initCanvas();
@@ -822,6 +1082,10 @@ class BaseGame {
     this.isRunning = true;
     this.isEnded = false;
     this.startTime = Date.now();
+    this.frameCount = 0;
+    this._handlers = [];
+
+    GameBackground.reset();
     this._notifyScore();
     this._notifyTime();
 
@@ -835,6 +1099,7 @@ class BaseGame {
     this.isRunning = false;
     if (this.timer) clearInterval(this.timer);
     if (this.animFrame) cancelAnimationFrame(this.animFrame);
+    this._cleanupEvents();
     this.onStop();
   }
 
@@ -845,6 +1110,7 @@ class BaseGame {
     this.isRunning = false;
     if (this.timer) clearInterval(this.timer);
     if (this.animFrame) cancelAnimationFrame(this.animFrame);
+    this._cleanupEvents();
 
     const elapsed = Math.round((Date.now() - this.startTime) / 1000);
     this.onEnd();
@@ -865,6 +1131,21 @@ class BaseGame {
     this._notifyScore();
   }
 
+  /**
+   * 获取触摸坐标（相对于画布）
+   * @param {TouchEvent|MouseEvent} e
+   * @returns {{x: number, y: number}}
+   */
+  getTouchPos(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (clientX - rect.left) * (this.width / rect.width),
+      y: (clientY - rect.top) * (this.height / rect.height),
+    };
+  }
+
   // ===== 内部方法 =====
 
   _startTimer() {
@@ -880,9 +1161,20 @@ class BaseGame {
 
   _gameLoop() {
     if (!this.isRunning) return;
+    this.frameCount++;
     this.onUpdate();
+    this._drawBackground();
     this.onDraw();
     this.animFrame = requestAnimationFrame(() => this._gameLoop());
+  }
+
+  /** 绘制动态背景 */
+  _drawBackground() {
+    if (this.useDynamicBg) {
+      GameBackground.draw(this.ctx, this.width, this.height, this.frameCount);
+    } else {
+      this.ctx.clearRect(0, 0, this.width, this.height);
+    }
   }
 
   _notifyScore() {
@@ -898,54 +1190,34 @@ class BaseGame {
   onStop() {}
   onEnd() {}
   onUpdate() {}
-  onDraw() {
-    // 默认清屏
-    this.ctx.clearRect(0, 0, this.width, this.height);
-  }
+  onDraw() {}
 }
+
 /**
  * 弹跳游戏 - 点击屏幕让小球跳到上方平台
- * 适合3岁宝宝，简单点击操作
  */
 class BounceGame extends BaseGame {
   constructor() {
-    super({
-      id: 'bounce',
-      name: '弹跳游戏',
-      icon: '🏀',
-      description: '点击让球跳起来',
-      duration: 60,
-    });
+    super({ id: 'bounce', name: '弹跳游戏', icon: '🏀', description: '点击让球跳起来', duration: 60 });
   }
 
   onStart() {
-    this.ball = {
-      x: this.width / 2,
-      y: this.height * 0.7,
-      radius: 18,
-      vy: 0,
-      color: '#FF6B6B',
-    };
+    this.ball = { x: this.width / 2, y: this.height * 0.7, radius: 20, vy: 0, color: '#FF6B6B' };
     this.platforms = [];
     this.gravity = 0.4;
     this.jumpForce = -9;
-    this.scrollSpeed = 1.2;
     this.cameraY = 0;
-    this.touchActive = false;
 
-    // 生成初始平台
     for (let i = 0; i < 8; i++) {
       this._addPlatform(i * 90);
     }
 
-    // 触摸事件
-    this._onTouch = (e) => {
-      e.preventDefault();
-      if (!this.isRunning) return;
-      this.ball.vy = this.jumpForce;
-    };
-    this.canvas.addEventListener('touchstart', this._onTouch, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTouch);
+    this.bindTouch('touchstart', () => {
+      if (this.isRunning) this.ball.vy = this.jumpForce;
+    });
+    this.bindInput('mousedown', () => {
+      if (this.isRunning) this.ball.vy = this.jumpForce;
+    });
   }
 
   _addPlatform(baseY) {
@@ -953,30 +1225,21 @@ class BounceGame extends BaseGame {
     this.platforms.push({
       x: 30 + Math.random() * (this.width - pw - 60),
       y: this.height - baseY - Math.random() * 20,
-      w: pw,
-      h: 14,
+      w: pw, h: 14,
       color: `hsl(${Math.random() * 60 + 180}, 70%, 55%)`,
       scored: false,
     });
   }
 
   onUpdate() {
-    // 物理
-    if (this.ball.vy < 8) {
-      this.ball.vy += this.gravity;
-    }
+    if (this.ball.vy < 8) this.ball.vy += this.gravity;
     this.ball.y += this.ball.vy;
 
-    // 相机跟随
     if (this.ball.y < this.height * 0.35) {
       const diff = this.height * 0.35 - this.ball.y;
       this.ball.y += diff;
       this.cameraY += diff;
-
-      // 移动平台
       this.platforms.forEach(p => { p.y += diff; });
-
-      // 移除屏幕外平台，添加新平台
       this.platforms = this.platforms.filter(p => p.y < this.height + 50);
       while (this.platforms.length < 8) {
         const lastP = this.platforms[this.platforms.length - 1];
@@ -984,59 +1247,32 @@ class BounceGame extends BaseGame {
       }
     }
 
-    // 边界检查
-    if (this.ball.x - this.ball.radius < 0) {
-      this.ball.x = this.ball.radius;
-    }
-    if (this.ball.x + this.ball.radius > this.width) {
-      this.ball.x = this.width - this.ball.radius;
-    }
+    this.ball.x = Math.max(this.ball.radius, Math.min(this.width - this.ball.radius, this.ball.x));
+    if (this.ball.y > this.height + 60) this.endGame();
 
-    // 掉落死亡
-    if (this.ball.y > this.height + 60) {
-      this.endGame();
-    }
-
-    // 平台碰撞
     for (const p of this.platforms) {
-      if (
-        this.ball.vy > 0 &&
-        this.ball.y + this.ball.radius > p.y &&
-        this.ball.y + this.ball.radius < p.y + p.h + 15 &&
-        this.ball.x > p.x - 5 &&
-        this.ball.x < p.x + p.w + 5
-      ) {
+      if (this.ball.vy > 0 &&
+          this.ball.y + this.ball.radius > p.y &&
+          this.ball.y + this.ball.radius < p.y + p.h + 15 &&
+          this.ball.x > p.x - 5 && this.ball.x < p.x + p.w + 5) {
         this.ball.vy = this.jumpForce;
-        if (!p.scored) {
-          p.scored = true;
-          this.addScore(1);
-        }
+        if (!p.scored) { p.scored = true; this.addScore(1); }
       }
     }
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
-
     // 平台
     for (const p of this.platforms) {
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      const r = 7;
-      const x = p.x, y = p.y, w = p.w, h = p.h;
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.arcTo(x + w, y, x + w, y + r, r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-      ctx.lineTo(x + r, y + h);
-      ctx.arcTo(x, y + h, x, y + h - r, r);
-      ctx.lineTo(x, y + r);
-      ctx.arcTo(x, y, x + r, y, r);
-      ctx.fill();
-
-      // 光泽
+      const r = 7, x = p.x, y = p.y, w = p.w, h = p.h;
+      ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+      ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, y + h - r);
+      ctx.arcTo(x + w, y + h, x + w - r, y + h, r); ctx.lineTo(x + r, y + h);
+      ctx.arcTo(x, y + h, x, y + h - r, r); ctx.lineTo(x, y + r);
+      ctx.arcTo(x, y, x + r, y, r); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.fillRect(x + 4, y + 2, w - 8, 4);
     }
@@ -1044,130 +1280,78 @@ class BounceGame extends BaseGame {
     // 球
     const b = this.ball;
     ctx.fillStyle = b.color;
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 球的光泽
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.beginPath();
-    ctx.arc(b.x - 4, b.y - 5, b.radius * 0.35, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 球的表情
+    ctx.beginPath(); ctx.arc(b.x - 5, b.y - 5, b.radius * 0.35, 0, Math.PI * 2); ctx.fill();
+    // 表情
     ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(b.x - 5, b.y - 3, 4, 0, Math.PI * 2);
-    ctx.arc(b.x + 5, b.y - 3, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x - 6, b.y - 3, 4, 0, Math.PI * 2); ctx.arc(b.x + 6, b.y - 3, 4, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(b.x - 4, b.y - 3, 2, 0, Math.PI * 2);
-    ctx.arc(b.x + 6, b.y - 3, 2, 0, Math.PI * 2);
-    ctx.fill();
-    // 微笑
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(b.x, b.y + 1, 8, 0.15 * Math.PI, 0.85 * Math.PI);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x - 5, b.y - 3, 2, 0, Math.PI * 2); ctx.arc(b.x + 7, b.y - 3, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(b.x, b.y + 1, 8, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTouch);
-    this.canvas.removeEventListener('mousedown', this._onTouch);
-  }
+  onStop() {}
 }
+
 /**
  * 贪吃蛇游戏 - 滑动控制蛇的方向吃食物
- * 简化版适合3岁宝宝，碰撞边界会反弹而不是死亡
  */
 class SnakeGame extends BaseGame {
   constructor() {
-    super({
-      id: 'snake',
-      name: '贪吃蛇',
-      icon: '🐍',
-      description: '滑动让蛇吃到好吃的水果',
-      duration: 60,
-    });
+    super({ id: 'snake', name: '贪吃蛇', icon: '🐍', description: '滑动让蛇吃到好吃的水果', duration: 60 });
   }
 
   onStart() {
-    this.gridSize = 20;
+    this.gridSize = 22;
     this.cols = Math.floor(this.width / this.gridSize);
     this.rows = Math.floor(this.height / this.gridSize);
 
-    this.snake = [
-      { x: Math.floor(this.cols / 2), y: Math.floor(this.rows / 2) },
-    ];
+    this.snake = [{ x: Math.floor(this.cols / 2), y: Math.floor(this.rows / 2) }];
     this.dir = { x: 1, y: 0 };
     this.nextDir = { x: 1, y: 0 };
     this.food = this._spawnFood();
     this.moveTimer = 0;
-    this.moveInterval = 10; // 帧
-    this.frameCount = 0;
-    this.growCount = 0;
+    this.moveInterval = 10;
 
-    // 触摸滑动
     this.touchStart = null;
-    this._onTouchStart = (e) => {
-      e.preventDefault();
+    this.bindTouch('touchstart', (e) => {
       const t = e.touches[0];
       this.touchStart = { x: t.clientX, y: t.clientY };
-    };
-    this._onTouchMove = (e) => {
-      e.preventDefault();
+    });
+    this.bindTouch('touchmove', (e) => {
       if (!this.touchStart) return;
       const t = e.touches[0];
       const dx = t.clientX - this.touchStart.x;
       const dy = t.clientY - this.touchStart.y;
       if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
-
       if (Math.abs(dx) > Math.abs(dy)) {
         this.nextDir = { x: dx > 0 ? 1 : -1, y: 0 };
       } else {
         this.nextDir = { x: 0, y: dy > 0 ? 1 : -1 };
       }
       this.touchStart = { x: t.clientX, y: t.clientY };
-    };
+    });
 
-    this.canvas.addEventListener('touchstart', this._onTouchStart, { passive: false });
-    this.canvas.addEventListener('touchmove', this._onTouchMove, { passive: false });
-
-    // 键盘支持
     this._onKey = (e) => {
-      const map = {
-        ArrowUp: { x: 0, y: -1 },
-        ArrowDown: { x: 0, y: 1 },
-        ArrowLeft: { x: -1, y: 0 },
-        ArrowRight: { x: 1, y: 0 },
-      };
-      if (map[e.key]) {
-        this.nextDir = map[e.key];
-      }
+      const map = { ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 } };
+      if (map[e.key]) this.nextDir = map[e.key];
     };
     document.addEventListener('keydown', this._onKey);
   }
 
   _spawnFood() {
     let pos;
-    do {
-      pos = {
-        x: Math.floor(Math.random() * this.cols),
-        y: Math.floor(Math.random() * this.rows),
-      };
-    } while (this.snake.some(s => s.x === pos.x && s.y === pos.y));
+    do { pos = { x: Math.floor(Math.random() * this.cols), y: Math.floor(Math.random() * this.rows) }; }
+    while (this.snake.some(s => s.x === pos.x && s.y === pos.y));
     return pos;
   }
 
   onUpdate() {
-    this.frameCount++;
-
     if (this.frameCount - this.moveTimer < this.moveInterval) return;
     this.moveTimer = this.frameCount;
 
-    // 更新方向（不允许反向）
     if (this.nextDir.x !== -this.dir.x || this.nextDir.y !== -this.dir.y) {
       this.dir = this.nextDir;
     }
@@ -1176,7 +1360,6 @@ class SnakeGame extends BaseGame {
     let nx = head.x + this.dir.x;
     let ny = head.y + this.dir.y;
 
-    // 边界反弹（适合宝宝，不会死）
     if (nx < 0) { nx = 0; this.dir.x = 1; this.nextDir.x = 1; }
     if (nx >= this.cols) { nx = this.cols - 1; this.dir.x = -1; this.nextDir.x = -1; }
     if (ny < 0) { ny = 0; this.dir.y = 1; this.nextDir.y = 1; }
@@ -1184,220 +1367,144 @@ class SnakeGame extends BaseGame {
 
     const newHead = { x: nx, y: ny };
 
-    // 吃食物
     if (nx === this.food.x && ny === this.food.y) {
       this.snake.unshift(newHead);
       this.food = this._spawnFood();
       this.addScore(1);
-      this.growCount++;
-
-      // 加速
-      if (this.moveInterval > 4 && this.growCount % 5 === 0) {
-        this.moveInterval--;
-      }
+      if (this.moveInterval > 4) this.moveInterval -= 0.3;
     } else {
       this.snake.unshift(newHead);
       this.snake.pop();
     }
-
-    // 撞到自己（轻微惩罚）—— 但3岁版本简化为不死亡，只是反弹
-    // 对于3岁宝宝，不自撞死亡
   }
 
   onDraw() {
     const ctx = this.ctx;
     const gs = this.gridSize;
 
-    ctx.clearRect(0, 0, this.width, this.height);
-
-    // 网格背景
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    // 网格
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 0.5;
-    for (let x = 0; x < this.cols; x++) {
-      for (let y = 0; y < this.rows; y++) {
+    for (let x = 0; x < this.cols; x++)
+      for (let y = 0; y < this.rows; y++)
         ctx.strokeRect(x * gs, y * gs, gs, gs);
-      }
-    }
 
     // 食物
-    const fx = this.food.x * gs + gs / 2;
-    const fy = this.food.y * gs + gs / 2;
     const foods = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍑', '🥝', '🫐'];
     const emoji = foods[Math.floor(Date.now() / 800) % foods.length];
-    ctx.font = `${gs * 1.2}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, fx, fy);
+    ctx.font = `${gs * 1.3}px serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, this.food.x * gs + gs / 2, this.food.y * gs + gs / 2);
 
     // 蛇
     for (let i = this.snake.length - 1; i >= 0; i--) {
       const s = this.snake[i];
       const ratio = 1 - i / (this.snake.length + 10) * 0.5;
       const size = gs * ratio;
+      const cx = s.x * gs + gs / 2;
+      const cy = s.y * gs + gs / 2;
 
       if (i === 0) {
-        // 头部
         ctx.fillStyle = '#4ECDC4';
-        ctx.beginPath();
-        const cx = s.x * gs + gs / 2;
-        const cy = s.y * gs + gs / 2;
-        ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 眼睛
+        ctx.beginPath(); ctx.arc(cx, cy, size / 2, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(cx - 3, cy - 3, 3.5, 0, Math.PI * 2);
-        ctx.arc(cx + 3, cy - 3, 3.5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 3.5, 0, Math.PI * 2); ctx.arc(cx + 3, cy - 3, 3.5, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#333';
-        ctx.beginPath();
-        ctx.arc(cx - 3, cy - 3, 1.8, 0, Math.PI * 2);
-        ctx.arc(cx + 3, cy - 3, 1.8, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 1.8, 0, Math.PI * 2); ctx.arc(cx + 3, cy - 3, 1.8, 0, Math.PI * 2); ctx.fill();
       } else {
         ctx.fillStyle = `hsla(175, 60%, 55%, ${0.6 + ratio * 0.4})`;
-        ctx.beginPath();
-        const cx = s.x * gs + gs / 2;
-        const cy = s.y * gs + gs / 2;
-        ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, size / 2, 0, Math.PI * 2); ctx.fill();
       }
     }
   }
 
   onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTouchStart);
-    this.canvas.removeEventListener('touchmove', this._onTouchMove);
     document.removeEventListener('keydown', this._onKey);
   }
 }
+
 /**
  * 赛车游戏 - 左右移动躲避障碍物
- * 宝宝用手指左右滑动控制赛车
  */
 class RacingGame extends BaseGame {
   constructor() {
-    super({
-      id: 'racing',
-      name: '赛车游戏',
-      icon: '🏎️',
-      description: '滑动让赛车躲避障碍',
-      duration: 60,
-    });
+    super({ id: 'racing', name: '赛车游戏', icon: '🏎️', description: '滑动让赛车躲避障碍', duration: 60 });
   }
 
   onStart() {
-    this.car = {
-      x: this.width / 2,
-      y: this.height * 0.75,
-      w: 40,
-      h: 60,
-    };
+    this.car = { x: this.width / 2, y: this.height * 0.75, w: 44, h: 64 };
     this.obstacles = [];
     this.roadOffset = 0;
     this.spawnTimer = 0;
     this.spawnInterval = 50;
-    this.touchX = null;
 
-    this._onTouchMove = (e) => {
-      e.preventDefault();
-      const rect = this.canvas.getBoundingClientRect();
-      const x = (e.touches[0].clientX - rect.left) * (this.width / rect.width);
-      this.car.x = Math.max(this.car.w / 2 + 20, Math.min(this.width - this.car.w / 2 - 20, x));
-    };
-    this._onMouseMove = (e) => {
-      if (!this.isRunning) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (this.width / rect.width);
-      this.car.x = Math.max(this.car.w / 2 + 20, Math.min(this.width - this.car.w / 2 - 20, x));
-    };
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this.car.x = Math.max(this.car.w / 2 + 20, Math.min(this.width - this.car.w / 2 - 20, pos.x));
+    });
+    this.bindTouch('touchmove', (e) => {
+      const pos = this.getTouchPos(e);
+      this.car.x = Math.max(this.car.w / 2 + 20, Math.min(this.width - this.car.w / 2 - 20, pos.x));
+    });
     this._onKey = (e) => {
-      if (e.key === 'ArrowLeft') this.car.x -= 15;
-      if (e.key === 'ArrowRight') this.car.x += 15;
+      if (e.key === 'ArrowLeft') this.car.x -= 20;
+      if (e.key === 'ArrowRight') this.car.x += 20;
       this.car.x = Math.max(this.car.w / 2 + 20, Math.min(this.width - this.car.w / 2 - 20, this.car.x));
     };
-
-    this.canvas.addEventListener('touchmove', this._onTouchMove, { passive: false });
-    this.canvas.addEventListener('touchstart', this._onTouchMove, { passive: false });
-    this.canvas.addEventListener('mousemove', this._onMouseMove);
     document.addEventListener('keydown', this._onKey);
   }
 
   onUpdate() {
     this.roadOffset = (this.roadOffset + 3) % 40;
     this.spawnTimer++;
-
     if (this.spawnTimer >= this.spawnInterval) {
       this.spawnTimer = 0;
       this._spawnObstacle();
-      // 逐渐加速
       if (this.spawnInterval > 20) this.spawnInterval -= 0.5;
     }
 
-    // 移动障碍物
-    for (const o of this.obstacles) {
-      o.y += o.speed;
-    }
+    for (const o of this.obstacles) o.y += o.speed;
 
-    // 碰撞检测
     for (const o of this.obstacles) {
-      if (
-        Math.abs(this.car.x - o.x) < (this.car.w + o.w) / 2 - 8 &&
-        Math.abs(this.car.y - o.y) < (this.car.h + o.h) / 2 - 8
-      ) {
-        this.endGame();
-        return;
+      if (Math.abs(this.car.x - o.x) < (this.car.w + o.w) / 2 - 10 &&
+          Math.abs(this.car.y - o.y) < (this.car.h + o.h) / 2 - 10) {
+        this.endGame(); return;
       }
     }
 
-    // 移除通过的障碍物并加分
     const passed = this.obstacles.filter(o => o.y > this.height + 50 && !o.scored);
-    for (const p of passed) {
-      p.scored = true;
-      this.addScore(1);
-    }
+    for (const p of passed) { p.scored = true; this.addScore(1); }
     this.obstacles = this.obstacles.filter(o => o.y < this.height + 80);
   }
 
   _spawnObstacle() {
     const types = [
-      { w: 35, h: 35, color: '#FF6B6B', shape: 'cone' },
-      { w: 38, h: 30, color: '#FFE66D', shape: 'barrier' },
-      { w: 32, h: 32, color: '#FF9F43', shape: 'rock' },
+      { w: 38, h: 38, color: '#FF6B6B', shape: 'cone' },
+      { w: 40, h: 32, color: '#FFE66D', shape: 'barrier' },
+      { w: 34, h: 34, color: '#FF9F43', shape: 'rock' },
     ];
     const t = types[Math.floor(Math.random() * types.length)];
     this.obstacles.push({
-      x: 55 + Math.random() * (this.width - 110),
-      y: -40,
-      w: t.w,
-      h: t.h,
-      color: t.color,
-      shape: t.shape,
-      speed: 2 + Math.random() * 2,
-      scored: false,
+      x: 55 + Math.random() * (this.width - 110), y: -40,
+      w: t.w, h: t.h, color: t.color, shape: t.shape,
+      speed: 2 + Math.random() * 2, scored: false,
     });
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
-
     // 道路
-    ctx.fillStyle = '#555';
+    ctx.fillStyle = 'rgba(80,80,80,0.8)';
     ctx.fillRect(20, 0, this.width - 40, this.height);
-
-    // 道路标线
+    // 标线
     ctx.fillStyle = '#FFE66D';
     for (let y = -this.roadOffset; y < this.height; y += 40) {
       ctx.fillRect(this.width / 2 - 2, y, 4, 20);
     }
-
     // 路边
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(0, 0, 20, this.height);
     ctx.fillRect(this.width - 20, 0, 20, this.height);
-    // 路边条纹
     for (let y = -this.roadOffset; y < this.height; y += 30) {
       ctx.fillStyle = y % 60 < 30 ? '#FF6B6B' : '#fff';
       ctx.fillRect(2, y, 16, 14);
@@ -1412,7 +1519,6 @@ class RacingGame extends BaseGame {
         ctx.moveTo(o.x, o.y - o.h / 2);
         ctx.lineTo(o.x - o.w / 2, o.y + o.h / 2);
         ctx.lineTo(o.x + o.w / 2, o.y + o.h / 2);
-        ctx.closePath();
         ctx.fill();
       } else if (o.shape === 'barrier') {
         ctx.fillRect(o.x - o.w / 2, o.y - o.h / 2, o.w, o.h);
@@ -1420,28 +1526,16 @@ class RacingGame extends BaseGame {
         ctx.fillRect(o.x - o.w / 2 + 4, o.y - o.h / 2 + 4, o.w / 3, o.h / 3);
         ctx.fillRect(o.x + o.w / 6, o.y - o.h / 2 + 4, o.w / 3, o.h / 3);
       } else {
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, o.w / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath();
-        ctx.arc(o.x - 3, o.y - 3, o.w / 6, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(o.x, o.y, o.w / 2, 0, Math.PI * 2); ctx.fill();
       }
     }
 
     // 赛车
     const c = this.car;
     ctx.fillStyle = '#4ECDC4';
-    ctx.beginPath();
-    ctx.roundRect(c.x - c.w / 2, c.y - c.h / 2, c.w, c.h, 8);
-    ctx.fill();
-
-    // 车窗
+    ctx.beginPath(); ctx.roundRect(c.x - c.w / 2, c.y - c.h / 2, c.w, c.h, 8); ctx.fill();
     ctx.fillStyle = '#A8E6CF';
     ctx.fillRect(c.x - c.w * 0.25, c.y - c.h * 0.4, c.w * 0.5, c.h * 0.35);
-
-    // 轮子
     ctx.fillStyle = '#333';
     ctx.fillRect(c.x - c.w / 2 - 3, c.y - c.h / 3, 6, 12);
     ctx.fillRect(c.x + c.w / 2 - 3, c.y - c.h / 3, 6, 12);
@@ -1450,121 +1544,78 @@ class RacingGame extends BaseGame {
   }
 
   onStop() {
-    this.canvas.removeEventListener('touchmove', this._onTouchMove);
-    this.canvas.removeEventListener('touchstart', this._onTouchMove);
-    this.canvas.removeEventListener('mousemove', this._onMouseMove);
     document.removeEventListener('keydown', this._onKey);
   }
 }
+
 /**
  * 坦克游戏 - 点击屏幕射击下落的目标
- * 宝宝点击目标来射击，训练视觉注意力和手眼协调
  */
 class TankGame extends BaseGame {
   constructor() {
-    super({
-      id: 'tank',
-      name: '坦克射击',
-      icon: '🎯',
-      description: '点击目标来射击',
-      duration: 60,
-    });
+    super({ id: 'tank', name: '坦克射击', icon: '🎯', description: '点击目标来射击', duration: 60 });
   }
 
   onStart() {
-    this.tank = {
-      x: this.width / 2,
-      y: this.height - 50,
-      w: 50,
-      h: 40,
-    };
+    this.tank = { x: this.width / 2, y: this.height - 50, w: 50, h: 40 };
     this.bullets = [];
     this.targets = [];
     this.spawnTimer = 0;
     this.explosions = [];
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
-
-      // 检查点击目标
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      // 先检查是否点击了目标
       for (let i = this.targets.length - 1; i >= 0; i--) {
         const t = this.targets[i];
-        const dist = Math.hypot(tx - t.x, ty - t.y);
-        if (dist < t.radius + 10) {
+        if (Math.hypot(pos.x - t.x, pos.y - t.y) < t.radius + 15) {
           this.explosions.push({ x: t.x, y: t.y, radius: t.radius, alpha: 1 });
           this.targets.splice(i, 1);
           this.addScore(1);
           return;
         }
       }
-
-      // 发射子弹
-      const angle = Math.atan2(ty - this.tank.y, tx - this.tank.x);
-      this.bullets.push({
-        x: this.tank.x,
-        y: this.tank.y - 15,
-        vx: Math.cos(angle) * 6,
-        vy: Math.sin(angle) * 6,
-        life: 60,
-      });
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+      // 否则发射子弹
+      const angle = Math.atan2(pos.y - this.tank.y, pos.x - this.tank.x);
+      this.bullets.push({ x: this.tank.x, y: this.tank.y - 15, vx: Math.cos(angle) * 6, vy: Math.sin(angle) * 6, life: 60 });
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      for (let i = this.targets.length - 1; i >= 0; i--) {
+        const t = this.targets[i];
+        if (Math.hypot(pos.x - t.x, pos.y - t.y) < t.radius + 15) {
+          this.explosions.push({ x: t.x, y: t.y, radius: t.radius, alpha: 1 });
+          this.targets.splice(i, 1);
+          this.addScore(1);
+          return;
+        }
+      }
+    });
   }
 
   onUpdate() {
     this.spawnTimer++;
-
-    // 生成目标
     const spawnRate = Math.max(20, 60 - this.score * 2);
     if (this.spawnTimer >= spawnRate) {
       this.spawnTimer = 0;
       this.targets.push({
-        x: 40 + Math.random() * (this.width - 80),
-        y: -30,
+        x: 40 + Math.random() * (this.width - 80), y: -30,
         radius: 18 + Math.random() * 15,
         speed: 0.8 + Math.random() * 1.5,
         color: ['#FF6B6B', '#FFE66D', '#FF9F43', '#EE5A24', '#FC427B'][Math.floor(Math.random() * 5)],
       });
     }
 
-    // 移动目标
-    for (const t of this.targets) {
-      t.y += t.speed;
-    }
+    for (const t of this.targets) t.y += t.speed;
+    this.targets = this.targets.filter(t => t.y < this.height + 30);
 
-    // 目标到达底部
-    this.targets = this.targets.filter(t => {
-      if (t.y > this.height + 30) {
-        // 漏掉了不加分，但不结束游戏（适合宝宝）
-        return false;
-      }
-      return true;
-    });
+    for (const b of this.bullets) { b.x += b.vx; b.y += b.vy; b.life--; }
+    this.bullets = this.bullets.filter(b => b.life > 0 && b.x > 0 && b.x < this.width && b.y > 0 && b.y < this.height);
 
-    // 移动子弹
-    for (const b of this.bullets) {
-      b.x += b.vx;
-      b.y += b.vy;
-      b.life--;
-    }
-    this.bullets = this.bullets.filter(b => b.life > 0 &&
-      b.x > 0 && b.x < this.width && b.y > 0 && b.y < this.height);
-
-    // 子弹碰撞
     for (let bi = this.bullets.length - 1; bi >= 0; bi--) {
       for (let ti = this.targets.length - 1; ti >= 0; ti--) {
-        const b = this.bullets[bi];
-        const t = this.targets[ti];
-        if (Math.hypot(b.x - t.x, b.y - t.y) < t.radius + 4) {
-          this.explosions.push({ x: t.x, y: t.y, radius: t.radius, alpha: 1 });
+        if (Math.hypot(this.bullets[bi].x - this.targets[ti].x, this.bullets[bi].y - this.targets[ti].y) < this.targets[ti].radius + 4) {
+          this.explosions.push({ x: this.targets[ti].x, y: this.targets[ti].y, radius: this.targets[ti].radius, alpha: 1 });
           this.targets.splice(ti, 1);
           this.bullets.splice(bi, 1);
           this.addScore(1);
@@ -1573,228 +1624,134 @@ class TankGame extends BaseGame {
       }
     }
 
-    // 爆炸动画
-    for (const e of this.explosions) {
-      e.alpha -= 0.04;
-      e.radius += 2;
-    }
+    for (const e of this.explosions) { e.alpha -= 0.04; e.radius += 2; }
     this.explosions = this.explosions.filter(e => e.alpha > 0);
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
-
-    // 天空渐变
-    const sky = ctx.createLinearGradient(0, 0, 0, this.height);
-    sky.addColorStop(0, '#1a1a3e');
-    sky.addColorStop(0.5, '#2d2d5e');
-    sky.addColorStop(1, '#3d6b4f');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, this.width, this.height);
-
     // 地面
-    ctx.fillStyle = '#8B6914';
+    ctx.fillStyle = 'rgba(139,105,20,0.6)';
     ctx.fillRect(0, this.height - 60, this.width, 60);
-    ctx.fillStyle = '#6B4F12';
+    ctx.fillStyle = 'rgba(107,79,18,0.6)';
     ctx.fillRect(0, this.height - 60, this.width, 4);
 
     // 目标
     for (const t of this.targets) {
-      // 外圈
-      ctx.strokeStyle = t.color;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // 内圈
+      ctx.strokeStyle = t.color; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.arc(t.x, t.y, t.radius * 0.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(t.x, t.y, t.radius * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 十字线
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(t.x, t.y - t.radius * 0.3);
-      ctx.lineTo(t.x, t.y + t.radius * 0.3);
-      ctx.moveTo(t.x - t.radius * 0.3, t.y);
-      ctx.lineTo(t.x + t.radius * 0.3, t.y);
+      ctx.moveTo(t.x, t.y - t.radius * 0.3); ctx.lineTo(t.x, t.y + t.radius * 0.3);
+      ctx.moveTo(t.x - t.radius * 0.3, t.y); ctx.lineTo(t.x + t.radius * 0.3, t.y);
       ctx.stroke();
     }
 
     // 子弹
     ctx.fillStyle = '#FFE66D';
-    for (const b of this.bullets) {
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    for (const b of this.bullets) { ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI * 2); ctx.fill(); }
 
     // 爆炸
     for (const e of this.explosions) {
-      ctx.fillStyle = `rgba(255, 200, 50, ${e.alpha})`;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = `rgba(255,200,50,${e.alpha})`;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
     }
 
     // 坦克
     const t = this.tank;
-    // 履带
     ctx.fillStyle = '#444';
     ctx.fillRect(t.x - t.w / 2, t.y + 5, t.w, t.h - 10);
-    // 车身
     ctx.fillStyle = '#5D8233';
-    ctx.beginPath();
-    ctx.arc(t.x, t.y - 5, t.w * 0.45, Math.PI, 0);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(t.x, t.y - 5, t.w * 0.45, Math.PI, 0); ctx.fill();
     ctx.fillRect(t.x - t.w * 0.45, t.y - 20, t.w * 0.9, t.h * 0.65);
-    // 炮管
-    ctx.fillStyle = '#444';
-    ctx.fillRect(t.x - 3, t.y - 35, 6, 22);
-    // 炮塔
+    ctx.fillStyle = '#444'; ctx.fillRect(t.x - 3, t.y - 35, 6, 22);
     ctx.fillStyle = '#6B9B3A';
-    ctx.beginPath();
-    ctx.arc(t.x, t.y - 12, 14, 0, Math.PI * 2);
-    ctx.fill();
-    // 星星
-    ctx.fillStyle = '#FFE66D';
-    ctx.font = '14px serif';
-    ctx.textAlign = 'center';
+    ctx.beginPath(); ctx.arc(t.x, t.y - 12, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#FFE66D'; ctx.font = '14px serif'; ctx.textAlign = 'center';
     ctx.fillText('⭐', t.x, t.y - 8);
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
-  }
+  onStop() {}
 }
+
 /**
  * 套牛游戏 - 在合适的时机点击套住移动的动物
  * 训练时机把握和手眼协调
  */
 class RopeGame extends BaseGame {
   constructor() {
-    super({
-      id: 'rope',
-      name: '套牛游戏',
-      icon: '🤠',
-      description: '看准时机点击套住小动物',
-      duration: 60,
-    });
+    super({ id: 'rope', name: '套牛游戏', icon: '🤠', description: '看准时机点击套住小动物', duration: 60 });
   }
 
   onStart() {
     this.animals = [];
-    this.rope = null; // { x, y, radius, growing }
-    this.spawnTimer = 0;
     this.caughtAnimals = [];
-    this.missCount = 0;
+    this.ropeAnimations = [];
+    this.spawnTimer = 0;
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this._tryCatch(pos.x, pos.y);
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      this._tryCatch(pos.x, pos.y);
+    });
+  }
 
-      // 检查是否套中动物
-      let caught = false;
-      for (let i = this.animals.length - 1; i >= 0; i--) {
-        const a = this.animals[i];
-        const dist = Math.hypot(tx - a.x, ty - a.y);
-        if (dist < a.radius + 15) {
-          this.caughtAnimals.push({
-            x: a.x,
-            y: a.y,
-            emoji: a.emoji,
-            alpha: 1,
-            vy: -3,
-          });
-          this.animals.splice(i, 1);
-          this.addScore(1);
-          caught = true;
-          break;
-        }
+  _tryCatch(tx, ty) {
+    // 检查是否套中动物
+    for (let i = this.animals.length - 1; i >= 0; i--) {
+      const a = this.animals[i];
+      const dist = Math.hypot(tx - a.x, ty - a.y);
+      if (dist < a.radius + 20) {
+        this.caughtAnimals.push({
+          x: a.x, y: a.y, emoji: a.emoji, alpha: 1, vy: -3,
+        });
+        this.animals.splice(i, 1);
+        this.addScore(1);
+        return;
       }
-
-      if (!caught) {
-        this.missCount++;
-        // 显示套索动画
-        this.ropeAnimations = this.ropeAnimations || [];
-        this.ropeAnimations.push({ x: tx, y: ty, radius: 5, alpha: 1 });
-      }
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+    }
+    // 未命中动画
+    this.ropeAnimations.push({ x: tx, y: ty, radius: 5, alpha: 1 });
   }
 
   onUpdate() {
     this.spawnTimer++;
-
     if (this.spawnTimer >= 45) {
       this.spawnTimer = 0;
       const animals = ['🐮', '🐷', '🐑', '🐔', '🐴', '🐰', '🐸', '🦆'];
       this.animals.push({
-        x: -40,
-        y: 100 + Math.random() * (this.height - 200),
-        radius: 22,
+        x: -40, y: 80 + Math.random() * (this.height - 180),
+        radius: 28,
         speed: 1 + Math.random() * 2,
         emoji: animals[Math.floor(Math.random() * animals.length)],
         wobble: Math.random() * Math.PI * 2,
       });
     }
 
-    // 移动动物
     for (const a of this.animals) {
       a.x += a.speed;
       a.wobble += 0.03;
-      a.displayY = a.y + Math.sin(a.wobble) * 10;
     }
-
-    // 移除跑掉的动物
     this.animals = this.animals.filter(a => a.x < this.width + 60);
 
-    // 捕获动画
-    for (const c of this.caughtAnimals) {
-      c.y += c.vy;
-      c.alpha -= 0.02;
-    }
+    for (const c of this.caughtAnimals) { c.y += c.vy; c.alpha -= 0.02; }
     this.caughtAnimals = this.caughtAnimals.filter(c => c.alpha > 0);
 
-    // 套索动画
-    if (this.ropeAnimations) {
-      for (const r of this.ropeAnimations) {
-        r.radius += 3;
-        r.alpha -= 0.06;
-      }
-      this.ropeAnimations = this.ropeAnimations.filter(r => r.alpha > 0);
-    }
+    for (const r of this.ropeAnimations) { r.radius += 3; r.alpha -= 0.06; }
+    this.ropeAnimations = this.ropeAnimations.filter(r => r.alpha > 0);
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
 
-    // 草原背景
-    const bg = ctx.createLinearGradient(0, 0, 0, this.height);
-    bg.addColorStop(0, '#87CEEB');
-    bg.addColorStop(0.6, '#90EE90');
-    bg.addColorStop(1, '#228B22');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, this.width, this.height);
-
-    // 地面纹理
-    ctx.fillStyle = '#7CCD7C';
-    for (let x = 0; x < this.width; x += 40) {
-      ctx.fillRect(x, this.height * 0.7 + (x % 80 === 0 ? 0 : 5), 20, 3);
-    }
+    // 草地
+    ctx.fillStyle = 'rgba(34,139,34,0.3)';
+    ctx.fillRect(0, this.height * 0.7, this.width, this.height * 0.3);
 
     // 围栏
     ctx.strokeStyle = '#8B6914';
@@ -1805,7 +1762,6 @@ class RopeGame extends BaseGame {
       ctx.lineTo(x, this.height * 0.72);
       ctx.stroke();
     }
-    ctx.strokeStyle = '#8B6914';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, this.height * 0.65);
@@ -1815,56 +1771,49 @@ class RopeGame extends BaseGame {
     ctx.stroke();
 
     // 动物
-    ctx.font = '36px serif';
+    ctx.font = '40px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const a of this.animals) {
-      const dy = a.displayY || a.y;
-      ctx.fillText(a.emoji, a.x, dy);
+      const dy = Math.sin(a.wobble) * 10;
+      ctx.fillText(a.emoji, a.x, a.y + dy);
+      // 触控区域指示
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y + dy, a.radius + 15, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     // 套索动画
-    if (this.ropeAnimations) {
-      for (const r of this.ropeAnimations) {
-        ctx.strokeStyle = `rgba(139, 90, 43, ${r.alpha})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+    for (const r of this.ropeAnimations) {
+      ctx.strokeStyle = `rgba(139,90,43,${r.alpha})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2); ctx.stroke();
     }
 
-    // 被捕获的动物
-    ctx.font = '30px serif';
+    // 被捕获
+    ctx.font = '34px serif';
     for (const c of this.caughtAnimals) {
       ctx.globalAlpha = c.alpha;
       ctx.fillText(c.emoji, c.x, c.y);
       ctx.globalAlpha = 1;
     }
 
-    // 人物（底部）
+    // 人物
     ctx.font = '50px serif';
     ctx.fillText('🤠', this.width / 2, this.height - 20);
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
-  }
+  onStop() {}
 }
+
 /**
- * 消除水果游戏 - 点击3个以上相邻的相同水果消除
- * 简化版：点击一组相同水果即可消除（适合3岁宝宝）
+ * 消除水果游戏 - 点击相同水果消除
  */
 class FruitGame extends BaseGame {
   constructor() {
-    super({
-      id: 'fruit',
-      name: '消除水果',
-      icon: '🍉',
-      description: '点击相同的水果消除它们',
-      duration: 60,
-    });
+    super({ id: 'fruit', name: '消除水果', icon: '🍉', description: '点击相同的水果消除它们', duration: 60 });
   }
 
   onStart() {
@@ -1878,48 +1827,17 @@ class FruitGame extends BaseGame {
     this.offsetY = (this.height - this.rows * this.cellSize) / 2;
     this.fruits = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍒'];
     this.grid = [];
-    this.selected = null;
-    this.eliminating = []; // 正在消除的动画
+    this.eliminating = [];
     this._initGrid();
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
-
-      const col = Math.floor((tx - this.offsetX) / this.cellSize);
-      const row = Math.floor((ty - this.offsetY) / this.cellSize);
-
-      if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return;
-
-      // 找到所有相连的相同水果
-      const target = this.grid[row][col];
-      if (!target) return;
-      const group = this._findGroup(col, row, target);
-      if (group.length >= 2) {
-        // 消除
-        for (const { col: c, row: r } of group) {
-          this.eliminating.push({
-            x: this.offsetX + c * this.cellSize + this.cellSize / 2,
-            y: this.offsetY + r * this.cellSize + this.cellSize / 2,
-            fruit: this.grid[r][c],
-            alpha: 1,
-            scale: 1,
-          });
-          this.grid[r][c] = null;
-        }
-        this.addScore(group.length);
-        // 下落和填充
-        setTimeout(() => this._applyGravity(), 300);
-      }
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this._handleTap(pos.x, pos.y);
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      this._handleTap(pos.x, pos.y);
+    });
   }
 
   _initGrid() {
@@ -1932,32 +1850,46 @@ class FruitGame extends BaseGame {
     }
   }
 
+  _handleTap(tx, ty) {
+    const col = Math.floor((tx - this.offsetX) / this.cellSize);
+    const row = Math.floor((ty - this.offsetY) / this.cellSize);
+    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return;
+
+    const target = this.grid[row][col];
+    if (!target) return;
+    const group = this._findGroup(col, row, target);
+    if (group.length >= 2) {
+      for (const { col: c, row: r } of group) {
+        this.eliminating.push({
+          x: this.offsetX + c * this.cellSize + this.cellSize / 2,
+          y: this.offsetY + r * this.cellSize + this.cellSize / 2,
+          fruit: this.grid[r][c], alpha: 1, scale: 1,
+        });
+        this.grid[r][c] = null;
+      }
+      this.addScore(group.length);
+      setTimeout(() => this._applyGravity(), 300);
+    }
+  }
+
   _findGroup(col, row, fruit) {
     const visited = new Set();
     const group = [];
     const stack = [{ col, row }];
-
     while (stack.length > 0) {
       const { col: c, row: r } = stack.pop();
       const key = `${c},${r}`;
       if (visited.has(key)) continue;
       if (c < 0 || c >= this.cols || r < 0 || r >= this.rows) continue;
       if (this.grid[r][c] !== fruit) continue;
-
       visited.add(key);
       group.push({ col: c, row: r });
-
-      stack.push({ col: c + 1, row: r });
-      stack.push({ col: c - 1, row: r });
-      stack.push({ col: c, row: r + 1 });
-      stack.push({ col: c, row: r - 1 });
+      stack.push({ col: c + 1, row: r }, { col: c - 1, row: r }, { col: c, row: r + 1 }, { col: c, row: r - 1 });
     }
-
     return group;
   }
 
   _applyGravity() {
-    // 下落
     for (let c = 0; c < this.cols; c++) {
       let writeRow = this.rows - 1;
       for (let r = this.rows - 1; r >= 0; r--) {
@@ -1967,7 +1899,6 @@ class FruitGame extends BaseGame {
           writeRow--;
         }
       }
-      // 填充新水果
       for (let r = writeRow; r >= 0; r--) {
         this.grid[r][c] = this.fruits[Math.floor(Math.random() * this.fruits.length)];
       }
@@ -1975,53 +1906,32 @@ class FruitGame extends BaseGame {
   }
 
   onUpdate() {
-    // 消除动画
-    for (const e of this.eliminating) {
-      e.alpha -= 0.04;
-      e.scale += 0.03;
-    }
+    for (const e of this.eliminating) { e.alpha -= 0.04; e.scale += 0.03; }
     this.eliminating = this.eliminating.filter(e => e.alpha > 0);
   }
 
   onDraw() {
     const ctx = this.ctx;
     const cs = this.cellSize;
-    ctx.clearRect(0, 0, this.width, this.height);
 
-    // 网格背景
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     ctx.fillRect(this.offsetX, this.offsetY, this.cols * cs, this.rows * cs);
 
     ctx.font = `${cs * 0.7}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const fruit = this.grid[r][c];
         if (!fruit) continue;
-
-        // 检查是否正在消除
-        const isEliminating = this.eliminating.some(
-          e => Math.abs(e.x - (this.offsetX + c * cs + cs / 2)) < 2 &&
-               Math.abs(e.y - (this.offsetY + r * cs + cs / 2)) < 2
-        );
-        if (isEliminating) continue;
-
         const cx = this.offsetX + c * cs + cs / 2;
         const cy = this.offsetY + r * cs + cs / 2;
-
-        // 单元格背景
         ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath();
-        ctx.roundRect(cx - cs / 2 + 2, cy - cs / 2 + 2, cs - 4, cs - 4, 8);
-        ctx.fill();
-
+        ctx.beginPath(); ctx.roundRect(cx - cs / 2 + 2, cy - cs / 2 + 2, cs - 4, cs - 4, 8); ctx.fill();
         ctx.fillText(fruit, cx, cy);
       }
     }
 
-    // 消除动画
     for (const e of this.eliminating) {
       ctx.globalAlpha = e.alpha;
       ctx.font = `${cs * 0.7 * e.scale}px serif`;
@@ -2030,24 +1940,15 @@ class FruitGame extends BaseGame {
     }
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
-  }
+  onStop() {}
 }
+
 /**
  * 找不同游戏 - 两幅图中找出不同的那一个
- * 宝宝需要在两幅相似图中找到颜色/形状不同的那个
  */
 class SpotDiffGame extends BaseGame {
   constructor() {
-    super({
-      id: 'spotdiff',
-      name: '找不同',
-      icon: '🔍',
-      description: '找出哪个图案不一样',
-      duration: 60,
-    });
+    super({ id: 'spotdiff', name: '找不同', icon: '🔍', description: '找出哪个图案不一样', duration: 60 });
   }
 
   onStart() {
@@ -2057,95 +1958,83 @@ class SpotDiffGame extends BaseGame {
     this.diffCol = 0;
     this.diffRow = 0;
     this.found = false;
-    this.generateLevel();
+    this._generateLevel();
   }
 
-  generateLevel() {
+  _generateLevel() {
     this.cols = Math.min(3 + Math.floor(this.level / 3), 5);
     this.rows = 2 + Math.floor(this.level / 5);
     this.diffCol = Math.floor(Math.random() * this.cols);
     this.diffRow = Math.floor(Math.random() * this.rows);
     this.found = false;
 
-    // 基础形状和颜色
     const shapes = ['circle', 'square', 'triangle', 'star', 'heart'];
     const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9F43', '#A29BFE', '#FD79A8'];
     this.baseShape = shapes[Math.floor(Math.random() * shapes.length)];
     this.baseColor = colors[Math.floor(Math.random() * colors.length)];
 
-    // 不同项（颜色变化或形状变化）
     const diffColors = colors.filter(c => c !== this.baseColor);
     const diffShapes = shapes.filter(s => s !== this.baseShape);
-
     this.diffColor = diffColors[Math.floor(Math.random() * diffColors.length)];
     this.diffShape = Math.random() < 0.5 ? this.baseShape : diffShapes[Math.floor(Math.random() * diffShapes.length)];
 
-    // 调整难度
     if (this.level < 3) {
-      // 前几关颜色差异更大
       this.diffColor = this.baseColor === '#FF6B6B' ? '#4ECDC4' : '#FF6B6B';
     }
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning || this.found) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
-
+    this.bindTouch('touchstart', (e) => {
+      if (this.found) return;
+      const pos = this.getTouchPos(e);
       const marginX = (this.width - this.cols * 100) / 2;
-      const marginY = (this.height - this.rows * 120) / 2 + 80;
-
-      const col = Math.floor((tx - marginX) / 100);
-      const row = Math.floor((ty - marginY) / 120);
-
+      const marginY = 100;
+      const col = Math.floor((pos.x - marginX) / 100);
+      const row = Math.floor((pos.y - marginY) / 110);
       if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return;
-
       if (col === this.diffCol && row === this.diffRow) {
         this.found = true;
         this.addScore(this.level * 5);
         this.level++;
-        setTimeout(() => this.generateLevel(), 800);
+        setTimeout(() => this._generateLevel(), 800);
       }
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+    });
+    this.bindInput('mousedown', (e) => {
+      if (this.found) return;
+      const pos = this.getTouchPos(e);
+      const marginX = (this.width - this.cols * 100) / 2;
+      const marginY = 100;
+      const col = Math.floor((pos.x - marginX) / 100);
+      const row = Math.floor((pos.y - marginY) / 110);
+      if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return;
+      if (col === this.diffCol && row === this.diffRow) {
+        this.found = true;
+        this.addScore(this.level * 5);
+        this.level++;
+        setTimeout(() => this._generateLevel(), 800);
+      }
+    });
   }
 
   _drawShape(ctx, x, y, shape, color, size = 35) {
     ctx.fillStyle = color;
     ctx.beginPath();
     switch (shape) {
-      case 'circle':
-        ctx.arc(x, y, size * 0.6, 0, Math.PI * 2);
-        break;
-      case 'square':
-        ctx.roundRect(x - size * 0.5, y - size * 0.5, size, size, 6);
-        break;
+      case 'circle': ctx.arc(x, y, size * 0.6, 0, Math.PI * 2); break;
+      case 'square': ctx.roundRect(x - size * 0.5, y - size * 0.5, size, size, 6); break;
       case 'triangle':
         ctx.moveTo(x, y - size * 0.6);
         ctx.lineTo(x - size * 0.6, y + size * 0.5);
         ctx.lineTo(x + size * 0.6, y + size * 0.5);
-        ctx.closePath();
-        break;
+        ctx.closePath(); break;
       case 'star':
         for (let i = 0; i < 5; i++) {
-          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-          const px = x + Math.cos(angle) * size * 0.6;
-          const py = y + Math.sin(angle) * size * 0.6;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-          const innerAngle = angle + (2 * Math.PI) / 5;
-          ctx.lineTo(
-            x + Math.cos(innerAngle) * size * 0.25,
-            y + Math.sin(innerAngle) * size * 0.25
-          );
+          const a = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const px = x + Math.cos(a) * size * 0.6;
+          const py = y + Math.sin(a) * size * 0.6;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          const ia = a + (2 * Math.PI) / 5;
+          ctx.lineTo(x + Math.cos(ia) * size * 0.25, y + Math.sin(ia) * size * 0.25);
         }
-        ctx.closePath();
-        break;
+        ctx.closePath(); break;
       case 'heart':
         ctx.moveTo(x, y + size * 0.3);
         ctx.bezierCurveTo(x - size * 0.5, y - size * 0.3, x - size * 0.25, y - size * 0.6, x, y - size * 0.2);
@@ -2153,83 +2042,48 @@ class SpotDiffGame extends BaseGame {
         break;
     }
     ctx.fill();
-
-    // 光泽
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.beginPath();
-    ctx.arc(x - size * 0.15, y - size * 0.2, size * 0.2, 0, Math.PI * 2);
-    ctx.fill();
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
-
-    // 标题
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('找出不一样的那个！', this.width / 2, 40);
+    ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('找出不一样的那个！', this.width / 2, 35);
+    ctx.font = '14px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(`第 ${this.level} 关`, this.width / 2, 60);
 
-    ctx.font = '14px sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText(`第 ${this.level} 关`, this.width / 2, 65);
-
-    // 网格
     const marginX = (this.width - this.cols * 100) / 2;
-    const marginY = (this.height - this.rows * 120) / 2 + 80;
+    const marginY = 100;
 
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const cx = marginX + c * 100 + 50;
-        const cy = marginY + r * 120 + 55;
+        const cy = marginY + r * 110 + 55;
+        ctx.fillStyle = (this.found && c === this.diffCol && r === this.diffRow)
+          ? 'rgba(78,205,196,0.3)' : 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.roundRect(cx - 42, cy - 48, 84, 96, 12); ctx.fill();
 
-        // 卡片背景
-        ctx.fillStyle = this.found && c === this.diffCol && r === this.diffRow
-          ? 'rgba(78, 205, 196, 0.3)'
-          : 'rgba(255,255,255,0.08)';
-        ctx.beginPath();
-        ctx.roundRect(cx - 42, cy - 48, 84, 96, 12);
-        ctx.fill();
-
-        // 画图形
         const isDiff = c === this.diffCol && r === this.diffRow;
-        const color = isDiff ? this.diffColor : this.baseColor;
-        const shape = isDiff ? this.diffShape : this.baseShape;
-        this._drawShape(ctx, cx, cy, shape, color);
+        this._drawShape(ctx, cx, cy, isDiff ? this.diffShape : this.baseShape, isDiff ? this.diffColor : this.baseColor);
 
-        // 找到提示
         if (this.found && isDiff) {
-          ctx.strokeStyle = '#4ECDC4';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.roundRect(cx - 42, cy - 48, 84, 96, 12);
-          ctx.stroke();
-
+          ctx.strokeStyle = '#4ECDC4'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.roundRect(cx - 42, cy - 48, 84, 96, 12); ctx.stroke();
           ctx.fillText('✅', cx, cy + 55);
         }
       }
     }
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
-  }
+  onStop() {}
 }
+
 /**
  * 找到规定的东西 - 在一堆物品中找到要求的目标
- * 训练视觉搜索和辨别能力
  */
 class FindItGame extends BaseGame {
   constructor() {
-    super({
-      id: 'findit',
-      name: '找到物品',
-      icon: '🔎',
-      description: '找到要求的那个物品',
-      duration: 60,
-    });
+    super({ id: 'findit', name: '找到物品', icon: '🔎', description: '找到要求的那个物品', duration: 60 });
   }
 
   onStart() {
@@ -2239,37 +2093,31 @@ class FindItGame extends BaseGame {
     this.level = 1;
     this._generatePuzzle();
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this._handleTap(pos.x, pos.y);
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      this._handleTap(pos.x, pos.y);
+    });
+  }
 
-      for (let i = this.items.length - 1; i >= 0; i--) {
-        const item = this.items[i];
-        if (item.emoji !== this.targetEmoji) continue;
-        const dist = Math.hypot(tx - item.x, ty - item.y);
-        if (dist < 28) {
-          this.items.splice(i, 1);
-          this.addScore(1);
-          this.foundCount++;
-          if (this.foundCount >= this.level + 2) {
-            this.level++;
-            setTimeout(() => this._generatePuzzle(), 500);
-          }
-          return;
+  _handleTap(tx, ty) {
+    for (let i = this.items.length - 1; i >= 0; i--) {
+      const item = this.items[i];
+      if (item.emoji !== this.targetEmoji) continue;
+      if (Math.hypot(tx - item.x, ty - item.y) < 32) {
+        this.items.splice(i, 1);
+        this.addScore(1);
+        this.foundCount++;
+        if (this.foundCount >= this.level + 2) {
+          this.level++;
+          setTimeout(() => this._generatePuzzle(), 500);
         }
+        return;
       }
-
-      // 点击了错误物品
-      // 对于3岁宝宝，不做惩罚，只是没有反应
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+    }
   }
 
   _generatePuzzle() {
@@ -2278,70 +2126,44 @@ class FindItGame extends BaseGame {
       '⭐', '❤️', '🌸', '🌈', '☀️', '🌙', '⚽', '🎈'];
     const itemCount = 12 + this.level * 2;
 
-    // 选择目标和干扰项
     this.targetEmoji = allEmojis[Math.floor(Math.random() * allEmojis.length)];
     const targetCount = this.level + 2;
     this.foundCount = 0;
     this.items = [];
 
-    // 生成位置（避免重叠）
     const usedPositions = [];
     const margin = 40;
 
     const addItem = (emoji) => {
-      let attempts = 0;
-      let x, y;
+      let x, y, attempts = 0;
       do {
         x = margin + Math.random() * (this.width - 2 * margin);
-        y = 100 + Math.random() * (this.height - 140);
+        y = 110 + Math.random() * (this.height - 150);
         attempts++;
-      } while (attempts < 50 && usedPositions.some(
-        p => Math.hypot(p.x - x, p.y - y) < 45
-      ));
+      } while (attempts < 50 && usedPositions.some(p => Math.hypot(p.x - x, p.y - y) < 50));
       usedPositions.push({ x, y });
       this.items.push({ emoji, x, y, size: 26 + Math.random() * 8 });
     };
 
-    // 放置目标
-    for (let i = 0; i < targetCount; i++) {
-      addItem(this.targetEmoji);
-    }
-
-    // 放置干扰项
+    for (let i = 0; i < targetCount; i++) addItem(this.targetEmoji);
     const distractors = allEmojis.filter(e => e !== this.targetEmoji);
     for (let i = 0; i < itemCount - targetCount; i++) {
       addItem(distractors[Math.floor(Math.random() * distractors.length)]);
     }
-
-    // 随机打乱
     this.items.sort(() => Math.random() - 0.5);
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
-
     // 目标提示
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.beginPath();
-    ctx.roundRect(this.width / 2 - 120, 10, 240, 60, 20);
-    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.beginPath(); ctx.roundRect(this.width / 2 - 130, 10, 260, 70, 20); ctx.fill();
+    ctx.fillStyle = '#FFE66D'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('请找到所有的', this.width / 2, 40);
+    ctx.font = '38px serif'; ctx.fillText(this.targetEmoji, this.width / 2, 72);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '14px sans-serif';
+    ctx.fillText(`剩余: ${this.level + 2 - this.foundCount} | 第${this.level}关`, this.width / 2, 95);
 
-    ctx.fillStyle = '#FFE66D';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('请找到所有的', this.width / 2, 38);
-
-    ctx.font = '36px serif';
-    ctx.fillText(this.targetEmoji, this.width / 2, 68);
-
-    // 进度
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(`剩余: ${this.level + 2 - this.foundCount} | 第${this.level}关`, this.width / 2, 90);
-
-    // 物品
-    ctx.font = '30px serif';
     ctx.textBaseline = 'middle';
     for (const item of this.items) {
       ctx.font = `${item.size}px serif`;
@@ -2349,99 +2171,47 @@ class FindItGame extends BaseGame {
     }
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
-  }
+  onStop() {}
 }
+
 /**
  * E字游戏 - 视力E字表训练
  * 显示不同方向和大小的E，宝宝指出E的开口方向
- * 经典弱视训练方法
  */
 class EChartGame extends BaseGame {
   constructor() {
-    super({
-      id: 'echart',
-      name: 'E字游戏',
-      icon: '👁️',
-      description: '指出E的开口方向',
-      duration: 60,
-    });
+    super({ id: 'echart', name: 'E字游戏', icon: '👁️', description: '指出E的开口方向', duration: 60 });
   }
 
   onStart() {
-    this.currentE = null; // { size, rotation, x, y }
+    this.currentE = null;
     this.level = 1;
     this.correctCount = 0;
-    this.totalCount = 0;
     this.showFeedback = false;
-    this.feedbackTimer = 0;
     this.feedbackCorrect = false;
     this._generateE();
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning || this.showFeedback) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
-
-      // E方向：0=右, PI/2=下, PI=左, 3PI/2=上
-      const angles = {
-        right: 0,
-        down: Math.PI / 2,
-        left: Math.PI,
-        up: -Math.PI / 2,
-      };
-
-      // 判断点击在哪个方向区域
-      const cx = this.currentE.x;
-      const cy = this.currentE.y;
-      const angle = Math.atan2(ty - cy, tx - cx);
-      const dir = this._angleToDir(angle);
-      const correctDir = this._rotationToDir(this.currentE.rotation);
-
-      this.totalCount++;
-      if (dir === correctDir) {
-        this.correctCount++;
-        this.showFeedback = true;
-        this.feedbackCorrect = true;
-        this.feedbackTimer = 30;
-        this.addScore(this.level * 2);
-        this.level = Math.min(8, Math.floor(this.correctCount / 3) + 1);
-      } else {
-        this.showFeedback = true;
-        this.feedbackCorrect = false;
-        this.feedbackTimer = 20;
-        if (this.level > 1 && this.correctCount % 3 === 0) {
-          this.level = Math.max(1, this.level - 1);
-        }
-      }
-      setTimeout(() => {
-        this.showFeedback = false;
-        this._generateE();
-      }, 600);
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+    this.bindTouch('touchstart', (e) => {
+      if (this.showFeedback) return;
+      const pos = this.getTouchPos(e);
+      this._checkAnswer(pos.x, pos.y);
+    });
+    this.bindInput('mousedown', (e) => {
+      if (this.showFeedback) return;
+      const pos = this.getTouchPos(e);
+      this._checkAnswer(pos.x, pos.y);
+    });
   }
 
   _generateE() {
     const minSize = Math.max(30, 100 - this.level * 8);
     const maxSize = Math.max(50, 150 - this.level * 10);
     const size = minSize + Math.random() * (maxSize - minSize);
-
     const rotations = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
     const rotation = rotations[Math.floor(Math.random() * 4)];
-
     const margin = size;
     this.currentE = {
-      size,
-      rotation,
+      size, rotation,
       x: margin + Math.random() * (this.width - 2 * margin),
       y: 120 + Math.random() * (this.height - 140 - margin),
     };
@@ -2461,178 +2231,124 @@ class EChartGame extends BaseGame {
     return 'left';
   }
 
+  _checkAnswer(tx, ty) {
+    const cx = this.currentE.x;
+    const cy = this.currentE.y;
+    const angle = Math.atan2(ty - cy, tx - cx);
+    const dir = this._angleToDir(angle);
+    const correctDir = this._rotationToDir(this.currentE.rotation);
+
+    if (dir === correctDir) {
+      this.correctCount++;
+      this.showFeedback = true;
+      this.feedbackCorrect = true;
+      this.addScore(this.level * 2);
+      this.level = Math.min(8, Math.floor(this.correctCount / 3) + 1);
+    } else {
+      this.showFeedback = true;
+      this.feedbackCorrect = false;
+      if (this.level > 1 && this.correctCount % 3 === 0) this.level = Math.max(1, this.level - 1);
+    }
+    setTimeout(() => { this.showFeedback = false; this._generateE(); }, 600);
+  }
+
   _drawE(ctx, x, y, size, rotation) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
-
-    const strokeW = size / 5;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = strokeW;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // E 的竖线
-    ctx.beginPath();
-    ctx.moveTo(-size / 2, -size / 2);
-    ctx.lineTo(-size / 2, size / 2);
-    ctx.stroke();
-
-    // 三条横线
-    ctx.beginPath();
-    ctx.moveTo(-size / 2, -size / 2);
-    ctx.lineTo(size / 2, -size / 2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(-size / 2, 0);
-    ctx.lineTo(size / 2 * 0.6, 0);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(-size / 2, size / 2);
-    ctx.lineTo(size / 2, size / 2);
-    ctx.stroke();
-
+    const sw = size / 5;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = sw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(-size / 2, -size / 2); ctx.lineTo(-size / 2, size / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-size / 2, -size / 2); ctx.lineTo(size / 2, -size / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-size / 2, 0); ctx.lineTo(size / 2 * 0.6, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-size / 2, size / 2); ctx.lineTo(size / 2, size / 2); ctx.stroke();
     ctx.restore();
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('E的开口朝哪个方向？', this.width / 2, 30);
+    ctx.fillText('点击E字的开口方向', this.width / 2, 52);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '14px sans-serif';
+    ctx.fillText(`难度: ${this.level}/8 | 正确: ${this.correctCount}`, this.width / 2, 72);
 
-    // 提示
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('E的开口朝哪个方向？', this.width / 2, 35);
-    ctx.fillText('点击对应的方向', this.width / 2, 58);
-
-    // 关卡
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(`难度: ${this.level}/8 | 正确: ${this.correctCount}`, this.width / 2, 80);
-
-    // 答案区域指示
-    if (!this.showFeedback) {
-      const cx = this.currentE.x;
-      const cy = this.currentE.y;
-
-      // 四个方向指示
+    if (!this.showFeedback && this.currentE) {
+      const cx = this.currentE.x, cy = this.currentE.y;
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
       const indicators = [
-        { x: cx + 120, y: cy, label: '右→', dir: 'right' },
-        { x: cx, y: cy + 120, label: '↓下', dir: 'down' },
-        { x: cx - 120, y: cy, label: '←左', dir: 'left' },
-        { x: cx, y: cy - 120, label: '↑上', dir: 'up' },
+        { x: cx + 100, y: cy, t: '右→' },
+        { x: cx, y: cy + 100, t: '↓下' },
+        { x: cx - 100, y: cy, t: '←左' },
+        { x: cx, y: cy - 100, t: '↑上' },
       ];
-
-      // 高亮正确答案方向（给提示）- 仅对低难度
-      if (this.level <= 2) {
-        const correctDir = this._rotationToDir(this.currentE.rotation);
-        const ind = indicators.find(i => i.dir === correctDir);
-        if (ind) {
-          ctx.fillStyle = 'rgba(78, 205, 196, 0.5)';
-          ctx.beginPath();
-          ctx.arc(ind.x, ind.y, 25, 0, Math.PI * 2);
-          ctx.fill();
-        }
+      for (const ind of indicators) {
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.beginPath(); ctx.arc(ind.x, ind.y, 28, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(ind.t, ind.x, ind.y + 4);
       }
     }
 
-    // E字
     if (this.currentE) {
       if (this.showFeedback) {
-        ctx.fillStyle = this.feedbackCorrect
-          ? 'rgba(78, 205, 196, 0.2)'
-          : 'rgba(255, 107, 107, 0.2)';
-        ctx.beginPath();
-        ctx.arc(this.currentE.x, this.currentE.y, this.currentE.size * 0.8, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = this.feedbackCorrect ? 'rgba(78,205,196,0.2)' : 'rgba(255,107,107,0.2)';
+        ctx.beginPath(); ctx.arc(this.currentE.x, this.currentE.y, this.currentE.size * 0.8, 0, Math.PI * 2); ctx.fill();
       }
-
       this._drawE(ctx, this.currentE.x, this.currentE.y, this.currentE.size, this.currentE.rotation);
     }
 
-    // 反馈
     if (this.showFeedback) {
       ctx.fillStyle = this.feedbackCorrect ? '#4ECDC4' : '#FF6B6B';
-      ctx.font = 'bold 32px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        this.feedbackCorrect ? '✓ 对了!' : '✗ 再试试',
-        this.width / 2,
-        this.height - 30
-      );
+      ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(this.feedbackCorrect ? '✓ 对了!' : '✗ 再试试', this.width / 2, this.height - 20);
     }
   }
 
-  onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
-  }
+  onStop() {}
 }
+
 /**
  * 病毒游戏 - 点击消灭屏幕上的病毒
- * 病毒会在屏幕上出现和移动，宝宝点击消灭它们
  */
 class VirusGame extends BaseGame {
   constructor() {
-    super({
-      id: 'virus',
-      name: '消灭病毒',
-      icon: '🦠',
-      description: '点击消灭出现的病毒',
-      duration: 60,
-    });
+    super({ id: 'virus', name: '消灭病毒', icon: '🦠', description: '点击消灭出现的病毒', duration: 60 });
   }
 
   onStart() {
     this.viruses = [];
-    this.effects = []; // 消灭特效
+    this.effects = [];
     this.spawnTimer = 0;
     this.maxViruses = 5;
-    this.missedViruses = 0;
 
-    this._onTap = (e) => {
-      e.preventDefault();
-      if (!this.isRunning) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const tx = (clientX - rect.left) * (this.width / rect.width);
-      const ty = (clientY - rect.top) * (this.height / rect.height);
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this._tryHit(pos.x, pos.y);
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      this._tryHit(pos.x, pos.y);
+    });
+  }
 
-      for (let i = this.viruses.length - 1; i >= 0; i--) {
-        const v = this.viruses[i];
-        const dist = Math.hypot(tx - v.x, ty - v.y);
-        if (dist < v.radius + 10) {
-          // 消灭特效
-          for (let j = 0; j < 6; j++) {
-            const angle = (j / 6) * Math.PI * 2;
-            this.effects.push({
-              x: v.x,
-              y: v.y,
-              vx: Math.cos(angle) * 3,
-              vy: Math.sin(angle) * 3,
-              color: v.color,
-              alpha: 1,
-              size: 4 + Math.random() * 4,
-            });
-          }
-          this.viruses.splice(i, 1);
-          this.addScore(1);
-          return;
+  _tryHit(tx, ty) {
+    for (let i = this.viruses.length - 1; i >= 0; i--) {
+      const v = this.viruses[i];
+      if (Math.hypot(tx - v.x, ty - v.y) < v.radius + 15) {
+        for (let j = 0; j < 6; j++) {
+          const angle = (j / 6) * Math.PI * 2;
+          this.effects.push({ x: v.x, y: v.y, vx: Math.cos(angle) * 3, vy: Math.sin(angle) * 3, color: v.color, alpha: 1, size: 4 + Math.random() * 4 });
         }
+        this.viruses.splice(i, 1);
+        this.addScore(1);
+        return;
       }
-    };
-
-    this.canvas.addEventListener('touchstart', this._onTap, { passive: false });
-    this.canvas.addEventListener('mousedown', this._onTap);
+    }
   }
 
   onUpdate() {
     this.spawnTimer++;
-
     const spawnRate = Math.max(25, 55 - this.score * 0.5);
     if (this.spawnTimer >= spawnRate && this.viruses.length < this.maxViruses + Math.floor(this.score / 10)) {
       this.spawnTimer = 0;
@@ -2645,7 +2361,6 @@ class VirusGame extends BaseGame {
         case 2: x = Math.random() * this.width; y = -30; break;
         case 3: x = Math.random() * this.width; y = this.height + 30; break;
       }
-
       this.viruses.push({
         x, y,
         targetX: 50 + Math.random() * (this.width - 100),
@@ -2655,156 +2370,1046 @@ class VirusGame extends BaseGame {
         speed: 1 + Math.random() * 1.5,
         wobble: Math.random() * Math.PI * 2,
         wobbleSpeed: 0.02 + Math.random() * 0.03,
-        life: 300 + Math.random() * 200,
         phase: Math.random() * Math.PI * 2,
       });
     }
 
-    // 病毒移动
     for (const v of this.viruses) {
-      v.life--;
       v.wobble += v.wobbleSpeed;
-
-      // 向目标移动
-      const dx = v.targetX - v.x;
-      const dy = v.targetY - v.y;
+      const dx = v.targetX - v.x, dy = v.targetY - v.y;
       const dist = Math.hypot(dx, dy);
-      if (dist > 5) {
-        v.x += (dx / dist) * v.speed;
-        v.y += (dy / dist) * v.speed;
-      } else {
-        // 到达后换目标
-        v.targetX = 50 + Math.random() * (this.width - 100);
-        v.targetY = 100 + Math.random() * (this.height - 150);
-      }
-
-      // 摆动
-      v.displayX = v.x + Math.sin(v.wobble) * 8;
-      v.displayY = v.y + Math.cos(v.wobble * 1.3) * 5;
+      if (dist > 5) { v.x += (dx / dist) * v.speed; v.y += (dy / dist) * v.speed; }
+      else { v.targetX = 50 + Math.random() * (this.width - 100); v.targetY = 100 + Math.random() * (this.height - 150); }
     }
 
-    // 移除超时的病毒
-    this.viruses = this.viruses.filter(v => v.life > 0);
-
-    // 特效动画
-    for (const e of this.effects) {
-      e.x += e.vx;
-      e.y += e.vy;
-      e.alpha -= 0.04;
-      e.size *= 0.98;
-    }
+    for (const e of this.effects) { e.x += e.vx; e.y += e.vy; e.alpha -= 0.04; e.size *= 0.98; }
     this.effects = this.effects.filter(e => e.alpha > 0);
   }
 
   onDraw() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
+    // 网格
+    ctx.strokeStyle = 'rgba(78,205,196,0.06)'; ctx.lineWidth = 1;
+    for (let x = 0; x < this.width; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.height); ctx.stroke(); }
+    for (let y = 0; y < this.height; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.width, y); ctx.stroke(); }
 
-    // 实验室背景
-    const bg = ctx.createLinearGradient(0, 0, 0, this.height);
-    bg.addColorStop(0, '#0a0a1a');
-    bg.addColorStop(1, '#1a1a3e');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, this.width, this.height);
-
-    // 网格线
-    ctx.strokeStyle = 'rgba(78, 205, 196, 0.06)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < this.width; x += 30) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, this.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < this.height; y += 30) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
-      ctx.stroke();
-    }
-
-    // 病毒
     for (const v of this.viruses) {
-      const x = v.displayX || v.x;
-      const y = v.displayY || v.y;
-
-      // 光晕
+      const x = v.x + Math.sin(v.wobble) * 8;
+      const y = v.y + Math.cos(v.wobble * 1.3) * 5;
       const glow = ctx.createRadialGradient(x, y, v.radius * 0.3, x, y, v.radius * 1.5);
-      glow.addColorStop(0, v.color);
-      glow.addColorStop(1, 'transparent');
+      glow.addColorStop(0, v.color); glow.addColorStop(1, 'transparent');
       ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(x, y, v.radius * 1.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 主体
+      ctx.beginPath(); ctx.arc(x, y, v.radius * 1.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = v.color;
-      ctx.beginPath();
-      ctx.arc(x, y, v.radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, v.radius, 0, Math.PI * 2); ctx.fill();
 
-      // 刺突
-      const spikeCount = 8;
-      ctx.strokeStyle = v.color;
-      ctx.lineWidth = 2.5;
-      for (let i = 0; i < spikeCount; i++) {
-        const angle = (i / spikeCount) * Math.PI * 2 + v.phase;
-        const innerR = v.radius * 0.7;
-        const outerR = v.radius * 1.35;
+      ctx.strokeStyle = v.color; ctx.lineWidth = 2.5;
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + v.phase;
         ctx.beginPath();
-        ctx.moveTo(
-          x + Math.cos(angle) * innerR,
-          y + Math.sin(angle) * innerR
-        );
-        ctx.lineTo(
-          x + Math.cos(angle) * outerR,
-          y + Math.sin(angle) * outerR
-        );
+        ctx.moveTo(x + Math.cos(a) * v.radius * 0.7, y + Math.sin(a) * v.radius * 0.7);
+        ctx.lineTo(x + Math.cos(a) * v.radius * 1.35, y + Math.sin(a) * v.radius * 1.35);
         ctx.stroke();
       }
 
-      // 眼睛
       ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(x - v.radius * 0.3, y - v.radius * 0.2, v.radius * 0.28, 0, Math.PI * 2);
-      ctx.arc(x + v.radius * 0.3, y - v.radius * 0.2, v.radius * 0.28, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x - v.radius * 0.3, y - v.radius * 0.2, v.radius * 0.28, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + v.radius * 0.3, y - v.radius * 0.2, v.radius * 0.28, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#333';
-      ctx.beginPath();
-      ctx.arc(x - v.radius * 0.25, y - v.radius * 0.2, v.radius * 0.14, 0, Math.PI * 2);
-      ctx.arc(x + v.radius * 0.35, y - v.radius * 0.2, v.radius * 0.14, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 嘴巴（愤怒表情）
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y + v.radius * 0.25, v.radius * 0.2, 0, Math.PI);
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(x - v.radius * 0.25, y - v.radius * 0.2, v.radius * 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + v.radius * 0.35, y - v.radius * 0.2, v.radius * 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x, y + v.radius * 0.25, v.radius * 0.2, 0, Math.PI); ctx.stroke();
     }
 
-    // 特效粒子
     for (const e of this.effects) {
-      ctx.fillStyle = `rgba(${e.color === '#FF6B6B' ? '255,107,107' : '255,159,67'}, ${e.alpha})`;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = e.color.replace(')', `,${e.alpha})`).replace('rgb', 'rgba');
+      if (e.color.startsWith('#')) {
+        ctx.fillStyle = `rgba(255,${e.alpha})`;
+      }
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  onStop() {}
+}
+
+/**
+ * 打地鼠游戏 - 点击从洞里冒出来的小动物
+ * 训练反应速度和手眼协调
+ */
+class WhackGame extends BaseGame {
+  constructor() {
+    super({ id: 'whack', name: '打地鼠', icon: '🔨', description: '点击冒出来的小动物', duration: 60 });
+  }
+
+  onStart() {
+    this.holes = [];
+    this.moles = []; // { holeIndex, timer, emoji, state: 'up'|'down' }
+    this.hitEffects = [];
+    const cols = 3, rows = 3;
+    const marginX = (this.width - cols * 90) / 2;
+    const marginY = this.height * 0.25;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        this.holes.push({
+          x: marginX + c * 90 + 45,
+          y: marginY + r * 100 + 45,
+        });
+      }
     }
 
-    // 消灭计数
-    if (this.score > 0) {
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = '14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`已消灭: ${this.score}个`, this.width / 2, this.height - 15);
+    // 定时生成地鼠
+    this._spawnInterval = setInterval(() => {
+      if (!this.isRunning) return;
+      if (this.moles.length < 3 + Math.floor(this.score / 5)) {
+        const holeIdx = Math.floor(Math.random() * this.holes.length);
+        if (!this.moles.some(m => m.holeIndex === holeIdx)) {
+          const emojis = ['🐹', '🐰', '🐸', '🐻', '🦊', '🐼', '🐨', '🐷'];
+          this.moles.push({
+            holeIndex: holeIdx,
+            emoji: emojis[Math.floor(Math.random() * emojis.length)],
+            timer: 40 + Math.random() * 40,
+          });
+        }
+      }
+    }, 800);
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      for (let i = this.moles.length - 1; i >= 0; i--) {
+        const m = this.moles[i];
+        const h = this.holes[m.holeIndex];
+        if (Math.hypot(pos.x - h.x, pos.y - h.y) < 40) {
+          this.hitEffects.push({ x: h.x, y: h.y, alpha: 1 });
+          this.moles.splice(i, 1);
+          this.addScore(1);
+          return;
+        }
+      }
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      for (let i = this.moles.length - 1; i >= 0; i--) {
+        const m = this.moles[i];
+        const h = this.holes[m.holeIndex];
+        if (Math.hypot(pos.x - h.x, pos.y - h.y) < 40) {
+          this.hitEffects.push({ x: h.x, y: h.y, alpha: 1 });
+          this.moles.splice(i, 1);
+          this.addScore(1);
+          return;
+        }
+      }
+    });
+  }
+
+  onUpdate() {
+    for (let i = this.moles.length - 1; i >= 0; i--) {
+      this.moles[i].timer--;
+      if (this.moles[i].timer <= 0) {
+        this.moles.splice(i, 1);
+      }
     }
+    for (const e of this.hitEffects) { e.alpha -= 0.05; }
+    this.hitEffects = this.hitEffects.filter(e => e.alpha > 0);
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+    // 地面
+    ctx.fillStyle = 'rgba(139,90,43,0.4)';
+    ctx.fillRect(0, this.height * 0.2, this.width, this.height * 0.8);
+
+    // 洞
+    for (const h of this.holes) {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.ellipse(h.x, h.y + 10, 40, 15, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(60,30,10,0.6)';
+      ctx.beginPath(); ctx.arc(h.x, h.y - 5, 38, 0, Math.PI); ctx.fill();
+    }
+
+    // 地鼠
+    ctx.font = '36px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const m of this.moles) {
+      const h = this.holes[m.holeIndex];
+      const popUp = Math.min(1, (40 - Math.max(0, m.timer - 30)) / 10); // 弹起动画
+      const y = h.y - 10 - popUp * 35;
+      ctx.fillText(m.emoji, h.x, y);
+      // 身体
+      ctx.fillStyle = 'rgba(139,90,43,0.5)';
+      ctx.beginPath(); ctx.arc(h.x, h.y + 5, 30 * popUp, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 击打特效
+    for (const e of this.hitEffects) {
+      ctx.fillStyle = `rgba(255,230,100,${e.alpha})`;
+      ctx.font = `${30 + (1 - e.alpha) * 20}px serif`;
+      ctx.fillText('💥', e.x, e.y - (1 - e.alpha) * 20);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '14px sans-serif';
+    ctx.fillText(`已打到: ${this.score}个`, this.width / 2, this.height * 0.15);
   }
 
   onStop() {
-    this.canvas.removeEventListener('touchstart', this._onTap);
-    this.canvas.removeEventListener('mousedown', this._onTap);
+    if (this._spawnInterval) clearInterval(this._spawnInterval);
   }
 }
+
+/**
+ * 泡泡龙游戏 - 点击彩色泡泡消除它们
+ * 训练颜色识别和手眼协调
+ */
+class BubbleGame extends BaseGame {
+  constructor() {
+    super({ id: 'bubble', name: '泡泡龙', icon: '🫧', description: '点击泡泡消除它们', duration: 60 });
+  }
+
+  onStart() {
+    this.bubbles = [];
+    this.pops = [];
+    this.spawnTimer = 0;
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      for (let i = this.bubbles.length - 1; i >= 0; i--) {
+        const b = this.bubbles[i];
+        if (Math.hypot(pos.x - b.x, pos.y - b.y) < b.radius) {
+          for (let j = 0; j < 4; j++) {
+            const a = (j / 4) * Math.PI * 2;
+            this.pops.push({ x: b.x, y: b.y, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2, color: b.color, alpha: 1, size: b.radius * 0.4 });
+          }
+          this.bubbles.splice(i, 1);
+          this.addScore(1);
+          return;
+        }
+      }
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      for (let i = this.bubbles.length - 1; i >= 0; i--) {
+        const b = this.bubbles[i];
+        if (Math.hypot(pos.x - b.x, pos.y - b.y) < b.radius) {
+          for (let j = 0; j < 4; j++) {
+            const a = (j / 4) * Math.PI * 2;
+            this.pops.push({ x: b.x, y: b.y, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2, color: b.color, alpha: 1, size: b.radius * 0.4 });
+          }
+          this.bubbles.splice(i, 1);
+          this.addScore(1);
+          return;
+        }
+      }
+    });
+  }
+
+  onUpdate() {
+    this.spawnTimer++;
+    if (this.spawnTimer >= 30 && this.bubbles.length < 12) {
+      this.spawnTimer = 0;
+      const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A29BFE', '#FD79A8', '#FF9F43'];
+      this.bubbles.push({
+        x: 30 + Math.random() * (this.width - 60),
+        y: this.height + 30,
+        radius: 20 + Math.random() * 18,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: 0.5 + Math.random() * 1.5,
+        wobble: Math.random() * Math.PI * 2,
+      });
+    }
+
+    for (const b of this.bubbles) {
+      b.y -= b.speed;
+      b.wobble += 0.02;
+      b.x += Math.sin(b.wobble) * 0.5;
+    }
+    this.bubbles = this.bubbles.filter(b => b.y > -40);
+
+    for (const p of this.pops) { p.x += p.vx; p.y += p.vy; p.alpha -= 0.04; }
+    this.pops = this.pops.filter(p => p.alpha > 0);
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+    for (const b of this.bubbles) {
+      // 光泽高光
+      const grad = ctx.createRadialGradient(b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.1, b.x, b.y, b.radius);
+      grad.addColorStop(0, 'rgba(255,255,255,0.6)');
+      grad.addColorStop(0.4, b.color);
+      grad.addColorStop(1, 'rgba(0,0,0,0.2)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath(); ctx.arc(b.x - b.radius * 0.25, b.y - b.radius * 0.3, b.radius * 0.25, 0, Math.PI * 2); ctx.fill();
+    }
+
+    for (const p of this.pops) {
+      ctx.fillStyle = p.color.replace(')', `,${p.alpha})`).replace('rgb', 'rgba');
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  onStop() {}
+}
+
+/**
+ * 连连看游戏 - 翻开两张卡片找到匹配的一对
+ * 训练记忆力和视觉辨别
+ */
+class MemoryGame extends BaseGame {
+  constructor() {
+    super({ id: 'memory', name: '连连看', icon: '🃏', description: '翻开卡片找到一样的', duration: 60 });
+  }
+
+  onStart() {
+    this.cards = [];
+    this.flipped = [];
+    this.matched = new Set();
+    this.checking = false;
+    this.cols = 4;
+    this.rows = 3;
+
+    const emojis = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍒'];
+    const pairs = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+    const cardW = 65, cardH = 80;
+    const marginX = (this.width - this.cols * (cardW + 8)) / 2;
+    const marginY = (this.height - this.rows * (cardH + 8)) / 2 + 20;
+
+    for (let i = 0; i < this.rows * this.cols; i++) {
+      const col = i % this.cols;
+      const row = Math.floor(i / this.cols);
+      this.cards.push({
+        x: marginX + col * (cardW + 8),
+        y: marginY + row * (cardH + 8),
+        w: cardW, h: cardH,
+        emoji: pairs[i],
+        flipped: false,
+        matched: false,
+      });
+    }
+
+    this.bindTouch('touchstart', (e) => {
+      if (this.checking) return;
+      const pos = this.getTouchPos(e);
+      for (let i = 0; i < this.cards.length; i++) {
+        const c = this.cards[i];
+        if (c.matched || c.flipped) continue;
+        if (pos.x >= c.x && pos.x <= c.x + c.w && pos.y >= c.y && pos.y <= c.y + c.h) {
+          c.flipped = true;
+          this.flipped.push(i);
+          if (this.flipped.length === 2) {
+            this.checking = true;
+            const [a, b] = this.flipped;
+            if (this.cards[a].emoji === this.cards[b].emoji) {
+              this.cards[a].matched = true;
+              this.cards[b].matched = true;
+              this.addScore(2);
+              this.flipped = [];
+              this.checking = false;
+              if (this.matched.size + 2 >= this.cards.length) {
+                this.addScore(5);
+                setTimeout(() => this._resetBoard(), 600);
+              }
+            } else {
+              setTimeout(() => {
+                this.cards[a].flipped = false;
+                this.cards[b].flipped = false;
+                this.flipped = [];
+                this.checking = false;
+              }, 600);
+            }
+          }
+          return;
+        }
+      }
+    });
+    this.bindInput('mousedown', (e) => {
+      if (this.checking) return;
+      const pos = this.getTouchPos(e);
+      for (let i = 0; i < this.cards.length; i++) {
+        const c = this.cards[i];
+        if (c.matched || c.flipped) continue;
+        if (pos.x >= c.x && pos.x <= c.x + c.w && pos.y >= c.y && pos.y <= c.y + c.h) {
+          c.flipped = true;
+          this.flipped.push(i);
+          if (this.flipped.length === 2) {
+            this.checking = true;
+            const [a, b] = this.flipped;
+            if (this.cards[a].emoji === this.cards[b].emoji) {
+              this.cards[a].matched = true;
+              this.cards[b].matched = true;
+              this.addScore(2);
+              this.flipped = [];
+              this.checking = false;
+              const matchedCount = this.cards.filter(c => c.matched).length;
+              if (matchedCount >= this.cards.length) {
+                this.addScore(5);
+                setTimeout(() => this._resetBoard(), 600);
+              }
+            } else {
+              setTimeout(() => {
+                this.cards[a].flipped = false;
+                this.cards[b].flipped = false;
+                this.flipped = [];
+                this.checking = false;
+              }, 600);
+            }
+          }
+          return;
+        }
+      }
+    });
+  }
+
+  _resetBoard() {
+    const emojis = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍒', '🍑', '🥝'];
+    const numPairs = Math.min(6, 4 + Math.floor(this.score / 10));
+    const selected = emojis.slice(0, numPairs);
+    const pairs = [...selected, ...selected].sort(() => Math.random() - 0.5);
+    this.cols = numPairs > 4 ? 4 : 3;
+    this.rows = Math.ceil(pairs.length / this.cols);
+    const cardW = this.cols > 3 ? 65 : 75;
+    const cardH = 80;
+    const marginX = (this.width - this.cols * (cardW + 8)) / 2;
+    const marginY = (this.height - this.rows * (cardH + 8)) / 2 + 20;
+
+    this.cards = [];
+    for (let i = 0; i < pairs.length; i++) {
+      const col = i % this.cols;
+      const row = Math.floor(i / this.cols);
+      this.cards.push({
+        x: marginX + col * (cardW + 8), y: marginY + row * (cardH + 8),
+        w: cardW, h: cardH, emoji: pairs[i], flipped: false, matched: false,
+      });
+    }
+    this.flipped = [];
+    this.checking = false;
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('找到一样的图案配对', this.width / 2, 30);
+
+    for (const c of this.cards) {
+      if (c.matched) {
+        ctx.fillStyle = 'rgba(78,205,196,0.3)';
+        ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 10); ctx.fill();
+        ctx.font = '30px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(c.emoji, c.x + c.w / 2, c.y + c.h / 2);
+      } else if (c.flipped) {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 10); ctx.fill();
+        ctx.font = '30px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(c.emoji, c.x + c.w / 2, c.y + c.h / 2);
+      } else {
+        ctx.fillStyle = '#FF6B6B';
+        ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 10); ctx.fill();
+        ctx.fillStyle = '#FF9999';
+        ctx.font = '24px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('?', c.x + c.w / 2, c.y + c.h / 2);
+      }
+    }
+  }
+
+  onStop() {}
+}
+
+/**
+ * 投篮游戏 - 瞄准篮筐投球
+ * 训练空间判断和手眼协调
+ */
+class BasketGame extends BaseGame {
+  constructor() {
+    super({ id: 'basket', name: '投篮游戏', icon: '🏀', description: '瞄准篮筐投篮', duration: 60 });
+  }
+
+  onStart() {
+    this.hoop = { x: this.width / 2, y: this.height * 0.3, w: 70 };
+    this.hoopDir = 1;
+    this.balls = [];
+    this.power = 0;
+    this.aiming = false;
+    this.aimStart = { x: 0, y: 0 };
+    this.shooterX = this.width / 2;
+    this.shooterY = this.height - 40;
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this.aiming = true;
+      this.aimStart = { x: pos.x, y: pos.y };
+      this.power = 0;
+    });
+    this.bindTouch('touchmove', (e) => {
+      if (!this.aiming) return;
+      const pos = this.getTouchPos(e);
+      this.power = Math.min(1, Math.hypot(pos.x - this.aimStart.x, pos.y - this.aimStart.y) / 150);
+    });
+    this.bindTouch('touchend', () => {
+      if (this.aiming && this.power > 0.1) {
+        this._shoot();
+      }
+      this.aiming = false;
+      this.power = 0;
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      this.aiming = true;
+      this.aimStart = { x: pos.x, y: pos.y };
+      this.power = 0;
+    });
+    this.bindInput('mousemove', (e) => {
+      if (!this.aiming) return;
+      const pos = this.getTouchPos(e);
+      this.power = Math.min(1, Math.hypot(pos.x - this.aimStart.x, pos.y - this.aimStart.y) / 150);
+    });
+    this.bindInput('mouseup', () => {
+      if (this.aiming && this.power > 0.1) {
+        this._shoot();
+      }
+      this.aiming = false;
+      this.power = 0;
+    });
+  }
+
+  _shoot() {
+    const dx = this.hoop.x - this.shooterX;
+    const dy = this.hoop.y - this.shooterY;
+    const dist = Math.hypot(dx, dy);
+    this.balls.push({
+      x: this.shooterX, y: this.shooterY,
+      vx: (dx / dist) * 10 * this.power,
+      vy: (dy / dist) * 10 * this.power - 3,
+      scored: false,
+    });
+  }
+
+  onUpdate() {
+    // 篮筐移动
+    this.hoop.x += this.hoopDir * 1.2;
+    if (this.hoop.x > this.width - 50 || this.hoop.x < 50) this.hoopDir *= -1;
+
+    // 球的物理
+    for (const b of this.balls) {
+      b.vy += 0.3;
+      b.x += b.vx;
+      b.y += b.vy;
+
+      if (!b.scored && b.y < this.hoop.y + 20 && b.y > this.hoop.y - 20 &&
+          Math.abs(b.x - this.hoop.x) < this.hoop.w / 2) {
+        b.scored = true;
+        this.addScore(1);
+      }
+    }
+    this.balls = this.balls.filter(b => b.y < this.height + 30);
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+    // 篮筐
+    ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 4;
+    ctx.beginPath();
+    const hx = this.hoop.x;
+    ctx.moveTo(hx - this.hoop.w / 2, this.hoop.y);
+    ctx.lineTo(hx + this.hoop.w / 2, this.hoop.y);
+    ctx.moveTo(hx - this.hoop.w / 2, this.hoop.y);
+    ctx.lineTo(hx - this.hoop.w / 2 - 10, this.hoop.y + 30);
+    ctx.moveTo(hx + this.hoop.w / 2, this.hoop.y);
+    ctx.lineTo(hx + this.hoop.w / 2 + 10, this.hoop.y + 30);
+    ctx.stroke();
+    // 网
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      const sx = hx - this.hoop.w / 2 + (i * this.hoop.w) / 4;
+      ctx.beginPath();
+      ctx.moveTo(sx, this.hoop.y);
+      ctx.lineTo(sx - 5 + i * 2, this.hoop.y + 40);
+      ctx.stroke();
+    }
+
+    // 球
+    for (const b of this.balls) {
+      ctx.fillStyle = '#FF9F43';
+      ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(b.x - 6, b.y - 6); ctx.lineTo(b.x + 6, b.y + 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(b.x + 6, b.y - 6); ctx.lineTo(b.x - 6, b.y + 6); ctx.stroke();
+    }
+
+    // 投篮手
+    ctx.font = '40px serif'; ctx.textAlign = 'center';
+    ctx.fillText('🏀', this.shooterX, this.shooterY);
+
+    // 力量指示器
+    if (this.aiming) {
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillRect(this.shooterX - 50, this.shooterY - 30, 100, 15);
+      const powerColors = ['#4ECDC4', '#FFE66D', '#FF9F43', '#FF6B6B'];
+      const idx = Math.min(3, Math.floor(this.power * 4));
+      ctx.fillStyle = powerColors[idx];
+      ctx.fillRect(this.shooterX - 50, this.shooterY - 30, 100 * this.power, 15);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '13px sans-serif';
+    ctx.fillText('按住屏幕蓄力，松手投篮', this.width / 2, this.height - 15);
+  }
+
+  onStop() {}
+}
+
+/**
+ * 切水果游戏 - 滑动手指切开飞起的水果
+ * 训练追踪移动目标
+ */
+class SlashGame extends BaseGame {
+  constructor() {
+    super({ id: 'slash', name: '切水果', icon: '🔪', description: '滑动手指切开水果', duration: 60 });
+  }
+
+  onStart() {
+    this.fruits = [];
+    this.slashTrail = [];
+    this.spawnTimer = 0;
+    this.trailTimer = 0;
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      this.slashTrail = [{ x: pos.x, y: pos.y }];
+      this.trailTimer = 10;
+    });
+    this.bindTouch('touchmove', (e) => {
+      const pos = this.getTouchPos(e);
+      if (this.slashTrail.length > 0) {
+        const last = this.slashTrail[this.slashTrail.length - 1];
+        this.slashTrail.push({ x: pos.x, y: pos.y });
+        // 检测切割
+        for (let i = this.fruits.length - 1; i >= 0; i--) {
+          const f = this.fruits[i];
+          if (Math.hypot(pos.x - f.x, pos.y - f.y) < f.radius + 8 &&
+              Math.hypot(last.x - f.x, last.y - f.y) < f.radius + 8) {
+            this.addScore(1);
+            this.fruits.splice(i, 1);
+          }
+        }
+      }
+      this.trailTimer = 10;
+    });
+    this.bindTouch('touchend', () => { this.trailTimer = 0; });
+  }
+
+  onUpdate() {
+    this.spawnTimer++;
+    if (this.spawnTimer >= 40) {
+      this.spawnTimer = 0;
+      const fruits = ['🍎', '🍊', '🍋', '🍉', '🍇', '🍓', '🍑', '🥝', '🍌'];
+      this.fruits.push({
+        x: 20 + Math.random() * (this.width - 40),
+        y: this.height + 30,
+        radius: 22,
+        emoji: fruits[Math.floor(Math.random() * fruits.length)],
+        vy: -(5 + Math.random() * 6),
+        vx: (Math.random() - 0.5) * 3,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.1,
+      });
+    }
+
+    for (const f of this.fruits) {
+      f.vy += 0.25;
+      f.y += f.vy;
+      f.x += f.vx;
+      f.rotation += f.rotSpeed;
+    }
+    this.fruits = this.fruits.filter(f => f.y < this.height + 40);
+
+    if (this.trailTimer > 0) this.trailTimer--;
+    if (this.trailTimer <= 0 && this.slashTrail.length > 0) {
+      this.slashTrail.splice(0, 3);
+      if (this.slashTrail.length === 0) this.slashTrail = [];
+    }
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+    // 切割轨迹
+    if (this.slashTrail.length > 1) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(this.slashTrail[0].x, this.slashTrail[0].y);
+      for (let i = 1; i < this.slashTrail.length; i++) {
+        ctx.lineTo(this.slashTrail[i].x, this.slashTrail[i].y);
+      }
+      ctx.stroke();
+      // 发光效果
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.moveTo(this.slashTrail[0].x, this.slashTrail[0].y);
+      for (let i = 1; i < this.slashTrail.length; i++) {
+        ctx.lineTo(this.slashTrail[i].x, this.slashTrail[i].y);
+      }
+      ctx.stroke();
+    }
+
+    // 水果
+    ctx.font = '34px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const f of this.fruits) {
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.rotation);
+      ctx.fillText(f.emoji, 0, 0);
+      ctx.restore();
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '13px sans-serif';
+    ctx.fillText('滑动手指切水果', this.width / 2, this.height - 15);
+  }
+
+  onStop() {}
+}
+
+/**
+ * 拼图游戏 - 拖动碎片到正确位置
+ * 训练形状识别和空间推理（简化版适合3岁宝宝）
+ */
+class PuzzleGame extends BaseGame {
+  constructor() {
+    super({ id: 'puzzle', name: '拼图游戏', icon: '🧩', description: '把碎片拖到正确位置', duration: 60 });
+  }
+
+  onStart() {
+    this.pieces = [];
+    this.slots = [];
+    this.dragging = null;
+    this.dragOffset = { x: 0, y: 0 };
+    const cols = 2, rows = 2;
+    const pieceW = 100, pieceH = 100;
+    const marginX = (this.width - cols * (pieceW + 20)) / 2;
+    const marginY = (this.height - rows * (pieceH + 20)) / 2 + 30;
+
+    const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A29BFE'];
+    const shapes = ['circle', 'star', 'heart', 'square'];
+
+    for (let i = 0; i < rows * cols; i++) {
+      const col = i % cols, row = Math.floor(i / cols);
+      const sx = marginX + col * (pieceW + 20);
+      const sy = marginY + row * (pieceH + 20);
+      this.slots.push({ x: sx, y: sy, w: pieceW, h: pieceH, color: colors[i], shape: shapes[i], filled: false });
+
+      this.pieces.push({
+        x: 20 + Math.random() * (this.width - pieceW - 40),
+        y: this.height - 150 + Math.random() * 80,
+        w: pieceW, h: pieceH,
+        color: colors[i], shape: shapes[i],
+        slotIndex: i, placed: false,
+        homeX: 0, homeY: 0,
+      });
+    }
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      for (let i = this.pieces.length - 1; i >= 0; i--) {
+        const p = this.pieces[i];
+        if (p.placed) continue;
+        if (pos.x >= p.x && pos.x <= p.x + p.w && pos.y >= p.y && pos.y <= p.y + p.h) {
+          this.dragging = i;
+          this.dragOffset = { x: pos.x - p.x, y: pos.y - p.y };
+          return;
+        }
+      }
+    });
+    this.bindTouch('touchmove', (e) => {
+      if (this.dragging === null) return;
+      const pos = this.getTouchPos(e);
+      this.pieces[this.dragging].x = pos.x - this.dragOffset.x;
+      this.pieces[this.dragging].y = pos.y - this.dragOffset.y;
+    });
+    this.bindTouch('touchend', () => {
+      if (this.dragging !== null) {
+        const p = this.pieces[this.dragging];
+        const s = this.slots[p.slotIndex];
+        if (Math.hypot(p.x + p.w / 2 - (s.x + s.w / 2), p.y + p.h / 2 - (s.y + s.h / 2)) < 50) {
+          p.x = s.x; p.y = s.y; p.placed = true; s.filled = true;
+          this.addScore(1);
+        }
+        this.dragging = null;
+      }
+    });
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('把碎片拖到正确的位置', this.width / 2, 25);
+
+    // 槽位
+    for (const s of this.slots) {
+      ctx.strokeStyle = s.filled ? s.color : 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 3; ctx.setLineDash([8, 4]);
+      ctx.beginPath(); ctx.roundRect(s.x, s.y, s.w, s.h, 12); ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (!s.filled) {
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.beginPath(); ctx.roundRect(s.x, s.y, s.w, s.h, 12); ctx.fill();
+      }
+    }
+
+    // 碎片
+    for (const p of this.pieces) {
+      if (p.placed) continue;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 12); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath(); ctx.roundRect(p.x + 5, p.y + 5, 30, 30, 5); ctx.fill();
+
+      // 形状标记
+      ctx.fillStyle = '#fff'; ctx.font = '40px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      let shapeEmoji = '●';
+      if (p.shape === 'star') shapeEmoji = '⭐';
+      else if (p.shape === 'heart') shapeEmoji = '❤️';
+      else if (p.shape === 'square') shapeEmoji = '■';
+      ctx.fillText(shapeEmoji, p.x + p.w / 2, p.y + p.h / 2);
+    }
+  }
+
+  onStop() {}
+}
+
+/**
+ * 走迷宫游戏 - 用手指引导小动物走出迷宫
+ * 训练精细动作和路径规划
+ */
+class MazeGame extends BaseGame {
+  constructor() {
+    super({ id: 'maze', name: '走迷宫', icon: '🌀', description: '引导小动物走出迷宫', duration: 60 });
+  }
+
+  onStart() {
+    this.dot = { x: 40, y: 40, radius: 14 };
+    this.goal = { x: this.width - 40, y: this.height - 80, radius: 30 };
+    this.trail = [];
+    this.walls = [];
+    this.level = 1;
+    this.touching = false;
+    this._generateMaze();
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      if (Math.hypot(pos.x - this.dot.x, pos.y - this.dot.y) < 40) {
+        this.touching = true;
+      }
+    });
+    this.bindTouch('touchmove', (e) => {
+      if (!this.touching) return;
+      const pos = this.getTouchPos(e);
+      // 检查碰墙
+      let canMove = true;
+      for (const w of this.walls) {
+        if (pos.x > w.x - 5 && pos.x < w.x + w.w + 5 &&
+            pos.y > w.y - 5 && pos.y < w.y + w.h + 5) {
+          canMove = false;
+          break;
+        }
+      }
+      if (canMove && pos.x > 5 && pos.x < this.width - 5 && pos.y > 5 && pos.y < this.height - 5) {
+        this.dot.x = pos.x;
+        this.dot.y = pos.y;
+        this.trail.push({ x: pos.x, y: pos.y });
+        if (this.trail.length > 50) this.trail.shift();
+      }
+
+      // 到达目标
+      if (Math.hypot(this.dot.x - this.goal.x, this.dot.y - this.goal.y) < this.goal.radius) {
+        this.addScore(this.level * 5);
+        this.level++;
+        this._generateMaze();
+      }
+    });
+    this.bindTouch('touchend', () => { this.touching = false; });
+  }
+
+  _generateMaze() {
+    this.dot.x = 40; this.dot.y = 40;
+    this.goal.x = this.width - 40;
+    this.goal.y = this.height - 80;
+    this.trail = [];
+    this.walls = [];
+
+    const numWalls = 10 + this.level * 2;
+    const wallW = 20 + Math.random() * 20;
+    for (let i = 0; i < numWalls; i++) {
+      const horiz = Math.random() < 0.5;
+      this.walls.push({
+        x: 30 + Math.random() * (this.width - 150),
+        y: 30 + Math.random() * (this.height - 150),
+        w: horiz ? 80 + Math.random() * 100 : wallW,
+        h: horiz ? wallW : 80 + Math.random() * 100,
+      });
+    }
+    // 保证起点和终点不被遮挡
+    this.walls = this.walls.filter(w =>
+      !(w.x < 80 && w.y < 80) &&
+      !(w.x + w.w > this.width - 80 && w.y + w.h > this.height - 120)
+    );
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+
+    // 墙壁
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    for (const w of this.walls) {
+      ctx.beginPath(); ctx.roundRect(w.x, w.y, w.w, w.h, 8); ctx.fill();
+    }
+
+    // 轨迹
+    if (this.trail.length > 1) {
+      ctx.strokeStyle = 'rgba(78,205,196,0.4)'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y);
+      for (let i = 1; i < this.trail.length; i++) {
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+      ctx.stroke();
+    }
+
+    // 终点
+    const pulse = Math.sin(this.frameCount * 0.05) * 5;
+    ctx.fillStyle = 'rgba(78,205,196,0.3)';
+    ctx.beginPath(); ctx.arc(this.goal.x, this.goal.y, this.goal.radius + pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4ECDC4';
+    ctx.beginPath(); ctx.arc(this.goal.x, this.goal.y, this.goal.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '28px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🏠', this.goal.x, this.goal.y);
+
+    // 小动物
+    ctx.fillStyle = '#FF6B6B';
+    ctx.beginPath(); ctx.arc(this.dot.x, this.dot.y, this.dot.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(this.dot.x - 3, this.dot.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(this.dot.x + 3, this.dot.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '14px sans-serif';
+    ctx.fillText(`第${this.level}关 | 拖动小动物回家`, this.width / 2, 20);
+  }
+
+  onStop() {}
+}
+
+/**
+ * 涂色游戏 - 点击区域填充颜色
+ * 训练颜色识别和精细动作
+ */
+class ColoringGame extends BaseGame {
+  constructor() {
+    super({ id: 'coloring', name: '涂色游戏', icon: '🎨', description: '点击区域来涂色', duration: 60 });
+  }
+
+  onStart() {
+    this.colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A29BFE', '#FD79A8', '#FF9F43', '#55E6C1', '#F8B739'];
+    this.selectedColor = 0;
+    this.drawings = [];
+    this._generateDrawing();
+
+    this.bindTouch('touchstart', (e) => {
+      const pos = this.getTouchPos(e);
+      // 检查颜色选择器
+      if (pos.y > this.height - 55) {
+        const idx = Math.floor(pos.x / (this.width / this.colors.length));
+        if (idx >= 0 && idx < this.colors.length) {
+          this.selectedColor = idx;
+          return;
+        }
+      }
+      // 涂色
+      for (const d of this.drawings) {
+        if (pos.x >= d.x && pos.x <= d.x + d.w && pos.y >= d.y && pos.y <= d.y + d.h) {
+          if (d.color !== this.colors[this.selectedColor]) {
+            d.color = this.colors[this.selectedColor];
+            this.addScore(1);
+          }
+          return;
+        }
+      }
+    });
+    this.bindInput('mousedown', (e) => {
+      const pos = this.getTouchPos(e);
+      if (pos.y > this.height - 55) {
+        const idx = Math.floor(pos.x / (this.width / this.colors.length));
+        if (idx >= 0 && idx < this.colors.length) {
+          this.selectedColor = idx;
+          return;
+        }
+      }
+      for (const d of this.drawings) {
+        if (pos.x >= d.x && pos.x <= d.x + d.w && pos.y >= d.y && pos.y <= d.y + d.h) {
+          if (d.color !== this.colors[this.selectedColor]) {
+            d.color = this.colors[this.selectedColor];
+            this.addScore(1);
+          }
+          return;
+        }
+      }
+    });
+  }
+
+  _generateDrawing() {
+    this.drawings = [];
+    // 生成一个简单图案的区块（房子、树、太阳等）
+    const cx = this.width / 2;
+    const cy = this.height / 2 - 20;
+
+    // 太阳
+    this.drawings.push({ x: this.width - 80, y: 40, w: 60, h: 60, color: null });
+    // 房子主体
+    this.drawings.push({ x: cx - 60, y: cy - 20, w: 120, h: 100, color: null });
+    // 屋顶
+    this.drawings.push({ x: cx - 10, y: cy - 70, w: 90, h: 55, color: null });
+    // 门
+    this.drawings.push({ x: cx - 15, y: cy + 30, w: 30, h: 50, color: null });
+    // 窗户
+    this.drawings.push({ x: cx - 45, y: cy + 5, w: 25, h: 25, color: null });
+    this.drawings.push({ x: cx + 20, y: cy + 5, w: 25, h: 25, color: null });
+    // 树
+    this.drawings.push({ x: 30, y: cy - 20, w: 50, h: 70, color: null });
+    this.drawings.push({ x: 55, y: cy - 60, w: 60, h: 55, color: null });
+    // 地面
+    this.drawings.push({ x: 0, y: cy + 80, w: this.width, h: this.height - cy - 80, color: null });
+    // 云
+    this.drawings.push({ x: 60, y: 20, w: 70, h: 40, color: null });
+  }
+
+  onDraw() {
+    const ctx = this.ctx;
+
+    // 图画区域
+    for (const d of this.drawings) {
+      ctx.fillStyle = d.color || 'rgba(255,255,255,0.08)';
+      ctx.beginPath(); ctx.roundRect(d.x, d.y, d.w, d.h, 6); ctx.fill();
+      if (!d.color) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(d.x, d.y, d.w, d.h, 6); ctx.stroke();
+      }
+    }
+
+    // 图标提示
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('给图画涂上好看的颜色吧！', this.width / 2, this.height - 85);
+
+    // 颜色选择器
+    const pickerH = 50;
+    const pickerY = this.height - pickerH;
+    const cellW = this.width / this.colors.length;
+    for (let i = 0; i < this.colors.length; i++) {
+      ctx.fillStyle = this.colors[i];
+      ctx.fillRect(i * cellW + 2, pickerY + 2, cellW - 4, pickerH - 4);
+      if (i === this.selectedColor) {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.roundRect(i * cellW + 1, pickerY + 1, cellW - 2, pickerH - 2, 8); ctx.stroke();
+      }
+    }
+  }
+
+  onStop() {}
+}
+
 /**
  * 主应用控制器
  * 管理页面切换、游戏生命周期、统计数据
@@ -2841,6 +3446,14 @@ const App = {
       new FindItGame(),
       new EChartGame(),
       new VirusGame(),
+      new WhackGame(),
+      new BubbleGame(),
+      new MemoryGame(),
+      new BasketGame(),
+      new SlashGame(),
+      new PuzzleGame(),
+      new MazeGame(),
+      new ColoringGame(),
     ];
 
     // 缓存DOM
@@ -3103,6 +3716,7 @@ const App = {
 
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => App.init());
+
 </script>
 </body>
 </html>
