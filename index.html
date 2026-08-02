@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>弱视训练游戏 - 宝宝爱眼</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 条纹背景 -->
+  <canvas id="stripe-bg"></canvas>
+
+  <!-- 主页面：游戏选择 -->
+  <div id="home-page" class="page active">
+    <div class="home-header">
+      <h1 class="title">🌟 宝宝爱眼训练 🌟</h1>
+      <p class="subtitle">选择一个游戏开始吧！</p>
+    </div>
+    <div class="game-grid" id="game-grid">
+      <!-- 游戏卡片由 JS 动态生成 -->
+    </div>
+    <div class="home-footer">
+      <button class="btn-stats" id="btn-stats">📊 训练记录</button>
+    </div>
+  </div>
+
+  <!-- 统计页面 -->
+  <div id="stats-page" class="page">
+    <div class="page-header">
+      <button class="btn-back" id="btn-back-stats">← 返回</button>
+      <h2>训练记录</h2>
+    </div>
+    <div class="stats-content" id="stats-content">
+      <div class="stats-summary" id="stats-summary"></div>
+      <div class="stats-chart-container">
+        <canvas id="stats-chart"></canvas>
+      </div>
+      <div class="stats-list" id="stats-list"></div>
+    </div>
+  </div>
+
+  <!-- 游戏页面容器 -->
+  <div id="game-page" class="page">
+    <div class="game-header">
+      <button class="btn-back" id="btn-back-game">← 退出</button>
+      <span class="game-title" id="game-title"></span>
+      <span class="game-score" id="game-score">得分: 0</span>
+    </div>
+    <div class="game-container" id="game-container">
+      <canvas id="game-canvas"></canvas>
+    </div>
+    <div class="game-over-overlay" id="game-over-overlay">
+      <div class="game-over-card">
+        <h2 class="game-over-title">🎉 真棒！</h2>
+        <p class="game-over-score" id="game-over-score">得分: 0</p>
+        <p class="game-over-best" id="game-over-best">最高分: 0</p>
+        <div class="game-over-buttons">
+          <button class="btn-primary" id="btn-replay">🔄 再玩一次</button>
+          <button class="btn-secondary" id="btn-home">🏠 返回首页</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/background.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/games/base.js"></script>
+  <script src="js/games/bounce.js"></script>
+  <script src="js/games/snake.js"></script>
+  <script src="js/games/racing.js"></script>
+  <script src="js/games/tank.js"></script>
+  <script src="js/games/rope.js"></script>
+  <script src="js/games/fruit.js"></script>
+  <script src="js/games/spotdiff.js"></script>
+  <script src="js/games/findit.js"></script>
+  <script src="js/games/echart.js"></script>
+  <script src="js/games/virus.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
