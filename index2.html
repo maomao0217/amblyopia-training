@@ -808,11 +808,11 @@ const GAME_CONFIGS = {
     id:'contrastcolor', name:'对比色查找', icon:'🎨', color:'#EC4899', category:'core',
     desc:'找颜色不同的圆', clinical:'对比敏感度训练，弱视核心训练项',
     difficulties: {
-      1:{count:9,deltaL:18,radius:50,levels:5},
-      2:{count:16,deltaL:14,radius:40,levels:6},
-      3:{count:25,deltaL:10,radius:32,levels:7},
-      4:{count:36,deltaL:7,radius:26,levels:8},
-      5:{count:64,deltaL:5,radius:22,levels:10}
+      1:{count:9,deltaL:0,deltaH:180,radius:50,levels:5},
+      2:{count:16,deltaL:0,deltaH:120,radius:40,levels:6},
+      3:{count:25,deltaL:6,deltaH:60,radius:32,levels:7},
+      4:{count:36,deltaL:10,deltaH:0,radius:26,levels:8},
+      5:{count:64,deltaL:6,deltaH:0,radius:22,levels:10}
     }
   },
   pursuit: {
@@ -930,11 +930,11 @@ const GAME_CONFIGS = {
     id:'findcolor', name:'找颜色', icon:'🌈', color:'#A855F7', category:'optional',
     desc:'100个圆找不同色', clinical:'对比敏感度压轴训练',
     difficulties: {
-      1:{count:100,deltaL:12,deltaH:0,radius:22,levels:5},
-      2:{count:100,deltaL:9,deltaH:0,radius:20,levels:6},
-      3:{count:100,deltaL:6,deltaH:2,radius:18,levels:7},
-      4:{count:100,deltaL:4,deltaH:4,radius:16,levels:8},
-      5:{count:100,deltaL:3,deltaH:6,radius:14,levels:10}
+      1:{count:100,deltaL:0,deltaH:180,radius:22,levels:5},
+      2:{count:100,deltaL:0,deltaH:120,radius:20,levels:6},
+      3:{count:100,deltaL:4,deltaH:60,radius:18,levels:7},
+      4:{count:100,deltaL:6,deltaH:30,radius:16,levels:8},
+      5:{count:100,deltaL:8,deltaH:10,radius:14,levels:10}
     }
   },
   butterfly: {
@@ -2926,7 +2926,7 @@ const GameEngine = {
       </div>
       <!-- 顶部栏 -->
       <div class="flex items-center justify-between px-4 py-3 pt-safe">
-        <button onclick="GameEngine.exitGame();Audio.click()" class="w-10 h-10 flex items-center justify-center -ml-2 text-xl text-gray-500">✕</button>
+        <button onclick="GameEngine.exitGame();Audio.click()" class="w-12 h-12 flex items-center justify-center -ml-2 text-2xl text-gray-500 relative z-[200]" style="touch-action:auto">✕</button>
         <div class="text-center">
           <div class="font-bold text-gray-800">${config.icon} ${config.name}</div>
           <div class="text-xs text-gray-400">${'★'.repeat(diff)}${'☆'.repeat(5-diff)}</div>
@@ -2994,7 +2994,7 @@ const BgPatterns = {
 
   // 绘制颜色切换背景
   drawColorSwitch(ctx, w, h, elapsedSec) {
-    const idx = Math.floor(elapsedSec / 1.0) % this.colorSwitchColors.length;
+    const idx = Math.floor(elapsedSec / 2.0) % this.colorSwitchColors.length;
     ctx.fillStyle = this.colorSwitchColors[idx];
     ctx.fillRect(0, 0, w, h);
   },
@@ -3478,7 +3478,10 @@ class EVideoGame extends BaseGame {
 
     const cx = this.W / 2;
     const cy = this.H / 2;
-    const size = this.cfg.size;
+    // E字随进度逐渐变小
+    const progress = Math.min(1, this.totalTrials / Math.max(1, this.targetTrials));
+    const minSize = Math.max(15, this.cfg.size * 0.35);
+    const size = this.cfg.size - (this.cfg.size - minSize) * progress;
     let color = this.cfg.color;
 
     if (this.feedback === 'correct') color = '#4ADE80';
@@ -3647,7 +3650,7 @@ class DiffSpotGame extends BaseGame {
     this.currentLevel = 0;
     this.levelStartTime = 0;
     this.wrongClicks = 0;
-    this.setupBg('wavy', ['#4ADE80', '#FFFFFF'], 45, 25);
+    this.setupColorSwitchBg();
     this._genLevel();
   }
 
@@ -3722,13 +3725,23 @@ class DiffSpotGame extends BaseGame {
     for (const diff of this.diffs) {
       if (diff.found) continue;
       const elem = this.rightElements[diff.index];
-      if (elem.missing) continue;
-      const d = Utils.dist(e.x, e.y, elem.x, elem.y);
-      if (d <= elem.size) {
-        diff.found = true;
-        hit = true;
-        Audio.success();
-        break;
+      const hitDist = Utils.dist(e.x, e.y, elem.x, elem.y);
+      const hitRadius = Math.max(elem.size * 1.3, elem.size + 15);
+      if (elem.missing) {
+        // 缺失类型：点击缺失元素应该在的位置
+        if (hitDist <= hitRadius) {
+          diff.found = true;
+          hit = true;
+          Audio.success();
+          break;
+        }
+      } else {
+        if (hitDist <= hitRadius) {
+          diff.found = true;
+          hit = true;
+          Audio.success();
+          break;
+        }
       }
     }
     if (!hit) {
@@ -4513,8 +4526,21 @@ class ContrastColorGame extends BaseGame {
       const x = (col + 0.5) * cellW;
       const y = 80 + (row + 0.5) * cellH;
       const isDiff = (i === correctIdx);
-      const L = isDiff ? baseL + cfg.deltaL : baseL;
-      this.circles.push({ x, y, r, color: `hsl(${baseHue},${baseS}%,${L}%)`, isDiff });
+      let H = baseHue, S = baseS, L = baseL;
+      if (isDiff) {
+        if (cfg.deltaH >= 100) {
+          // 完全不同色系：用对比色
+          H = (baseHue + 150 + Utils.randInt(-30, 30)) % 360;
+          S = Utils.randInt(55, 75);
+        } else if (cfg.deltaH >= 30) {
+          // 明显色差
+          H = (baseHue + cfg.deltaH + Utils.randInt(-15, 15)) % 360;
+        } else {
+          // 细微色差（高难度）：只改变亮度
+          L = baseL + cfg.deltaL;
+        }
+      }
+      this.circles.push({ x, y, r, color: `hsl(${H},${S}%,${L}%)`, isDiff });
     }
     this.levelStartTime = performance.now();
     this.answered = false;
@@ -4807,6 +4833,9 @@ class WhackMoleGame extends TimedGame {
         } else {
           this.recordResult(false, 0);
           Audio.mistake();
+          Audio.alarm();
+          this.finish();
+          return;
         }
         setTimeout(() => {
           if (h.mole === m) h.mole = null;
@@ -5160,12 +5189,18 @@ class TracingGame extends BaseGame {
   onRender(ctx) {
     ctx.clearRect(0, 0, this.W, this.H);
     this.drawScrollingBg(ctx);
-    ctx.fillStyle = '#333';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeText('沿虚线描线', this.W/2, 35);
+    ctx.fillStyle = '#FFF';
     ctx.fillText('沿虚线描线', this.W/2, 35);
     ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#888';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeText(`第 ${this.currentTrial + 1} / ${this.cfg.trials} 次`, this.W/2, 55);
+    ctx.fillStyle = '#FFF';
     ctx.fillText(`第 ${this.currentTrial + 1} / ${this.cfg.trials} 次`, this.W/2, 55);
 
     // 路径背景
@@ -5372,12 +5407,18 @@ class MazeGame extends BaseGame {
   onRender(ctx) {
     ctx.clearRect(0, 0, this.W, this.H);
     this.drawScrollingBg(ctx);
-    ctx.fillStyle = '#333';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeText('迷宫', this.W/2, 35);
+    ctx.fillStyle = '#FFF';
     ctx.fillText('迷宫', this.W/2, 35);
     ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#888';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeText(`关卡 ${this.currentLevel + 1} / ${this.cfg.levels}`, this.W/2, 55);
+    ctx.fillStyle = '#FFF';
     ctx.fillText(`关卡 ${this.currentLevel + 1} / ${this.cfg.levels}`, this.W/2, 55);
     // 终点
     ctx.fillStyle = '#FF6B6B';
@@ -5487,13 +5528,17 @@ class ShrinkNumGame extends BaseGame {
     const trialIdx = this.totalTrials;
     const shrink = Math.pow(this.cfg.shrink, trialIdx);
     const size = Math.max(this.cfg.minSize, this.cfg.fontSize * shrink);
-    let color = '#000';
+    // 用描边文字确保在所有背景色上都可见
+    let color = '#FF1493';
     if (this.feedback === 'correct') color = '#4ADE80';
     if (this.feedback === 'wrong') color = '#FF6B6B';
-    ctx.fillStyle = color;
     ctx.font = `bold ${size}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = Math.max(2, size * 0.06);
+    ctx.strokeText(this.currentNum, this.W/2, this.H/2);
+    ctx.fillStyle = color;
     ctx.fillText(this.currentNum, this.W/2, this.H/2);
   }
 }
@@ -5583,12 +5628,18 @@ class FindNumGame extends BaseGame {
   onRender(ctx) {
     ctx.clearRect(0, 0, this.W, this.H);
     this.drawScrollingBg(ctx);
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = '#FFF';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
+    ctx.strokeText(`找出数字 ${this.targetNumber}`, this.W/2, 40);
     ctx.fillText(`找出数字 ${this.targetNumber}`, this.W/2, 40);
     ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#888';
+    ctx.fillStyle = '#FFF';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeText(`已找到 ${this.foundCount} / ${this.cfg.targets}`, this.W/2, 62);
     ctx.fillText(`已找到 ${this.foundCount} / ${this.cfg.targets}`, this.W/2, 62);
     this.nums.forEach(n => {
       if (n.found) {
@@ -5598,10 +5649,13 @@ class FindNumGame extends BaseGame {
         ctx.arc(n.x, n.y, this.cfg.fontSize * 0.6, 0, Math.PI*2);
         ctx.stroke();
       }
-      ctx.fillStyle = n.found ? '#BBB' : '#333';
       ctx.font = `bold ${this.cfg.fontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.strokeText(n.n, n.x, n.y);
+      ctx.fillStyle = n.found ? '#BBB' : '#FFF';
       ctx.fillText(n.n, n.x, n.y);
     });
   }
@@ -5749,12 +5803,22 @@ class FindColorGame extends BaseGame {
       const x = (col + 0.5) * cellW;
       const y = 80 + (row + 0.5) * cellH;
       const isDiff = (i === correctIdx);
-      let H = baseHue, L = baseL;
+      let H = baseHue, S = baseS, L = baseL;
       if (isDiff) {
-        H = (baseHue + cfg.deltaH) % 360;
-        L = baseL + cfg.deltaL;
+        if (cfg.deltaH >= 100) {
+          // 完全不同色系：用对比色，保持饱和度
+          H = (baseHue + 150 + Utils.randInt(-30, 30)) % 360;
+          S = Utils.randInt(60, 80);
+        } else if (cfg.deltaH >= 30) {
+          // 明显色差
+          H = (baseHue + cfg.deltaH + Utils.randInt(-15, 15)) % 360;
+        } else {
+          // 细微色差（高难度）
+          H = (baseHue + cfg.deltaH) % 360;
+          L = baseL + cfg.deltaL;
+        }
       }
-      this.circles.push({ x, y, r, color: `hsl(${H},${baseS}%,${L}%)`, isDiff });
+      this.circles.push({ x, y, r, color: `hsl(${H},${S}%,${L}%)`, isDiff });
     }
     this.levelStartTime = performance.now();
     this.answered = false;
@@ -5918,7 +5982,7 @@ class LaserDotGame extends BaseGame {
     this.jumpTimer = 0;
     this.spawnTime = performance.now();
     this.feedback = 0;
-    this.setupBg('hstripes', ['#333333', '#FF4444'], 35, 30);
+    this.setupBg('hstripes', ['#1B3A5C', '#90EE90'], 35, 30);
     this._jump();
   }
 
@@ -6504,7 +6568,7 @@ class SeqMemoryGame extends BaseGame {
     this.phase = 'showing'; // showing | input | feedback
     this.showIdx = 0;
     this.showTimer = 0;
-    this.setupBg('zigzag', ['#1A1A2E', '#FFB84D'], 35, 25);
+    this.setupBg('zigzag', ['#1B5E3B', '#E8F5E9'], 35, 25);
     this._initPads();
     this._genSequence();
     this._startShow();
