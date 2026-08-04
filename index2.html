@@ -3228,16 +3228,10 @@ class BaseGame {
     return { type: altType, colors: altColors, size: size * (0.8 + Math.random() * 0.4), speed: speed * (0.8 + Math.random() * 0.4) };
   }
 
-  // 设置为颜色切换背景（双背景：五色循环 + 黑白格子，10秒切换）
+  // 设置为颜色切换背景（五色循环：黑白红黄蓝，每2秒切换）
   setupColorSwitchBg() {
     this.bgType = 'colorSwitch';
-    this._bgConfigs = [
-      { type: 'colorSwitch', colors: [], size: 0, speed: 0 },
-      { type: 'checker', colors: ['#222222', '#FFFFFF'], size: 40, speed: 20 }
-    ];
-    this._bgElapsed = 0;
-    this._bgActiveIdx = 0;
-    this._bgSwitchInterval = 10 + Math.random() * 5;
+    this._bgConfigs = [];
   }
 
   // 滚动背景绘制 - 刺激弱视眼，刺激视觉运动
