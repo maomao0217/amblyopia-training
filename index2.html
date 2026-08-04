@@ -3335,6 +3335,17 @@ class BaseGame {
 
   finish() {
     if (this.finished) return;
+    const elapsed = (performance.now() - this.startTime) / 1000;
+    if (elapsed < 60) {
+      if (!this._pendingFinish) {
+        this._pendingFinish = true;
+        setTimeout(() => {
+          this._forceFinish = true;
+          this.finish();
+        }, Math.ceil((60 - elapsed) * 1000));
+      }
+      return;
+    }
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
   }
@@ -3379,7 +3390,7 @@ class EVideoGame extends BaseGame {
     this.feedback = null; // 'correct' | 'wrong' | null
     this.feedbackTime = 0;
     // E字用水平条纹背景滚动刺激视觉
-    this.setupBg('hstripes', ['#4A9EFF', '#FFD700'], 40, 35);
+    this.setupBg('hstripes', ['#FF4444', '#4488FF'], 40, 35);
     this._nextTrial();
 
     // 渲染方向按钮
@@ -3529,7 +3540,7 @@ class PursuitGame extends BaseGame {
     this.missCount = 0;
     this.flashPhase = 0;
     this.trail = cfg.trail;
-    this.setupBg('diagonal', ['#FF6B6B', '#FFFFFF'], 35, 30);
+    this.setupBg('diagonal', ['#FF4444', '#4488FF'], 35, 30);
     this._genPath();
   }
 
@@ -4260,7 +4271,7 @@ class LandoltCGame extends BaseGame {
     this.showTime = 0;
     this.feedback = null;
     // C环用图片背景滚动刺激视觉
-    this.setupBg('vstripes', ['#FF6B6B', '#FFFFFF'], 40, 35);
+    this.setupBg('vstripes', ['#FF4444', '#44CC44'], 40, 35);
     this.feedbackTime = 0;
     this._nextTrial();
 
@@ -4736,7 +4747,7 @@ class WhackMoleGame extends TimedGame {
     const cfg = GAME_CONFIGS.whackmole.difficulties[this.difficulty];
     this.cfg = cfg;
     // 颜色切换画布背景刺激视觉
-    this.setupBg('hstripes', ['#6BBE5F', '#8B6F47'], 40, 30);
+    this.setupBg('hstripes', ['#FF4444', '#44CC44'], 40, 30);
     this.durationSec = cfg.duration;
     this.elapsedSec = 0;
     this.moles = [];
@@ -4830,18 +4841,23 @@ class WhackMoleGame extends TimedGame {
         if (m.type === 'mole') {
           this.recordResult(true, 0);
           Audio.success();
+          setTimeout(() => {
+            if (h.mole === m) h.mole = null;
+            const idx = this.moles.indexOf(m);
+            if (idx >= 0) this.moles.splice(idx, 1);
+          }, 200);
         } else {
           this.recordResult(false, 0);
           Audio.mistake();
           Audio.alarm();
+          // 清理炸弹
+          setTimeout(() => {
+            if (h.mole === m) h.mole = null;
+            const idx = this.moles.indexOf(m);
+            if (idx >= 0) this.moles.splice(idx, 1);
+          }, 200);
           this.finish();
-          return;
         }
-        setTimeout(() => {
-          if (h.mole === m) h.mole = null;
-          const idx = this.moles.indexOf(m);
-          if (idx >= 0) this.moles.splice(idx, 1);
-        }, 200);
         return;
       }
     }
@@ -5672,7 +5688,7 @@ class FindLetterGame extends BaseGame {
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
     this.letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    this.setupBg('zigzag', ['#4A9EFF', '#FFFFFF'], 40, 30);
+    this.setupBg('zigzag', ['#FF4444', '#4488FF'], 40, 30);
     this._genLevel();
   }
 
@@ -5781,7 +5797,7 @@ class FindColorGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
-    this.setupBg('wavy', ['#FFFFFF', '#CCCCCC'], 50, 20);
+    this.setupBg('wavy', ['#222222', '#FFFFFF'], 50, 20);
     this._genLevel();
   }
 
@@ -6067,7 +6083,7 @@ class FruitNinjaGame extends TimedGame {
     this.lastPointer = null;
     this.lastPointer2 = null;
     this._bindMove();
-    this.setupBg('diagonal', ['#2D1B4E', '#FF6B6B'], 45, 25);
+    this.setupBg('diagonal', ['#FF4444', '#4488FF'], 45, 25);
     this.fruitEmojis = ['🍎','🍌','🍇','🍓','🍑','🍉','🍊','🥝','🍍'];
   }
 
@@ -6224,7 +6240,7 @@ class CatchCoinGame extends TimedGame {
     this.basketX = this.W / 2;
     this.basketY = this.H - 60;
     this._bindMove();
-    this.setupBg('checker', ['#BBDEFB', '#E3F2FD'], 50, 20);
+    this.setupBg('checker', ['#FF4444', '#4488FF'], 50, 20);
   }
 
   _bindMove() {
@@ -6344,7 +6360,7 @@ class StarHoldGame extends BaseGame {
     this.holdTime = 0;
     this.trialStartTime = performance.now();
     this.lastClickTime = 0;
-    this.setupBg('diagonal', ['#1E1B4B', '#6366F1'], 40, 25);
+    this.setupBg('diagonal', ['#FF4444', '#44CC44'], 40, 25);
     this._genTrial();
   }
 
@@ -6464,7 +6480,7 @@ class FadeOutGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.trials;
     this.currentTrial = 0;
-    this.setupBg('wavy', ['#1A1A2E', '#4ADE80'], 40, 20);
+    this.setupBg('wavy', ['#222222', '#FFFFFF'], 40, 20);
     this._genTrial();
   }
 
@@ -6714,7 +6730,7 @@ class ConnectLineGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
-    this.setupBg('dots', ['#F0FDF4', '#BBF7D0'], 40, 15, 'hstripes', ['#FEFCE8', '#FEF08A'], 45, 12);
+    this.setupBg('dots', ['#F0FDF4', '#BBF7D0'], 40, 15, 'hstripes', ['#FF4444', '#44CC44'], 45, 12);
     this._genLevel();
   }
 
@@ -7162,7 +7178,7 @@ class WhichFasterGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.trials;
     this.currentTrial = 0;
-    this.setupBg('checker', ['#E8F4FD', '#BBDEFB'], 60, 20);
+    this.setupBg('checker', ['#FF4444', '#4488FF'], 60, 20);
     this._genTrial();
   }
 
@@ -7321,7 +7337,7 @@ class LinkMatchGame extends BaseGame {
     this.currentLevel = 0;
     this.selected = null;
     this.emojis = ['🍎','🍌','🍇','🍓','🍑','🍉','🍊','🐱','🐶','🐰','🦊','🐻','🐼','⭐','🌈','🚗','⚽','🌸','🎈','🍕'];
-    this.setupBg('checker', ['#EDE9FE', '#C4B5FD'], 45, 20, 'circles', ['#FEF3C7', '#FDE68A'], 40, 15);
+    this.setupBg('checker', ['#FF4444', '#4488FF'], 45, 20, 'circles', ['#FEF3C7', '#FDE68A'], 40, 15);
     this._genLevel();
   }
   _genLevel() {
@@ -7428,7 +7444,7 @@ class RopingGame extends BaseGame {
     this.currentTrial = 0;
     this.cows = [];
     this.lasso = null;
-    this.setupBg('hstripes', ['#FEF3C7', '#FDE68A'], 45, 25, 'dots', ['#ECFDF5', '#A7F3D0'], 40, 20);
+    this.setupBg('hstripes', ['#FF4444', '#44CC44'], 45, 25, 'dots', ['#ECFDF5', '#A7F3D0'], 40, 20);
     this._spawnCows();
   }
   _spawnCows() {
@@ -7523,7 +7539,7 @@ class RacingGame extends TimedGame {
     this.obstacles = [];
     this.spawnTimer = 0;
     this.keys = {};
-    this.setupBg('vstripes', ['#1F2937', '#374151'], 50, 60, 'checker', ['#1F2937', '#111827'], 55, 70);
+    this.setupBg('vstripes', ['#222222', '#FFFFFF'], 50, 60, 'checker', ['#222222', '#FFFFFF'], 55, 70);
     // 渲染方向按钮
     const controls = document.getElementById('game-controls');
     if (controls) {
@@ -7643,7 +7659,7 @@ class TankShooterGame extends BaseGame {
     this.tankX = this.W / 2; this.tankW = 40; this.tankH = 50;
     this.enemies = []; this.bullets = []; this.particles = [];
     this.keys = {}; this.shootCooldown = 0;
-    this.setupBg('diagonal', ['#1A2F1A', '#2D5A2D'], 50, 20, 'circles', ['#1A2F1A', '#4ADE80'], 45, 12);
+    this.setupBg('diagonal', ['#FF4444', '#44CC44'], 50, 20, 'circles', ['#1A2F1A', '#4ADE80'], 45, 12);
     // 渲染方向+射击按钮
     const controls = document.getElementById('game-controls');
     if (controls) {
@@ -7981,7 +7997,7 @@ class FishingGame extends BaseGame {
     this.caughtInRound = 0;
     this.targetsNeeded = 0;
     this.fishEmojis = ['🐟','🐠','🐡','🦈','🐋','🐬','🦀','🦞','🐙','🦑','🐢','🐸'];
-    this.setupBg('wavy', ['#E0F2FE', '#7DD3FC'], 40, 15, 'hstripes', ['#CCFBF1', '#5EEAD4'], 45, 18);
+    this.setupBg('wavy', ['#FF4444', '#4488FF'], 40, 15, 'hstripes', ['#FF4444', '#44CC44'], 45, 18);
     this._newRound();
   }
   _newRound() {
@@ -8101,7 +8117,7 @@ class ColorSortGame extends BaseGame {
     this.spawnTimer = 0;
     this._elapsedSec = 0;
     this.dragItem = null;
-    this.setupBg('checker', ['#FDF2F8', '#FBCFE8'], 40, 25, 'dots', ['#F0F9FF', '#BAE6FD'], 35, 20);
+    this.setupBg('checker', ['#FF4444', '#4488FF'], 40, 25, 'dots', ['#F0F9FF', '#BAE6FD'], 35, 20);
     this._bindDrag();
   }
   _bindDrag() {
