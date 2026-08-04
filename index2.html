@@ -3228,10 +3228,16 @@ class BaseGame {
     return { type: altType, colors: altColors, size: size * (0.8 + Math.random() * 0.4), speed: speed * (0.8 + Math.random() * 0.4) };
   }
 
-  // 设置为颜色切换背景
+  // 设置为颜色切换背景（双背景：五色循环 + 黑白格子，10秒切换）
   setupColorSwitchBg() {
     this.bgType = 'colorSwitch';
-    this._bgConfigs = [];
+    this._bgConfigs = [
+      { type: 'colorSwitch', colors: [], size: 0, speed: 0 },
+      { type: 'checker', colors: ['#222222', '#FFFFFF'], size: 40, speed: 20 }
+    ];
+    this._bgElapsed = 0;
+    this._bgActiveIdx = 0;
+    this._bgSwitchInterval = 10 + Math.random() * 5;
   }
 
   // 滚动背景绘制 - 刺激弱视眼，刺激视觉运动
@@ -3540,7 +3546,7 @@ class PursuitGame extends BaseGame {
     this.missCount = 0;
     this.flashPhase = 0;
     this.trail = cfg.trail;
-    this.setupBg('hstripes', ['#222222', '#FFFFFF'], 40, 25, 'diagonal', ['#FF4444', '#4488FF'], 35, 22);
+    this.setupColorSwitchBg();
     this._genPath();
   }
 
@@ -3661,7 +3667,7 @@ class DiffSpotGame extends BaseGame {
     this.currentLevel = 0;
     this.levelStartTime = 0;
     this.wrongClicks = 0;
-    this.setupBg('checker', ['#222222', '#FFFFFF'], 40, 20, 'diagonal', ['#FF4444', '#44CC44'], 45, 18);
+    this.setupColorSwitchBg();
     this._genLevel();
   }
 
@@ -3862,7 +3868,7 @@ class PuzzleGame extends BaseGame {
     const cfg = GAME_CONFIGS.puzzle.difficulties[this.difficulty];
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
-    this.setupBg('hstripes', ['#FF4444', '#4488FF'], 40, 25, 'vstripes', ['#FF4444', '#44CC44'], 35, 22);
+    this.setupColorSwitchBg();
     this.currentLevel = 0;
     this.attempts = 0;
     this.correctPlacements = 0;
@@ -4637,7 +4643,6 @@ class BalloonGame extends TimedGame {
     this.elapsedSec += dt;
     if (this.elapsedSec >= this.durationSec) {
       this.finish();
-      return;
     }
     // 维持气球数
     while (this.balloons.length < this.cfg.maxBalloons) this._spawnBalloon();
@@ -4798,7 +4803,7 @@ class WhackMoleGame extends TimedGame {
   onUpdate(dt) {
     if (this.finished) return;
     this.elapsedSec += dt;
-    if (this.elapsedSec >= this.durationSec) { this.finish(); return; }
+    if (this.elapsedSec >= this.durationSec) { this.finish(); }
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.cfg.spawnInterval) {
       this.spawnTimer = 0;
@@ -5078,7 +5083,7 @@ class TracingGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.trials;
     this.currentTrial = 0;
-    this.setupBg('wavy', ['#222222', '#FFFFFF'], 40, 20, 'zigzag', ['#FF4444', '#4488FF'], 35, 18);
+    this.setupColorSwitchBg();
     this._genPath();
     this.userPath = [];
     this.isDrawing = false;
@@ -5274,7 +5279,7 @@ class MazeGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
-    this.setupBg('checker', ['#FF4444', '#44CC44'], 40, 20, 'diagonal', ['#222222', '#FFFFFF'], 45, 18);
+    this.setupColorSwitchBg();
     this._genLevel();
   }
 
@@ -5474,7 +5479,7 @@ class ShrinkNumGame extends BaseGame {
     const cfg = GAME_CONFIGS.shrinknum.difficulties[this.difficulty];
     this.cfg = cfg;
     this.targetTrials = cfg.trials;
-    this.setupBg('diagonal', ['#FF4444', '#4488FF'], 40, 25, 'hstripes', ['#222222', '#FFFFFF'], 35, 22);
+    this.setupColorSwitchBg();
     this.currentNum = null;
     this.showTime = 0;
     this.feedback = null;
@@ -5567,7 +5572,7 @@ class FindNumGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
-    this.setupBg('vstripes', ['#FF4444', '#4488FF'], 40, 20, 'checker', ['#FF4444', '#44CC44'], 45, 18);
+    this.setupColorSwitchBg();
     this._genLevel();
   }
 
@@ -5895,7 +5900,7 @@ class ButterflyGame extends BaseGame {
     this.x = this.W / 2;
     this.y = this.H / 2;
     this.t = 0;
-    this.setupBg('wavy', ['#FF4444', '#44CC44'], 40, 20, 'zigzag', ['#FF4444', '#4488FF'], 35, 18);
+    this.setupColorSwitchBg();
     this.trailSeed = Math.random() * 1000;
     this.trialStartTime = performance.now();
     this.feedback = 0;
@@ -6116,7 +6121,7 @@ class FruitNinjaGame extends TimedGame {
   onUpdate(dt) {
     if (this.finished) return;
     this.elapsedSec += dt;
-    if (this.elapsedSec >= this.durationSec) { this.finish(); return; }
+    if (this.elapsedSec >= this.durationSec) { this.finish(); }
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.cfg.spawnInterval) {
       this.spawnTimer = 0;
@@ -6265,7 +6270,7 @@ class CatchCoinGame extends TimedGame {
   onUpdate(dt) {
     if (this.finished) return;
     this.elapsedSec += dt;
-    if (this.elapsedSec >= this.durationSec) { this.finish(); return; }
+    if (this.elapsedSec >= this.durationSec) { this.finish(); }
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.cfg.spawnInterval) {
       this.spawnTimer = 0;
@@ -7558,7 +7563,7 @@ class RacingGame extends TimedGame {
   onUpdate(dt) {
     if (this.finished) return;
     this.elapsedSec += dt;
-    if (this.elapsedSec >= this.durationSec) { this.finish(); return; }
+    if (this.elapsedSec >= this.durationSec) { this.finish(); }
     const spd = this.cfg.speed;
     if (this.keys.left) this.carX -= spd * dt;
     if (this.keys.right) this.carX += spd * dt;
@@ -7876,7 +7881,7 @@ class BrickBreakGame extends TimedGame {
   onUpdate(dt) {
     if (this.finished) return;
     this.elapsedSec += dt;
-    if (this.elapsedSec >= this.durationSec) { this.finish(); return; }
+    if (this.elapsedSec >= this.durationSec) { this.finish(); }
     // 球移动
     this.ballX += this.ballVX * dt;
     this.ballY += this.ballVY * dt;
@@ -8171,7 +8176,7 @@ class ColorSortGame extends BaseGame {
   onUpdate(dt) {
     if (this.finished) return;
     this._elapsedSec = (this._elapsedSec || 0) + dt;
-    if (this._elapsedSec >= this.cfg.duration) { this.finish(); return; }
+    if (this._elapsedSec >= this.cfg.duration) { this.finish(); }
     const spawnRate = Math.max(0.4, 1.5 - this.cfg.speed / 100);
     this.spawnTimer += dt;
     if (this.spawnTimer >= spawnRate && this.items.filter(it => !it.matched).length < 4 && this.items.length < this.targetTrials) {
