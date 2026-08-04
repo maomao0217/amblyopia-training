@@ -3540,7 +3540,7 @@ class PursuitGame extends BaseGame {
     this.missCount = 0;
     this.flashPhase = 0;
     this.trail = cfg.trail;
-    this.setupBg('diagonal', ['#FF4444', '#4488FF'], 35, 30);
+    this.setupColorSwitchBg();
     this._genPath();
   }
 
@@ -5943,8 +5943,7 @@ class ButterflyGame extends BaseGame {
 
   onRender(ctx) {
     ctx.clearRect(0, 0, this.W, this.H);
-    ctx.fillStyle = '#E8F8E8';
-    ctx.fillRect(0, 0, this.W, this.H);
+    this.drawScrollingBg(ctx);
     // 花
     ctx.fillStyle = '#FFB6C1';
     for (let i = 0; i < 5; i++) {
@@ -6360,7 +6359,7 @@ class StarHoldGame extends BaseGame {
     this.holdTime = 0;
     this.trialStartTime = performance.now();
     this.lastClickTime = 0;
-    this.setupBg('diagonal', ['#FF4444', '#44CC44'], 40, 25);
+    this.setupBg('diagonal', ['#222222', '#FFFFFF'], 40, 25);
     this._genTrial();
   }
 
@@ -7178,7 +7177,7 @@ class WhichFasterGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.trials;
     this.currentTrial = 0;
-    this.setupBg('checker', ['#FF4444', '#4488FF'], 60, 20);
+    this.setupBg('checker', ['#FF4444', '#44CC44'], 60, 20);
     this._genTrial();
   }
 
@@ -7444,7 +7443,7 @@ class RopingGame extends BaseGame {
     this.currentTrial = 0;
     this.cows = [];
     this.lasso = null;
-    this.setupBg('hstripes', ['#FF4444', '#44CC44'], 45, 25, 'dots', ['#ECFDF5', '#A7F3D0'], 40, 20);
+    this.setupBg('hstripes', ['#222222', '#FFFFFF'], 45, 25, 'dots', ['#ECFDF5', '#A7F3D0'], 40, 20);
     this._spawnCows();
   }
   _spawnCows() {
@@ -7659,7 +7658,7 @@ class TankShooterGame extends BaseGame {
     this.tankX = this.W / 2; this.tankW = 40; this.tankH = 50;
     this.enemies = []; this.bullets = []; this.particles = [];
     this.keys = {}; this.shootCooldown = 0;
-    this.setupBg('diagonal', ['#FF4444', '#44CC44'], 50, 20, 'circles', ['#1A2F1A', '#4ADE80'], 45, 12);
+    this.setupBg('checker', ['#222222', '#FFFFFF'], 50, 20, 'diagonal', ['#222222', '#FFFFFF'], 45, 12);
     // 渲染方向+射击按钮
     const controls = document.getElementById('game-controls');
     if (controls) {
@@ -7713,6 +7712,7 @@ class TankShooterGame extends BaseGame {
         for (let k = 0; k < 15; k++) {
           this.particles.push({ x: this.tankX, y: tankY, vx: (Math.random()-0.5)*300, vy: (Math.random()-0.5)*300, life: 0.6, color: '#FF4444' });
         }
+        this.enemies.splice(i, 1);
         Audio.mistake();
         this.finish();
         return;
@@ -8117,7 +8117,7 @@ class ColorSortGame extends BaseGame {
     this.spawnTimer = 0;
     this._elapsedSec = 0;
     this.dragItem = null;
-    this.setupBg('checker', ['#FF4444', '#4488FF'], 40, 25, 'dots', ['#F0F9FF', '#BAE6FD'], 35, 20);
+    this.setupBg('vstripes', ['#222222', '#FFFFFF'], 40, 25, 'dots', ['#F0F9FF', '#BAE6FD'], 35, 20);
     this._bindDrag();
   }
   _bindDrag() {
