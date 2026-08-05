@@ -3334,9 +3334,9 @@ class BaseGame {
   isFinished() { return this.finished; }
 
   finish() {
-    if (this.finished) return;
+    if (this.finished) return true;
     const elapsed = (performance.now() - this.startTime) / 1000;
-    if (elapsed < 120) {
+    if (elapsed < 120 && !this._forceFinish) {
       if (!this._pendingFinish) {
         this._pendingFinish = true;
         setTimeout(() => {
@@ -3344,11 +3344,16 @@ class BaseGame {
           this.finish();
         }, Math.ceil((120 - elapsed) * 1000));
       }
-      return;
+      this.onContinuePlaying();
+      return false;
     }
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
+    return true;
   }
+
+  // 当finish被延迟时调用，子类可重写来继续生成游戏内容
+  onContinuePlaying() {}
 }
 
 // ============================================================
@@ -3436,7 +3441,7 @@ class EVideoGame extends BaseGame {
     // 反馈后 500ms 进入下一题
     if (this.feedback && now - this.feedbackTime > 500) {
       if (this.totalTrials >= this.targetTrials) {
-        this.finish();
+        if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); }
         return;
       }
       this._nextTrial();
@@ -3591,7 +3596,7 @@ class PursuitGame extends BaseGame {
         this.totalTrials++;
         this.callbacks.onProgress(this.getProgress());
         Audio.mistake();
-        if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
+        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.totalPauses; } return; }
         this.isPaused = false;
         this.nextPauseTime = Utils.rand(this.cfg.pauseInterval[0], this.cfg.pauseInterval[1]);
         this._genPath();
@@ -3607,7 +3612,7 @@ class PursuitGame extends BaseGame {
       this.recordResult(true, rt);
       this.successCount++;
       Audio.success();
-      if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
+      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.totalPauses; } return; }
       this.isPaused = false;
       this.nextPauseTime = Utils.rand(this.cfg.pauseInterval[0], this.cfg.pauseInterval[1]);
       this._genPath();
@@ -3783,7 +3788,7 @@ class DiffSpotGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -4319,7 +4324,7 @@ class LandoltCGame extends BaseGame {
     if (this.finished) return;
     const now = performance.now();
     if (this.feedback && now - this.feedbackTime > 500) {
-      if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
+      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
       this._nextTrial();
     }
     if (this.cfg.timeout > 0 && !this.feedback) {
@@ -4451,7 +4456,7 @@ class HiddenTargetGame extends BaseGame {
         const rt = performance.now() - this.levelStartTime;
         this.recordResult(true, rt);
         this.currentLevel++;
-        if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+        if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
         setTimeout(() => this._genLevel(), 500);
       }
     } else {
@@ -4472,7 +4477,7 @@ class HiddenTargetGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5412,7 +5417,7 @@ class MazeGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5520,7 +5525,7 @@ class ShrinkNumGame extends BaseGame {
     if (this.finished) return;
     const now = performance.now();
     if (this.feedback && now - this.feedbackTime > 500) {
-      if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
+      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
       this._nextTrial();
     }
     if (this.cfg.timeout > 0 && !this.feedback) {
@@ -5616,7 +5621,7 @@ class FindNumGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
-            if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+            if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
@@ -5633,7 +5638,7 @@ class FindNumGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5735,7 +5740,7 @@ class FindLetterGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
-            if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+            if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
@@ -5752,7 +5757,7 @@ class FindLetterGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5922,7 +5927,7 @@ class ButterflyGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
+        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this.trialStartTime = performance.now();
       }
     }
@@ -6011,7 +6016,7 @@ class LaserDotGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
+        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._jump(); } return; }
         this._jump();
       }
       return;
@@ -6496,7 +6501,7 @@ class FadeOutGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { this.finish(); return; }
+        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this._genTrial();
       }
       return;
@@ -6933,7 +6938,7 @@ class ShadowMatchGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { this.finish(); return; }
+        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this._genTrial();
       }
     }
@@ -7205,7 +7210,7 @@ class WhichFasterGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { this.finish(); return; }
+        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this._genTrial();
       }
       return;
@@ -7368,14 +7373,14 @@ class LinkMatchGame extends BaseGame {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
-      if (this.currentLevel >= this.targetTrials) { this.finish(); return; }
+      if (this.currentLevel >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.levels || this.cfg.trials; } return; }
       this._genLevel(); return;
     }
     if (this.feedbackTimer > 0) {
       this.feedbackTimer -= dt;
       if (this.feedbackTimer <= 0 && this.matchedInLevel >= this.cfg.pairs) {
         this.currentLevel++;
-        if (this.currentLevel >= this.targetTrials) { this.finish(); return; }
+        if (this.currentLevel >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.levels || this.cfg.trials; } return; }
         this._genLevel();
       }
     }
@@ -7470,13 +7475,13 @@ class RopingGame extends BaseGame {
       this.lasso.life -= dt;
       if (this.lasso.life <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.targetTrials) { this.finish(); return; }
+        if (this.currentTrial >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this._spawnCows();
       }
     }
     if (allDone && !this.lasso) {
       this.currentTrial++;
-      if (this.currentTrial >= this.targetTrials) { this.finish(); return; }
+      if (this.currentTrial >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
       this._spawnCows();
     }
   }
@@ -8028,7 +8033,7 @@ class FishingGame extends BaseGame {
       if (f.y < 70 || f.y > this.H - 30) f.vy *= -1;
     });
     if (this.caughtInRound >= this.targetsNeeded) {
-      if (this.correctTrials >= this.targetTrials) { this.finish(); return; }
+      if (this.correctTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
       this._newRound();
     }
   }
@@ -8298,7 +8303,7 @@ class RotatePuzGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.targetTrials) { this.finish(); return; }
+        if (this.currentTrial >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this._genTrial();
       }
     }
