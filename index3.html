@@ -17,37 +17,25 @@
   }
   @layer base {
     body {
-      font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+      font-family: 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',sans-serif;
       -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
-      user-select: none;
+      -webkit-user-select: none; user-select: none;
       overscroll-behavior: none;
     }
     canvas { display: block; }
+    .color-btn { transition: transform 0.15s; }
+    .color-btn:active { transform: scale(1.2); }
   }
   @layer utilities {
     .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     .pt-safe { padding-top: env(safe-area-inset-top); }
     .animate-pop { animation: pop 0.3s ease-out; }
-    .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-    .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+    .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.68,-0.55,0.265,1.55); }
     .animate-float { animation: float 3s ease-in-out infinite; }
   }
-  @keyframes pop {
-    0% { transform: scale(0.8); opacity: 0; }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
+  @keyframes pop { 0%{transform:scale(0.8);opacity:0}50%{transform:scale(1.05)}100%{transform:scale(1);opacity:1} }
+  @keyframes bounceIn { 0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1} }
+  @keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)} }
 </style>
 </head>
 <body class="bg-cream min-h-screen">
@@ -58,906 +46,527 @@
 const App = (function() {
 
 // ============================================================
-// 工具函数
+// Utils
 // ============================================================
 const Utils = {
-  shuffle(arr) { const a = [...arr]; for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; },
-  rand(min, max) { return min + Math.random() * (max - min); },
-  randInt(min, max) { return Math.floor(this.rand(min, max + 1)); },
-  clamp(v, min, max) { return Math.max(min, Math.min(max, v)); },
-  fmtMMSS(sec) { sec = Math.max(0, Math.floor(sec)); const m = Math.floor(sec/60), s = sec%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); },
-  dist(x1, y1, x2, y2) { return Math.sqrt((x1-x2)**2 + (y1-y2)**2); },
-  dateStr(d) { d = d || new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); },
-  todayStr() { return this.dateStr(new Date()); }
+  shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r},
+  rand(min,max){return min+Math.random()*(max-min)},
+  randInt(min,max){return Math.floor(this.rand(min,max+1))},
+  clamp(v,min,max){return Math.max(min,Math.min(max,v))},
+  fmtMMSS(s){s=Math.max(0,Math.floor(s));const m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')},
+  dist(x1,y1,x2,y2){return Math.sqrt((x1-x2)**2+(y1-y2)**2)}
 };
 
 // ============================================================
-// Audio 音效
+// Audio
 // ============================================================
 const Audio = {
-  _ctx: null, _enabled: true,
-  init() { this._enabled = true; },
-  _ensureCtx() {
-    if (!this._enabled) return null;
-    if (!this._ctx) { try { this._ctx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e) { return null; } }
-    if (this._ctx.state === 'suspended') this._ctx.resume();
+  _ctx:null,_enabled:true,
+  init(){this._enabled=true},
+  _ensureCtx(){
+    if(!this._enabled)return null;
+    if(!this._ctx){try{this._ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
+    if(this._ctx.state==='suspended')this._ctx.resume();
     return this._ctx;
   },
-  _tone(freq, start, dur, type, vol) {
-    const ctx = this._ensureCtx(); if (!ctx) return;
-    const osc = ctx.createOscillator(), gain = ctx.createGain();
-    osc.type = type||'sine'; osc.frequency.value = freq;
-    const t0 = ctx.currentTime+start;
-    gain.gain.setValueAtTime(0,t0); gain.gain.linearRampToValueAtTime(vol||0.25,t0+0.02); gain.gain.exponentialRampToValueAtTime(0.001,t0+dur);
-    osc.connect(gain).connect(ctx.destination); osc.start(t0); osc.stop(t0+dur);
+  _tone(freq,start,dur,type,vol){
+    const ctx=this._ensureCtx();if(!ctx)return;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    const t0=ctx.currentTime+start;
+    g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol||0.25,t0+0.02);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+    o.connect(g).connect(ctx.destination);o.start(t0);o.stop(t0+dur);
   },
-  success() { this._tone(523,0,0.12,'sine',0.2); this._tone(659,0.1,0.12,'sine',0.2); this._tone(784,0.2,0.25,'sine',0.25); },
-  mistake() { this._tone(400,0,0.1,'sine',0.12); this._tone(350,0.08,0.12,'sine',0.12); },
-  click() { this._tone(800,0,0.04,'sine',0.12); },
-  complete() { [523,659,784,1047].forEach((f,i)=>this._tone(f,i*0.08,0.15,'triangle',0.2)); },
-  encouragement(pct) {
-    if(pct>=1) this.complete();
-    else if(pct>=0.8) { [523,659,784].forEach((f,i)=>this._tone(f,i*0.1,0.15,'triangle',0.2)); }
-    else if(pct>=0.6) { this._tone(523,0,0.1,'sine',0.15); this._tone(659,0.1,0.15,'sine',0.18); }
-  }
+  success(){this._tone(523,0,0.12,'sine',0.2);this._tone(659,0.1,0.12,'sine',0.2);this._tone(784,0.2,0.25,'sine',0.25)},
+  mistake(){this._tone(400,0,0.1,'sine',0.12);this._tone(350,0.08,0.12,'sine',0.12)},
+  click(){this._tone(800,0,0.04,'sine',0.12)},
+  complete(){[523,659,784,1047].forEach((f,i)=>this._tone(f,i*0.08,0.15,'triangle',0.2))},
+  encouragement(pct){if(pct>=1)this.complete();else if(pct>=0.8){[523,659,784].forEach((f,i)=>this._tone(f,i*0.1,0.15,'triangle',0.2))}else if(pct>=0.6){this._tone(523,0,0.1,'sine',0.15);this._tone(659,0.1,0.15,'sine',0.18)}}
 };
 
 // ============================================================
-// Store 数据层（简化版）
+// Store
 // ============================================================
-const LS_KEY = 'fineMotorTrainer_v1';
+const LS_KEY='fineMotorTrainer_v2';
 const Store = {
-  _state: null,
-  init() {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      this._state = raw ? JSON.parse(raw) : this._defaultState();
-    } catch(e) { this._state = this._defaultState(); }
-  },
-  _defaultState() {
-    return {
-      settings: { childName: '', maxPlayMinutes: 30 },
-      gameStats: {},
-      totalStars: 0, totalPlayTime: 0
-    };
-  },
-  getSettings() { return this._state.settings; },
-  save() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(this._state)); } catch(e) {}
-  },
-  recordGameResult(gameId, stats) {
-    const s = this._state.gameStats[gameId] = this._state.gameStats[gameId] || { plays: 0, bestAcc: 0, bestRT: 999999, difficulty: 1 };
-    s.plays++; if (stats.accuracy > s.bestAcc) s.bestAcc = stats.accuracy;
-    if (stats.avgReactionMs < s.bestRT) s.bestRT = stats.avgReactionMs;
-  },
-  addStars(n) { this._state.totalStars += n; },
-  addPlayTime(sec) { this._state.totalPlayTime += sec; },
-  adjustDifficulty(gameId) {
-    const s = this._state.gameStats[gameId];
-    if (!s) return 1;
-    if (s.plays >= 3 && s.bestAcc >= 0.8) s.difficulty = Math.min(5, s.difficulty + 1);
-    return s.difficulty;
-  },
-  getDifficulty(gameId) {
-    const s = this._state.gameStats[gameId];
-    return s ? s.difficulty : 1;
-  }
+  _state:null,
+  init(){try{const r=localStorage.getItem(LS_KEY);this._state=r?JSON.parse(r):this._default()}catch(e){this._state=this._default()}},
+  _default(){return{settings:{maxPlayMinutes:30},gameStats:{},totalStars:0,totalPlayTime:0}},
+  getSettings(){return this._state.settings},
+  save(){try{localStorage.setItem(LS_KEY,JSON.stringify(this._state))}catch(e){}},
+  recordGameResult(gid,stats){const s=this._state.gameStats[gid]=this._state.gameStats[gid]||{plays:0,bestAcc:0,difficulty:1};s.plays++;if(stats.accuracy>s.bestAcc)s.bestAcc=stats.accuracy},
+  addStars(n){this._state.totalStars+=n},
+  addPlayTime(s){this._state.totalPlayTime+=s},
+  adjustDifficulty(gid){const s=this._state.gameStats[gid];if(!s)return 1;if(s.plays>=3&&s.bestAcc>=0.8)s.difficulty=Math.min(5,s.difficulty+1);return s.difficulty},
+  getDifficulty(gid){const s=this._state.gameStats[gid];return s?s.difficulty:1}
 };
 
 // ============================================================
-// Router 路由
+// Router
 // ============================================================
 const Router = {
-  _current: '/',
-  navigate(path) { this._current = path; Renderer.render(); },
-  getPath() { return this._current; }
+  _current:'/',
+  navigate(p){this._current=p;Renderer.render()},
+  getPath(){return this._current}
 };
 
 // ============================================================
-// 背景绘制系统
+// BgPatterns
 // ============================================================
 const BgPatterns = {
-  colorSwitchColors: ['#FFFFFF','#000000','#FF4444','#FFD700','#4488FF'],
-  drawColorSwitch(ctx, w, h, elapsedSec) {
-    const idx = Math.floor(elapsedSec / 2.0) % this.colorSwitchColors.length;
-    ctx.fillStyle = this.colorSwitchColors[idx];
-    ctx.fillRect(0, 0, w, h);
-  },
-  drawChecker(ctx, w, h, offset, size, c1, c2) {
-    for (let r = -1; r < Math.ceil(h/size)+2; r++)
-      for (let c = -1; c < Math.ceil(w/size)+2; c++) {
-        ctx.fillStyle = ((r+c)%2===0) ? c1 : c2;
-        ctx.fillRect(c*size-offset, r*size-offset, size, size);
-      }
-  },
-  drawHStripes(ctx, w, h, offset, size, c1, c2) {
-    ctx.fillStyle = c1; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle = c2;
-    for (let y = -size; y < h+size; y += size) ctx.fillRect(0, y-offset, w, size/2);
-  },
-  drawVStripes(ctx, w, h, offset, size, c1, c2) {
-    ctx.fillStyle = c1; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle = c2;
-    for (let x = -size; x < w+size; x += size) ctx.fillRect(x-offset, 0, size/2, h);
-  },
-  drawDiagonal(ctx, w, h, offset, size, c1, c2) {
-    ctx.fillStyle = c1; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle = c2;
-    const d = Math.sqrt(w*w+h*h)+size*4;
-    const step = size;
-    for (let p = -d; p < d; p += step) {
-      ctx.beginPath(); ctx.moveTo(p-offset, -d); ctx.lineTo(p-offset+step/3, -d);
-      ctx.lineTo(p-offset+d+step/3, d); ctx.lineTo(p-offset+d, d); ctx.closePath(); ctx.fill();
-    }
-  },
-  drawWavy(ctx, w, h, offset, size, c1, c2) {
-    ctx.fillStyle = c1; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle = c2;
-    for (let y = -size; y < h+size; y += size) {
-      ctx.beginPath(); ctx.moveTo(0, y-offset);
-      for (let x = 0; x <= w; x += 20) ctx.lineTo(x, y-offset+Math.sin((x+offset*2)/size)*size*0.3);
-      ctx.lineTo(w, y-offset+size/2); ctx.lineTo(0, y-offset+size/2); ctx.closePath(); ctx.fill();
-    }
-  },
-  drawZigzag(ctx, w, h, offset, size, c1, c2) {
-    ctx.fillStyle = c1; ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle = c2; ctx.lineWidth = size/3;
-    for (let y = -size; y < h+size*2; y += size) {
-      ctx.beginPath();
-      for (let x = -size; x < w+size; x += size) {
-        const yy = y + (Math.floor(x/size)%2===0 ? -offset : offset);
-        if (x === -size) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
-      }
-      ctx.stroke();
-    }
-  },
-  drawDots(ctx, w, h, offset, size, c1, c2) {
-    ctx.fillStyle = c1; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle = c2;
-    for (let x = size/2; x < w+size; x += size)
-      for (let y = size/2; y < h+size; y += size)
-        { ctx.beginPath(); ctx.arc(x-offset*0.3, y-offset*0.3, size*0.15, 0, Math.PI*2); ctx.fill(); }
-  }
+  colorSwitchColors:['#FFFFFF','#000000','#FF4444','#FFD700','#4488FF'],
+  drawColorSwitch(ctx,w,h,t){ctx.fillStyle=this.colorSwitchColors[Math.floor(t/2)%this.colorSwitchColors.length];ctx.fillRect(0,0,w,h)},
+  drawChecker(ctx,w,h,off,sz,c1,c2){for(let r=-1;r<Math.ceil(h/sz)+2;r++)for(let c=-1;c<Math.ceil(w/sz)+2;c++){ctx.fillStyle=((r+c)%2===0)?c1:c2;ctx.fillRect(c*sz-off,r*sz-off,sz,sz)}},
+  drawHStripes(ctx,w,h,off,sz,c1,c2){ctx.fillStyle=c1;ctx.fillRect(0,0,w,h);ctx.fillStyle=c2;for(let y=-sz;y<h+sz;y+=sz)ctx.fillRect(0,y-off,w,sz/2)},
+  drawVStripes(ctx,w,h,off,sz,c1,c2){ctx.fillStyle=c1;ctx.fillRect(0,0,w,h);ctx.fillStyle=c2;for(let x=-sz;x<w+sz;x+=sz)ctx.fillRect(x-off,0,sz/2,h)},
+  drawDiagonal(ctx,w,h,off,sz,c1,c2){ctx.fillStyle=c1;ctx.fillRect(0,0,w,h);ctx.fillStyle=c2;const d=Math.sqrt(w*w+h*h)+sz*4;for(let p=-d;p<d;p+=sz){ctx.beginPath();ctx.moveTo(p-off,-d);ctx.lineTo(p-off+sz/3,-d);ctx.lineTo(p-off+d+sz/3,d);ctx.lineTo(p-off+d,d);ctx.closePath();ctx.fill()}},
+  drawWavy(ctx,w,h,off,sz,c1,c2){ctx.fillStyle=c1;ctx.fillRect(0,0,w,h);ctx.fillStyle=c2;for(let y=-sz;y<h+sz;y+=sz){ctx.beginPath();ctx.moveTo(0,y-off);for(let x=0;x<=w;x+=20)ctx.lineTo(x,y-off+Math.sin((x+off*2)/sz)*sz*0.3);ctx.lineTo(w,y-off+sz/2);ctx.lineTo(0,y-off+sz/2);ctx.closePath();ctx.fill()}},
+  drawZigzag(ctx,w,h,off,sz,c1,c2){ctx.fillStyle=c1;ctx.fillRect(0,0,w,h);ctx.strokeStyle=c2;ctx.lineWidth=sz/3;for(let y=-sz;y<h+sz*2;y+=sz){ctx.beginPath();for(let x=-sz;x<w+sz;x+=sz){const yy=y+(Math.floor(x/sz)%2===0?-off:off);if(x===-sz)ctx.moveTo(x,yy);else ctx.lineTo(x,yy)}ctx.stroke()}},
+  drawDots(ctx,w,h,off,sz,c1,c2){ctx.fillStyle=c1;ctx.fillRect(0,0,w,h);ctx.fillStyle=c2;for(let x=sz/2;x<w+sz;x+=sz)for(let y=sz/2;y<h+sz;y+=sz){ctx.beginPath();ctx.arc(x-off*0.3,y-off*0.3,sz*0.15,0,Math.PI*2);ctx.fill()}}
 };
 
 // ============================================================
-// BaseGame 基类
+// BaseGame
 // ============================================================
 class BaseGame {
-  constructor(ctx, w, h, difficulty, callbacks) {
-    this.ctx = ctx; this.W = w; this.H = h;
-    this.difficulty = difficulty; this.callbacks = callbacks;
-    this.startTime = performance.now();
-    this.totalTrials = 0; this.correctTrials = 0; this.reactionTimes = [];
-    this.finished = false; this.targetTrials = 0;
-    this._lastDt = 0; this.bgOffset = 0; this.bgAngle = 0; this._bgElapsed = 0;
-    this._bgConfigs = []; this._bgActiveIdx = 0; this._bgSwitchInterval = 10 + Math.random()*5;
-    this.bgType = 'checker'; this.bgColors = ['#222222','#FFFFFF']; this.bgSize = 50; this.bgSpeed = 25;
-    this.bgEnabled = true;
+  constructor(ctx,w,h,difficulty,callbacks){
+    this.ctx=ctx;this.W=w;this.H=h;this.difficulty=difficulty;this.callbacks=callbacks;
+    this.startTime=performance.now();this.totalTrials=0;this.correctTrials=0;this.reactionTimes=[];
+    this.finished=false;this.targetTrials=0;this._lastDt=0;this.bgOffset=0;this._bgElapsed=0;
+    this._bgConfigs=[];this._bgActiveIdx=0;this._bgSwitchInterval=10+Math.random()*5;
+    this.bgType='checker';this.bgColors=['#222222','#FFFFFF'];this.bgSize=50;this.bgSpeed=25;this.bgEnabled=true;
   }
-  onStart() {}
-  onUpdate(dt) { this._lastDt = dt; }
-  onRender(ctx) {}
-  onInput(e) {}
-
-  _applyBgConfig(idx) {
-    const cfg = this._bgConfigs[idx]; if (!cfg) return;
-    this.bgType = cfg.type; this.bgColors = cfg.colors; this.bgSize = cfg.size; this.bgSpeed = cfg.speed;
+  onStart(){}
+  onUpdate(dt){this._lastDt=dt}
+  onRender(ctx){}
+  onInput(e){}
+  _applyBgConfig(idx){const c=this._bgConfigs[idx];if(!c)return;this.bgType=c.type;this.bgColors=c.colors;this.bgSize=c.size;this.bgSpeed=c.speed}
+  setupBg(type,colors,size,speed,type2,colors2,size2,speed2){
+    this._bgConfigs=[{type,colors:colors||['#222222','#FFFFFF'],size:size||50,speed:speed||25}];
+    if(type2)this._bgConfigs.push({type:type2,colors:colors2||colors,size:size2||size,speed:speed2||speed});
+    else{const alt=['checker','hstripes','vstripes','diagonal','wavy','zigzag','dots'][Math.floor(Math.random()*7)];this._bgConfigs.push({type:alt,colors:[colors[1]||'#FFFFFF',colors[0]||'#222222'],size:size*(0.8+Math.random()*0.4),speed:speed*(0.8+Math.random()*0.4)})}
+    this._bgElapsed=0;this._bgActiveIdx=0;this._bgSwitchInterval=10+Math.random()*5;this._applyBgConfig(0);
   }
-  setupBg(type, colors, size, speed, type2, colors2, size2, speed2) {
-    this._bgConfigs = [{ type, colors: colors||['#222222','#FFFFFF'], size: size||50, speed: speed||25 }];
-    if (type2) this._bgConfigs.push({ type: type2, colors: colors2||colors, size: size2||size, speed: speed2||speed });
-    else { const alt=['checker','hstripes','vstripes','diagonal','wavy','zigzag','dots'][Math.floor(Math.random()*7)];
-      this._bgConfigs.push({ type: alt, colors: [colors[1]||'#FFFFFF',colors[0]||'#222222'], size: size*(0.8+Math.random()*0.4), speed: speed*(0.8+Math.random()*0.4) }); }
-    this._bgElapsed = 0; this._bgActiveIdx = 0; this._bgSwitchInterval = 10 + Math.random()*5;
-    this._applyBgConfig(0);
-  }
-  setupColorSwitchBg() { this.bgType = 'colorSwitch'; this._bgConfigs = []; }
-  drawScrollingBg(ctx) {
-    if (!this.bgEnabled) { ctx.fillStyle = '#FFF8F0'; ctx.fillRect(0,0,this.W,this.H); return; }
-    if (this._bgConfigs.length >= 2) {
-      this._bgElapsed += (this._lastDt||0.016);
-      if (this._bgElapsed >= this._bgSwitchInterval) { this._bgElapsed=0; this._bgActiveIdx=(this._bgActiveIdx+1)%this._bgConfigs.length; this._bgSwitchInterval=10+Math.random()*5; this._applyBgConfig(this._bgActiveIdx); }
-    }
-    const speed = this.bgSpeed, size = this.bgSize, c1 = this.bgColors[0], c2 = this.bgColors[1]||'#FFFFFF';
-    if (this.bgType === 'colorSwitch') { BgPatterns.drawColorSwitch(ctx,this.W,this.H,(performance.now()-this.startTime)/1000); return; }
-    this.bgOffset = (this.bgOffset+(this._lastDt||0.016)*speed)%(size*2);
-    switch(this.bgType) {
-      case 'checker': BgPatterns.drawChecker(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      case 'hstripes': BgPatterns.drawHStripes(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      case 'vstripes': BgPatterns.drawVStripes(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      case 'diagonal': BgPatterns.drawDiagonal(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      case 'wavy': BgPatterns.drawWavy(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      case 'zigzag': BgPatterns.drawZigzag(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      case 'dots': BgPatterns.drawDots(ctx,this.W,this.H,this.bgOffset,size,c1,c2); break;
-      default: BgPatterns.drawChecker(ctx,this.W,this.H,this.bgOffset,size,c1,c2);
+  setupColorSwitchBg(){this.bgType='colorSwitch';this._bgConfigs=[]}
+  drawScrollingBg(ctx){
+    if(!this.bgEnabled){ctx.fillStyle='#FFF8F0';ctx.fillRect(0,0,this.W,this.H);return}
+    if(this._bgConfigs.length>=2){this._bgElapsed+=(this._lastDt||0.016);if(this._bgElapsed>=this._bgSwitchInterval){this._bgElapsed=0;this._bgActiveIdx=(this._bgActiveIdx+1)%this._bgConfigs.length;this._bgSwitchInterval=10+Math.random()*5;this._applyBgConfig(this._bgActiveIdx)}}
+    if(this.bgType==='colorSwitch'){BgPatterns.drawColorSwitch(ctx,this.W,this.H,(performance.now()-this.startTime)/1000);return}
+    const spd=this.bgSpeed,sz=this.bgSize,c1=this.bgColors[0],c2=this.bgColors[1]||'#FFFFFF';
+    this.bgOffset=(this.bgOffset+(this._lastDt||0.016)*spd)%(sz*2);
+    switch(this.bgType){
+      case'checker':BgPatterns.drawChecker(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      case'hstripes':BgPatterns.drawHStripes(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      case'vstripes':BgPatterns.drawVStripes(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      case'diagonal':BgPatterns.drawDiagonal(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      case'wavy':BgPatterns.drawWavy(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      case'zigzag':BgPatterns.drawZigzag(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      case'dots':BgPatterns.drawDots(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);break;
+      default:BgPatterns.drawChecker(ctx,this.W,this.H,this.bgOffset,sz,c1,c2);
     }
   }
-  recordResult(correct, rtMs) {
-    this.totalTrials++;
-    if (correct) this.correctTrials++;
-    if (rtMs !== undefined) this.reactionTimes.push(rtMs);
-    this.callbacks.onProgress(this.getProgress());
+  recordResult(correct,rtMs){this.totalTrials++;if(correct)this.correctTrials++;if(rtMs!==undefined)this.reactionTimes.push(rtMs);this.callbacks.onProgress(this.getProgress())}
+  getProgress(){return{trials:this.totalTrials,targetTrials:this.targetTrials,pct:this.targetTrials?this.totalTrials/this.targetTrials:0}}
+  getStats(){const rt=this.reactionTimes.length?Math.round(this.reactionTimes.reduce((a,b)=>a+b,0)/this.reactionTimes.length):0;return{accuracy:this.totalTrials?this.correctTrials/this.totalTrials:0,avgReactionMs:rt,durationSec:Math.round((performance.now()-this.startTime)/1000),totalTrials:this.totalTrials,correctTrials:this.correctTrials,difficulty:this.difficulty}}
+  finish(){
+    if(this.finished)return true;
+    const t=(performance.now()-this.startTime)/1000;
+    if(t<120&&!this._forceFinish){if(!this._pendingFinish){this._pendingFinish=true;setTimeout(()=>{this._forceFinish=true;this.finish()},Math.ceil((120-t)*1000))}this.onContinuePlaying();return false}
+    this.finished=true;this.callbacks.onEnd(this.getStats());return true;
   }
-  getProgress() {
-    return { trials: this.totalTrials, targetTrials: this.targetTrials, pct: this.targetTrials?this.totalTrials/this.targetTrials:0 };
-  }
-  getStats() {
-    const avgRT = this.reactionTimes.length ? Math.round(this.reactionTimes.reduce((a,b)=>a+b,0)/this.reactionTimes.length) : 0;
-    return { accuracy: this.totalTrials?this.correctTrials/this.totalTrials:0, avgReactionMs: avgRT, durationSec: Math.round((performance.now()-this.startTime)/1000), totalTrials: this.totalTrials, correctTrials: this.correctTrials, difficulty: this.difficulty };
-  }
-  finish() {
-    if (this.finished) return true;
-    const elapsed = (performance.now()-this.startTime)/1000;
-    if (elapsed < 120 && !this._forceFinish) {
-      if (!this._pendingFinish) { this._pendingFinish=true; setTimeout(()=>{this._forceFinish=true;this.finish();},Math.ceil((120-elapsed)*1000)); }
-      this.onContinuePlaying(); return false;
-    }
-    this.finished = true; this.callbacks.onEnd(this.getStats()); return true;
-  }
-  onContinuePlaying() {}
+  onContinuePlaying(){}
 }
 
 // ============================================================
-// GameEngine 游戏引擎
+// GameEngine
 // ============================================================
 const GAME_REGISTRY = {};
-
 const GameEngine = {
-  _currentGame: null, _canvas: null, _ctx2d: null, _rafId: null, _lastTime: 0, _dpr: 1,
-  _gameId: null, _countdownRemaining: 0, _countdownLastTick: 0,
-
-  startGame(gameId, difficulty) {
-    this._gameId = gameId;
-    const config = GAME_CONFIGS[gameId], diff = difficulty||1;
-    document.getElementById('app').innerHTML = this.tplGameShell(config, diff);
-    setTimeout(() => {
-      const canvas = document.getElementById('game-canvas'); if (!canvas) return;
+  _currentGame:null,_canvas:null,_ctx2d:null,_rafId:null,_lastTime:0,_dpr:1,_gameId:null,_countdownRemaining:0,_countdownLastTick:0,
+  startGame(gameId,difficulty){
+    this._gameId=gameId;const config=GAME_CONFIGS[gameId],diff=difficulty||1;
+    document.getElementById('app').innerHTML=this.tplGameShell(config,diff);
+    setTimeout(()=>{
+      const canvas=document.getElementById('game-canvas');if(!canvas)return;
       this._setupCanvas(canvas);
-      const GameClass = GAME_REGISTRY[gameId];
-      this._currentGame = new GameClass(this._ctx2d, this._canvasW, this._canvasH, diff, {
-        onProgress: (p) => this._updateProgress(p),
-        onEnd: (stats) => this._onGameEnd(stats)
-      });
+      const GC=GAME_REGISTRY[gameId];
+      this._currentGame=new GC(this._ctx2d,this._canvasW,this._canvasH,diff,{onProgress:p=>this._updateProgress(p),onEnd:s=>this._onGameEnd(s)});
       this._currentGame.onStart();
-      canvas.addEventListener('pointerdown', (e) => this._handleInput(e));
-      canvas.addEventListener('pointermove', (e) => {
-        if (!this._currentGame || this._currentGame.finished) return;
-        const rect = canvas.getBoundingClientRect();
-        this._currentGame.onInput({ x: e.clientX-rect.left, y: e.clientY-rect.top, type: 'move' });
-      });
-      canvas.addEventListener('pointerup', (e) => {
-        if (!this._currentGame || this._currentGame.finished) return;
-        const rect = canvas.getBoundingClientRect();
-        this._currentGame.onInput({ x: e.clientX-rect.left, y: e.clientY-rect.top, type: 'up' });
-      });
-      this._startCountdown();
-      this._lastTime = performance.now();
-      this._loop(this._lastTime);
-    }, 50);
+      canvas.addEventListener('pointerdown',e=>this._handleInput(e));
+      canvas.addEventListener('pointermove',e=>{if(!this._currentGame||this._currentGame.finished)return;const r=canvas.getBoundingClientRect();this._currentGame.onInput({x:e.clientX-r.left,y:e.clientY-r.top,type:'move'})});
+      canvas.addEventListener('pointerup',e=>{if(!this._currentGame||this._currentGame.finished)return;const r=canvas.getBoundingClientRect();this._currentGame.onInput({x:e.clientX-r.left,y:e.clientY-r.top,type:'up'})});
+      this._startCountdown();this._lastTime=performance.now();this._loop(this._lastTime);
+    },50);
   },
-  _setupCanvas(canvas) {
-    this._canvas = canvas; const dpr = window.devicePixelRatio||1; this._dpr = dpr;
-    const rect = canvas.getBoundingClientRect(); canvas.width = rect.width*dpr; canvas.height = rect.height*dpr;
-    const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr); this._ctx2d=ctx; this._canvasW=rect.width; this._canvasH=rect.height;
+  _setupCanvas(canvas){this._canvas=canvas;const dpr=window.devicePixelRatio||1;this._dpr=dpr;const r=canvas.getBoundingClientRect();canvas.width=r.width*dpr;canvas.height=r.height*dpr;const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);this._ctx2d=ctx;this._canvasW=r.width;this._canvasH=r.height},
+  _startCountdown(){const el=document.getElementById('countdown-timer');if(!el)return;const max=parseInt(el.dataset.max)||1800;this._countdownRemaining=parseInt(el.dataset.remaining)||max;this._countdownLastTick=performance.now()},
+  _updateCountdown(now){const el=document.getElementById('countdown-display');if(!el)return;const dt=(now-this._countdownLastTick)/1000;if(dt>=1){this._countdownRemaining=Math.max(0,this._countdownRemaining-dt);this._countdownLastTick=now;el.textContent=Utils.fmtMMSS(this._countdownRemaining)}if(this._countdownRemaining<=0)this._onCountdownEnd()},
+  _onCountdownEnd(){this.stop();document.getElementById('app').innerHTML='<div class="flex items-center justify-center h-screen"><div class="text-center p-8"><div class="text-6xl mb-4">⏰</div><div class="text-xl font-bold text-gray-700 mb-2">时间到啦！</div><div class="text-gray-500 mb-6">小朋友，休息一下眼睛吧～</div><button onclick="goHome()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold">回到主页</button></div></div>'},
+  _loop(now){if(!this._currentGame||this._currentGame.finished)return;const dt=Math.min((now-this._lastTime)/1000,0.1);this._lastTime=now;this._updateCountdown(now);try{this._currentGame.onUpdate(dt);this._currentGame.onRender(this._ctx2d)}catch(e){console.error(e)}this._rafId=requestAnimationFrame(t=>this._loop(t))},
+  _handleInput(e){if(!this._currentGame)return;const r=this._canvas.getBoundingClientRect();this._currentGame.onInput({x:e.clientX-r.left,y:e.clientY-r.top,type:e.type})},
+  _updateProgress(p){const b=document.getElementById('game-progress-bar'),t=document.getElementById('game-progress-text');if(b)b.style.width=Math.min(100,p.pct*100)+'%';if(t&&p.targetTrials)t.textContent=p.trials+'/'+p.targetTrials},
+  stop(){if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null}this._currentGame=null},
+  exitGame(){this.stop();Router.navigate('/')},
+  _onGameEnd(stats){this.stop();Store.recordGameResult(this._gameId,stats);Store.addPlayTime(stats.durationSec);const nd=Store.adjustDifficulty(this._gameId);Store.save();Audio.encouragement(stats.accuracy);this._showResult(stats,nd)},
+  _showResult(stats,newDiff){
+    const pct=Math.round(stats.accuracy*100),gn=GAME_CONFIGS[this._gameId].name,stars=pct>=90?3:pct>=70?2:pct>=50?1:0;
+    if(stars>0)Store.addStars(stars);
+    document.getElementById('app').innerHTML='<div class="flex items-center justify-center min-h-screen p-4"><div class="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center animate-bounce-in"><div class="text-6xl mb-4">'+(stars>=3?'🌟':stars>=2?'⭐':stars>=1?'👍':'💪')+'</div><div class="text-2xl font-bold text-gray-800 mb-2">'+gn+' 完成！</div><div class="text-5xl font-bold text-primary my-4">'+pct+'%</div><div class="text-gray-500 text-sm mb-2">正确率</div><div class="text-gray-400 text-xs mb-1">用时 '+Utils.fmtMMSS(stats.durationSec)+'</div>'+(stars>=3?'<div class="text-sm text-warm font-bold mt-2">太棒了！获得3颗星！✨</div>':'')+(newDiff>Store.getDifficulty(this._gameId)?'<div class="text-sm text-green-500 font-bold mt-1">难度升级！★→'+'★'.repeat(newDiff)+'</div>':'')+'<button onclick="goHome()" class="mt-6 w-full bg-primary text-white py-3 rounded-2xl font-bold active:scale-95 transition-transform">继续</button></div></div>';
   },
-  _startCountdown() {
-    const timerEl = document.getElementById('countdown-timer'); if (!timerEl) return;
-    const max = parseInt(timerEl.dataset.max)||1800;
-    this._countdownRemaining = parseInt(timerEl.dataset.remaining)||max;
-    this._countdownLastTick = performance.now();
-  },
-  _updateCountdown(now) {
-    const displayEl = document.getElementById('countdown-display'); if (!displayEl) return;
-    const dt = (now-this._countdownLastTick)/1000;
-    if (dt>=1) { this._countdownRemaining=Math.max(0,this._countdownRemaining-dt); this._countdownLastTick=now; displayEl.textContent=Utils.fmtMMSS(this._countdownRemaining); }
-    if (this._countdownRemaining<=0) { this._onCountdownEnd(); }
-  },
-  _onCountdownEnd() { this.stop(); document.getElementById('app').innerHTML='<div class="flex items-center justify-center h-screen"><div class="text-center p-8"><div class="text-6xl mb-4">⏰</div><div class="text-xl font-bold text-gray-700 mb-2">时间到啦！</div><div class="text-gray-500 mb-6">小朋友，休息一下眼睛吧～</div><button onclick="goHome()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold">回到主页</button></div></div>'; },
-  _loop(now) {
-    if (!this._currentGame||this._currentGame.finished) return;
-    const dt = Math.min((now-this._lastTime)/1000, 0.1); this._lastTime = now;
-    this._updateCountdown(now);
-    try { this._currentGame.onUpdate(dt); this._currentGame.onRender(this._ctx2d); } catch(e) { console.error(e); }
-    this._rafId = requestAnimationFrame((t) => this._loop(t));
-  },
-  _handleInput(e) {
-    if (!this._currentGame) return;
-    const rect = this._canvas.getBoundingClientRect();
-    this._currentGame.onInput({ x: e.clientX-rect.left, y: e.clientY-rect.top, type: e.type });
-  },
-  _updateProgress(p) {
-    const bar = document.getElementById('game-progress-bar');
-    const text = document.getElementById('game-progress-text');
-    if (bar) bar.style.width = Math.min(100,p.pct*100)+'%';
-    if (text && p.targetTrials) text.textContent = `${p.trials}/${p.targetTrials}`;
-  },
-  stop() { if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;} this._currentGame=null; },
-  exitGame() { this.stop(); Router.navigate('/'); },
-  _onGameEnd(stats) {
-    this.stop();
-    Store.recordGameResult(this._gameId, stats);
-    Store.addPlayTime(stats.durationSec);
-    const newDiff = Store.adjustDifficulty(this._gameId);
-    Store.save();
-    Audio.encouragement(stats.accuracy);
-    this._showResult(stats, newDiff);
-  },
-  _showResult(stats, newDiff) {
-    const pct = Math.round(stats.accuracy*100);
-    const gameName = GAME_CONFIGS[this._gameId].name;
-    const stars = pct>=90?3:pct>=70?2:pct>=50?1:0;
-    if (stars>0) Store.addStars(stars);
-    document.getElementById('app').innerHTML = `
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center animate-bounce-in">
-        <div class="text-6xl mb-4">${stars>=3?'🌟':stars>=2?'⭐':stars>=1?'👍':'💪'}</div>
-        <div class="text-2xl font-bold text-gray-800 mb-2">${gameName} 完成！</div>
-        <div class="text-5xl font-bold text-primary my-4">${pct}%</div>
-        <div class="text-gray-500 text-sm mb-2">正确率</div>
-        <div class="text-gray-400 text-xs mb-1">用时 ${Utils.fmtMMSS(stats.durationSec)}</div>
-        <div class="text-gray-400 text-xs mb-1">完成 ${stats.totalTrials} 题</div>
-        ${stars>=3?'<div class="text-sm text-warm font-bold mt-2">太棒了！获得3颗星！✨</div>':''}
-        ${newDiff>Store.getDifficulty(this._gameId)?'<div class="text-sm text-green-500 font-bold mt-1">难度升级！★→'+'★'.repeat(newDiff)+'</div>':''}
-        <button onclick="goHome()" class="mt-6 w-full bg-primary text-white py-3 rounded-2xl font-bold active:scale-95 transition-transform">继续</button>
-      </div></div>`;
-  },
-  tplGameShell(config, diff) {
-    const maxSec = (Store.getSettings().maxPlayMinutes||30)*60;
-    return `
-    <div class="fixed inset-0 bg-cream z-50 flex flex-col">
-      <div id="countdown-timer" class="fixed top-4 right-4 z-[100] bg-white/90 backdrop-blur rounded-2xl shadow-lg px-3 py-2 flex items-center gap-2 text-sm" style="top:calc(env(safe-area-inset-top,16px)+4px)" data-max="${maxSec}" data-remaining="${maxSec}">
-        <span>⏱️</span><span id="countdown-display" class="font-bold text-gray-700">${Utils.fmtMMSS(maxSec)}</span>
-      </div>
-      <div class="flex items-center justify-between px-4 py-3 pt-safe">
-        <button onclick="GameEngine.exitGame();Audio.click()" class="w-12 h-12 flex items-center justify-center -ml-2 text-2xl text-gray-500 relative z-[200]" style="touch-action:auto">✕</button>
-        <div class="text-center"><div class="font-bold text-gray-800">${config.icon} ${config.name}</div><div class="text-xs text-gray-400">${'★'.repeat(diff)}${'☆'.repeat(5-diff)}</div></div>
-        <div class="w-10 text-right text-sm text-gray-500" id="game-progress-text"></div>
-      </div>
-      <div class="px-4 pb-2"><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div id="game-progress-bar" class="h-full rounded-full transition-all duration-300" style="width:0%;background:${config.color}"></div></div></div>
-      <div class="flex-1 relative" id="game-canvas-host"><canvas id="game-canvas" class="absolute inset-0 w-full h-full" style="touch-action:none"></canvas></div>
-      <div id="game-controls" class="pb-safe"></div>
-    </div>`;
+  tplGameShell(config,diff){
+    const maxSec=(Store.getSettings().maxPlayMinutes||30)*60;
+    return '<div class="fixed inset-0 bg-cream z-50 flex flex-col"><div id="countdown-timer" class="fixed top-4 right-4 z-[100] bg-white/90 backdrop-blur rounded-2xl shadow-lg px-3 py-2 flex items-center gap-2 text-sm" style="top:calc(env(safe-area-inset-top,16px)+4px)" data-max="'+maxSec+'" data-remaining="'+maxSec+'"><span>⏱️</span><span id="countdown-display" class="font-bold text-gray-700">'+Utils.fmtMMSS(maxSec)+'</span></div><div class="flex items-center justify-between px-4 py-3 pt-safe"><button onclick="GameEngine.exitGame();Audio.click()" class="w-12 h-12 flex items-center justify-center -ml-2 text-2xl text-gray-500 relative z-[200]" style="touch-action:auto">✕</button><div class="text-center"><div class="font-bold text-gray-800">'+config.icon+' '+config.name+'</div><div class="text-xs text-gray-400">'+'★'.repeat(diff)+'☆'.repeat(5-diff)+'</div></div><div class="w-10 text-right text-sm text-gray-500" id="game-progress-text"></div></div><div class="px-4 pb-2"><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div id="game-progress-bar" class="h-full rounded-full transition-all duration-300" style="width:0%;background:'+config.color+'"></div></div></div><div class="flex-1 relative" id="game-canvas-host"><canvas id="game-canvas" class="absolute inset-0 w-full h-full" style="touch-action:none"></canvas></div><div id="game-controls" class="pb-safe"></div></div>';
   }
 };
 
 // ============================================================
-// 辅助绘图函数
+// 共用颜色面板
 // ============================================================
-const DrawUtils = {
-  drawRoundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
-  }
-};
+const PALETTE_COLORS = ['#FF4444','#FF8C00','#FFD700','#4ADE80','#4488FF','#9B6BFF','#EC4899','#8B4513','#333333','#FFFFFF'];
+const PALETTE_NAMES = ['红','橙','黄','绿','蓝','紫','粉','棕','黑','白'];
 
 // ============================================================
 // GAME_CONFIGS
 // ============================================================
 const GAME_CONFIGS = {
-  dotconnect: {
-    id:'dotconnect', name:'点连线', icon:'🖍️', color:'#4A9EFF', category:'fine',
-    desc:'按顺序连接圆点画出图形', clinical:'手眼协调 + 顺序思维',
-    difficulties: {
-      1:{dots:6,radius:18,levels:4},
-      2:{dots:10,radius:16,levels:5},
-      3:{dots:14,radius:14,levels:6},
-      4:{dots:18,radius:12,levels:7},
-      5:{dots:22,radius:10,levels:8}
-    }
-  },
   colorfill: {
-    id:'colorfill', name:'涂色', icon:'🎨', color:'#EC4899', category:'fine',
-    desc:'在轮廓内涂抹填充颜色', clinical:'精细控制 + 颜色辨别',
-    difficulties: {
-      1:{targetPct:0.6,brushR:28,levels:4},
-      2:{targetPct:0.7,brushR:24,levels:5},
-      3:{targetPct:0.78,brushR:20,levels:6},
-      4:{targetPct:0.85,brushR:16,levels:7},
-      5:{targetPct:0.9,brushR:12,levels:8}
-    }
+    id:'colorfill',name:'涂色',icon:'🎨',color:'#EC4899',
+    desc:'选择颜色给图案涂色',clinical:'精细控制+颜色辨别',
+    difficulties:{1:{targetPct:0.9,brushR:22,levels:3},2:{targetPct:0.9,brushR:18,levels:4},3:{targetPct:0.9,brushR:14,levels:5},4:{targetPct:0.9,brushR:11,levels:6},5:{targetPct:0.9,brushR:8,levels:7}}
   },
-  symmetry: {
-    id:'symmetry', name:'对称画', icon:'🪞', color:'#10B981', category:'fine',
-    desc:'画出对称的另一半', clinical:'空间对称感知 + 精细运动',
-    difficulties: {
-      1:{points:4,tolerance:30,levels:4},
-      2:{points:6,tolerance:24,levels:5},
-      3:{points:8,tolerance:20,levels:6},
-      4:{points:10,tolerance:16,levels:7},
-      5:{points:12,tolerance:12,levels:8}
-    }
+  traceline: {
+    id:'traceline',name:'描线画图',icon:'✏️',color:'#4A9EFF',
+    desc:'沿虚线描出动物轮廓',clinical:'手眼协调+精细运动',
+    difficulties:{1:{tolerance:28,levels:3},2:{tolerance:22,levels:4},3:{tolerance:17,levels:5},4:{tolerance:13,levels:6},5:{tolerance:10,levels:7}}
   },
-  papercut: {
-    id:'papercut', name:'剪窗花', icon:'✂️', color:'#F97316', category:'fine',
-    desc:'在折叠纸上剪出窗花', clinical:'空间想象 + 精细运动',
-    difficulties: {
-      1:{cuts:2,tolerance:22,levels:4},
-      2:{cuts:3,tolerance:18,levels:5},
-      3:{cuts:4,tolerance:15,levels:6},
-      4:{cuts:5,tolerance:12,levels:7},
-      5:{cuts:6,tolerance:10,levels:8}
-    }
+  dotdraw: {
+    id:'dotdraw',name:'虚线画图',icon:'🖼️',color:'#10B981',
+    desc:'参考左图描右图并涂色',clinical:'空间感知+精细运动+颜色辨别',
+    difficulties:{1:{tolerance:28,brushR:20,levels:3},2:{tolerance:22,brushR:16,levels:4},3:{tolerance:17,brushR:13,levels:5},4:{tolerance:13,brushR:10,levels:6},5:{tolerance:10,brushR:8,levels:7}}
   }
 };
 
 // ============================================================
-// 游戏1：点连线 DotConnectGame
+// 动物/形状轮廓数据
 // ============================================================
-class DotConnectGame extends BaseGame {
-  onStart() {
-    const cfg = GAME_CONFIGS.dotconnect.difficulties[this.difficulty];
-    this.cfg = cfg; this.targetTrials = cfg.levels; this.currentLevel = 0;
-    this.setupBg('dots', ['#222222','#FFFFFF'], 40, 15, 'diagonal', ['#FF4444','#4488FF'], 35, 12);
-    this._genLevel();
-  }
-  _genLevel() {
-    const cfg = this.cfg;
-    const shapes = this._getShape(cfg.dots);
-    this.dots = shapes.dots; this.shapeName = shapes.name;
-    this.dots.forEach((d,i) => { d.idx = i; d.connected = false; });
-    this.nextIdx = 0; this.connections = []; this.feedback = null; this.feedbackTime = 0;
-    this.levelStartTime = performance.now();
-  }
-  _getShape(n) {
-    const cx = this.W/2, cy = this.H/2, r = Math.min(this.W,this.H)*0.35;
-    const shapes = {
-      star: (n) => { const pts=[]; for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2;const rr=i%2===0?r:r*0.45;pts.push({x:cx+Math.cos(a)*rr,y:cy+Math.sin(a)*rr});} return pts; },
-      fish: (n) => { const pts=[]; for(let i=0;i<n;i++){const t=i/(n-1);pts.push({x:cx-Math.cos(t*Math.PI*1.5)*r*0.7+Math.sin(t*Math.PI*1.5)*r*0.3,y:cy+Math.sin(t*Math.PI)*r*0.6+(t-0.5)*r*0.4});} return pts; },
-      rabbit: (n) => { const pts=[]; for(let i=0;i<n;i++){const t=i/(n-1)*Math.PI*2;const rx=r*0.7,ry=r*0.9;pts.push({x:cx+Math.cos(t)*rx*0.8,y:cy+Math.sin(t)*ry-(t<Math.PI?r*0.3:0)});} return pts; },
-      house: (n) => { const pts=[]; const w=r*1.2,h=r*0.8; for(let i=0;i<n;i++){const t=i/(n-1);if(t<0.25)pts.push({x:cx-w+t*4*w,y:cy-h});else if(t<0.5)pts.push({x:cx+w,y:cy-h+(t-0.25)*4*h});else if(t<0.75)pts.push({x:cx+w-(t-0.5)*4*w,y:cy+h});else pts.push({x:cx-w,y:cy+h-(t-0.75)*4*h});} pts.splice(Math.floor(pts.length*0.25),0,{x:cx,y:cy-h*1.8}); return pts; },
-      flower: (n) => { const pts=[]; for(let i=0;i<n;i++){const a=i/n*Math.PI*2;const rr=i%2===0?r:r*0.3;pts.push({x:cx+Math.cos(a)*rr,y:cy+Math.sin(a)*rr});} return pts; }
-    };
-    const keys = Object.keys(shapes);
-    const key = keys[Utils.randInt(0,keys.length-1)];
-    const dots = shapes[key](n);
-    // 打乱dot顺序（第一个固定为0号）
-    const shuffled = [{...dots[0], idx:0}];
-    const rest = Utils.shuffle(dots.slice(1).map((d,i)=>({...d,idx:i+1})));
-    // 按角度排序使连线不交叉
-    rest.sort((a,b) => Math.atan2(a.y-cy,a.x-cx) - Math.atan2(b.y-cy,b.x-cx));
-    return { dots: [dots[0], ...rest.map((r,i)=>({x:r.x,y:r.y}))], name: key };
-  }
-  onInput(e) {
-    if (this.finished || this.feedback) return;
-    if (e.type !== 'pointerdown') return;
-    let hit = null;
-    for (const d of this.dots) {
-      if (d.connected) continue;
-      if (d.idx !== this.nextIdx) continue;
-      if (Utils.dist(e.x,e.y,d.x,d.y) <= this.cfg.radius*2) { hit = d; break; }
-    }
-    if (!hit) { this.recordResult(false, performance.now()-this.levelStartTime); Audio.mistake(); return; }
-    hit.connected = true;
-    if (this.nextIdx > 0) {
-      const prev = this.dots.find(d=>d.idx===this.nextIdx-1);
-      if (prev) this.connections.push({ from: prev, to: hit });
-    }
-    this.nextIdx++; Audio.click();
-    if (this.nextIdx >= this.cfg.dots) {
-      const rt = performance.now()-this.levelStartTime;
-      this.recordResult(true, rt/this.cfg.dots);
-      Audio.success();
-      this.feedback = 'correct'; this.feedbackTime = performance.now();
-    }
-  }
-  onUpdate(dt) {
-    if (this.finished) return;
-    if (this.feedback && performance.now()-this.feedbackTime > 800) {
-      this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials+=this.cfg.levels; this.currentLevel=0; this._genLevel(); } return; }
-      this._genLevel();
-    }
-  }
-  onRender(ctx) {
-    ctx.clearRect(0,0,this.W,this.H); this.drawScrollingBg(ctx);
-    ctx.fillStyle = '#FFF'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
-    ctx.strokeText(`点连线 · ${this.shapeName} · ${this.currentLevel+1}/${this.cfg.levels}`,this.W/2,30);
-    ctx.fillText(`点连线 · ${this.shapeName} · ${this.currentLevel+1}/${this.cfg.levels}`,this.W/2,30);
-    // 连线
-    ctx.strokeStyle = '#FFB84D'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    this.connections.forEach(c => { ctx.beginPath(); ctx.moveTo(c.from.x,c.from.y); ctx.lineTo(c.to.x,c.to.y); ctx.stroke(); });
-    // 圆点
-    this.dots.forEach(d => {
-      const isNext = d.idx === this.nextIdx && !d.connected;
-      const isDone = d.connected;
-      ctx.beginPath(); ctx.arc(d.x,d.y,this.cfg.radius,0,Math.PI*2);
-      ctx.fillStyle = isDone ? '#4ADE80' : isNext ? '#FFB84D' : '#E0E0E0';
-      ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#000'; ctx.font = `bold ${this.cfg.radius}px sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(d.idx+1, d.x, d.y);
-    });
-  }
+const SHAPES = {
+  fish:[{x:0.5,y:0.2},{x:0.85,y:0.5},{x:0.5,y:0.8},{x:0.2,y:0.5}],
+  star:[{x:0.5,y:0.08},{x:0.62,y:0.35},{x:0.92,y:0.38},{x:0.68,y:0.58},{x:0.78,y:0.88},{x:0.5,y:0.7},{x:0.22,y:0.88},{x:0.32,y:0.58},{x:0.08,y:0.38},{x:0.38,y:0.35}],
+  cat:[{x:0.35,y:0.15},{x:0.5,y:0.05},{x:0.65,y:0.15},{x:0.8,y:0.35},{x:0.75,y:0.6},{x:0.9,y:0.85},{x:0.6,y:0.7},{x:0.5,y:0.9},{x:0.4,y:0.7},{x:0.1,y:0.85},{x:0.25,y:0.6},{x:0.2,y:0.35}],
+  rabbit:[{x:0.4,y:0.05},{x:0.5,y:0.02},{x:0.6,y:0.1},{x:0.7,y:0.25},{x:0.8,y:0.2},{x:0.85,y:0.3},{x:0.75,y:0.45},{x:0.85,y:0.6},{x:0.75,y:0.75},{x:0.6,y:0.8},{x:0.5,y:0.85},{x:0.3,y:0.8},{x:0.2,y:0.7},{x:0.25,y:0.5},{x:0.15,y:0.4},{x:0.25,y:0.3}],
+  butterfly:[{x:0.5,y:0.1},{x:0.7,y:0.15},{x:0.85,y:0.4},{x:0.6,y:0.5},{x:0.7,y:0.7},{x:0.5,y:0.55},{x:0.3,y:0.7},{x:0.4,y:0.5},{x:0.15,y:0.4},{x:0.3,y:0.15}],
+  house:[{x:0.5,y:0.05},{x:0.9,y:0.4},{x:0.9,y:0.9},{x:0.1,y:0.9},{x:0.1,y:0.4}],
+  flower:[{x:0.5,y:0.05},{x:0.65,y:0.25},{x:0.9,y:0.3},{x:0.7,y:0.5},{x:0.78,y:0.75},{x:0.5,y:0.6},{x:0.22,y:0.75},{x:0.3,y:0.5},{x:0.1,y:0.3},{x:0.35,y:0.25}],
+  heart:[{x:0.5,y:0.85},{x:0.85,y:0.4},{x:0.6,y:0.15},{x:0.5,y:0.3},{x:0.4,y:0.15},{x:0.15,y:0.4}]
+};
+
+function getShapeOutline(shapeName,cx,cy,size){
+  const pts=SHAPES[shapeName];if(!pts)return[];
+  return pts.map(p=>({x:cx+(p.x-0.5)*size*2,y:cy+(p.y-0.5)*size*2}));
 }
-GAME_REGISTRY.dotconnect = DotConnectGame;
+
+// 生成虚线点（在轮廓线上均匀采样）
+function generateDottedOutline(outline,n){
+  if(outline.length<2)return[];
+  // 计算总长度
+  let totalLen=0;const segs=[];
+  for(let i=0;i<outline.length;i++){const a=outline[i],b=outline[(i+1)%outline.length];const len=Utils.dist(a.x,a.y,b.x,b.y);segs.push({a,b,len});totalLen+=len}
+  // 均匀采样
+  const dots=[],step=totalLen/n;
+  let cur=0,segIdx=0,segPos=0;
+  for(let i=0;i<n;i++){
+    const target=i*step;
+    while(cur+segs[segIdx].len<target&&segIdx<segs.length-1){cur+=segs[segIdx].len;segIdx++}
+    const t=Math.min(1,Math.max(0,(target-cur)/segs[segIdx].len));
+    const a=segs[segIdx].a,b=segs[segIdx].b;
+    dots.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+  }
+  return dots;
+}
 
 // ============================================================
-// 游戏2：涂色 ColorFillGame
+// 游戏1：涂色 ColorFillGame
 // ============================================================
 class ColorFillGame extends BaseGame {
-  onStart() {
-    const cfg = GAME_CONFIGS.colorfill.difficulties[this.difficulty];
-    this.cfg = cfg; this.targetTrials = cfg.levels; this.currentLevel = 0;
+  onStart(){
+    const cfg=GAME_CONFIGS.colorfill.difficulties[this.difficulty];
+    this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
+    this.activeColor=PALETTE_COLORS[0];
     this.setupColorSwitchBg();
-    this._initOffscreen();
-    this._genLevel();
+    this._initOffscreen();this._genLevel();
+    this._renderPalette();
   }
-  _initOffscreen() {
-    this.offscreen = document.createElement('canvas');
-    this.offscreen.width = Math.floor(this.W); this.offscreen.height = Math.floor(this.H);
-    this.octx = this.offscreen.getContext('2d');
-    this.filled = new Uint8Array(Math.floor(this.W)*Math.floor(this.H));
+  _initOffscreen(){this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filled=new Uint8Array(Math.floor(this.W)*Math.floor(this.H))}
+  _renderPalette(){
+    const ctrl=document.getElementById('game-controls');if(!ctrl)return;
+    ctrl.innerHTML='<div class="flex justify-center gap-2 p-2 flex-wrap max-w-md mx-auto">'+PALETTE_COLORS.map((c,i)=>'<button data-color="'+c+'" class="color-btn w-10 h-10 rounded-full border-2 '+(c===this.activeColor?'border-gray-800 scale-110':'border-gray-300')+'" style="background:'+c+'"></button>').join('')+'</div>';
+    ctrl.querySelectorAll('[data-color]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.color;this._renderPalette();Audio.click()})});
   }
-  _genLevel() {
-    const cfg = this.cfg;
-    const shapes = ['star','heart','fish','butterfly','apple','house','flower','tree'];
-    this.shapeType = shapes[Utils.randInt(0,shapes.length-1)];
-    const colors = ['#FF6B6B','#4A9EFF','#FFB84D','#4ADE80','#9B6BFF','#EC4899'];
-    this.targetColor = colors[Utils.randInt(0,colors.length-1)];
-    this.filled.fill(0);
-    // 绘制轮廓到offscreen
-    const ctx = this.octx, w = this.W, h = this.H;
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 3; ctx.fillStyle = '#F8F8F8';
-    const cx=w/2, cy=h/2, r=Math.min(w,h)*0.3;
-    this._drawShape(ctx, cx, cy, r, this.shapeType);
-    ctx.fill(); ctx.stroke();
-    this.filledPixels = 0; this.totalPixels = 0;
-    // 计算轮廓内总像素
-    const imgData = ctx.getImageData(0,0,w,h).data;
-    for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
-      const i = (y*w+x)*4;
-      if (imgData[i]<250||imgData[i+1]<250||imgData[i+2]<250) this.totalPixels++;
+  _genLevel(){
+    const cfg=this.cfg;this.filled.fill(0);this.filledPixels=0;
+    const ctx=this.octx,w=Math.floor(this.W),h=Math.floor(this.H);
+    ctx.clearRect(0,0,w,h);ctx.fillStyle='#FFF';ctx.fillRect(0,0,w,h);
+    const keys=Object.keys(SHAPES);this.shapeName=keys[Utils.randInt(0,keys.length-1)];
+    const cx=this.W/2,cy=this.H/2,r=Math.min(this.W,this.H)*0.32;
+    this.outline=getShapeOutline(this.shapeName,cx,cy,r);
+    // 画轮廓
+    ctx.beginPath();ctx.moveTo(this.outline[0].x,this.outline[0].y);
+    for(let i=1;i<this.outline.length;i++)ctx.lineTo(this.outline[i].x,this.outline[i].y);
+    ctx.closePath();ctx.fillStyle='#F8F8F8';ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=3;ctx.stroke();
+    // 统计填充像素
+    const img=ctx.getImageData(0,0,w,h).data;this.totalPixels=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(img[i]<250||img[i+1]<250||img[i+2]<250)this.totalPixels++}
+    this.completion=0;this.isDrawing=false;this.feedback=null;this.feedbackTime=0;this.levelStartTime=performance.now();
+  }
+  onInput(e){
+    if(this.finished||this.feedback)return;
+    if(e.type==='pointerdown')this.isDrawing=true;
+    if(e.type==='pointerup')this.isDrawing=false;
+    if(!this.isDrawing&&e.type!=='move')return;
+    if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
+    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.cfg.brushR;
+    for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+      if(dx*dx+dy*dy>br*br)continue;
+      const px=x+dx,py=y+dy;if(px<0||py<0||px>=Math.floor(this.W)||py>=Math.floor(this.H))continue;
+      const idx=py*Math.floor(this.W)+px;if(this.filled[idx])continue;
+      const pd=ctx.getImageData(px,py,1,1).data;
+      if(pd[0]<250||pd[1]<250||pd[2]<250){this.filled[idx]=1;this.filledPixels++}
     }
-    this.isDrawing = false; this.completion = 0; this.feedback = null; this.feedbackTime = 0;
-    this.levelStartTime = performance.now();
-    // 重绘纯轮廓
-    ctx.clearRect(0,0,w,h); ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 3; ctx.fillStyle = '#F8F8F8';
-    this._drawShape(ctx,cx,cy,r,this.shapeType); ctx.fill(); ctx.stroke();
-  }
-  _drawShape(ctx, cx, cy, r, type) {
-    ctx.beginPath();
-    switch(type) {
-      case 'star': for(let i=0;i<10;i++){const a=i/10*Math.PI*2-Math.PI/2,rr=i%2===0?r:r*0.4;i===0?ctx.moveTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr):ctx.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);} break;
-      case 'heart': ctx.moveTo(cx,cy+r*0.8);ctx.bezierCurveTo(cx-r*1.2,cy-r*0.3,cx-r*0.5,cy-r*0.9,cx,cy-r*0.4);ctx.bezierCurveTo(cx+r*0.5,cy-r*0.9,cx+r*1.2,cy-r*0.3,cx,cy+r*0.8); break;
-      case 'fish': ctx.ellipse(cx,cy,r*0.8,r*0.5,0,0,Math.PI*2);ctx.moveTo(cx+r*0.8,cy);ctx.lineTo(cx+r*1.3,cy-r*0.4);ctx.lineTo(cx+r*1.3,cy+r*0.4);ctx.closePath(); break;
-      case 'butterfly': ctx.ellipse(cx-r*0.3,cy,r*0.5,r*0.7,0.2,0,Math.PI*2);ctx.ellipse(cx+r*0.3,cy,r*0.5,r*0.7,-0.2,0,Math.PI*2); break;
-      case 'apple': ctx.arc(cx,cy+r*0.1,r*0.7,0,Math.PI*2);ctx.moveTo(cx,cy-r*0.5);ctx.lineTo(cx,cy-r*0.9); break;
-      case 'house': ctx.moveTo(cx-r,cy+r*0.3);ctx.lineTo(cx-r,cy-r*0.1);ctx.lineTo(cx,cy-r*0.7);ctx.lineTo(cx+r,cy-r*0.1);ctx.lineTo(cx+r,cy+r*0.3);ctx.closePath(); break;
-      case 'flower': for(let i=0;i<5;i++){const a=i/5*Math.PI*2;ctx.arc(cx+Math.cos(a)*r*0.4,cy+Math.sin(a)*r*0.4,r*0.4,0,Math.PI*2);} break;
-      case 'tree': ctx.moveTo(cx,cy-r);ctx.lineTo(cx-r*0.4,cy-r*0.3);ctx.lineTo(cx-r*0.2,cy-r*0.3);ctx.lineTo(cx-r*0.6,cy+r*0.1);ctx.lineTo(cx-r*0.3,cy+r*0.1);ctx.lineTo(cx,cy+r*0.8);ctx.lineTo(cx+r*0.3,cy+r*0.1);ctx.lineTo(cx+r*0.6,cy+r*0.1);ctx.lineTo(cx+r*0.2,cy-r*0.3);ctx.lineTo(cx+r*0.4,cy-r*0.3);ctx.closePath(); break;
+    this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
+    if(this.completion>=this.cfg.targetPct&&!this.feedback){
+      const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now();
     }
   }
-  onInput(e) {
-    if (this.finished || this.feedback) return;
-    if (e.type==='pointerdown') this.isDrawing=true;
-    if (e.type==='pointerup') this.isDrawing=false;
-    if (!this.isDrawing && e.type!=='move') return;
-    if (e.x<0||e.y<0||e.x>=this.W||e.y>=this.H) return;
-    // 涂抹填充
-    const ctx = this.octx, x=Math.floor(e.x), y=Math.floor(e.y);
-    const r = this.cfg.brushR;
-    for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) {
-      if (dx*dx+dy*dy>r*r) continue;
-      const px=x+dx, py=y+dy;
-      if (px<0||py<0||px>=this.W||py>=this.H) continue;
-      const idx = py*Math.floor(this.W)+px;
-      if (this.filled[idx]) continue;
-      // 检查是否在轮廓内
-      const pd = ctx.getImageData(px,py,1,1).data;
-      if (pd[0]<250||pd[1]<250||pd[2]<250) { this.filled[idx]=1; this.filledPixels++; }
-    }
-    this.completion = this.totalPixels?this.filledPixels/this.totalPixels:0;
-    if (this.completion >= this.cfg.targetPct && !this.feedback) {
-      const rt = performance.now()-this.levelStartTime;
-      this.recordResult(true, rt);
-      Audio.success();
-      this.feedback = 'done'; this.feedbackTime = performance.now();
-    }
+  onUpdate(dt){
+    if(this.finished)return;
+    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
   }
-  onUpdate(dt) {
-    if (this.finished) return;
-    if (this.feedback && performance.now()-this.feedbackTime > 600) {
-      this.currentLevel++;
-      if (this.currentLevel>=this.cfg.levels) { if (!this.finish()) { this.targetTrials+=this.cfg.levels; this.currentLevel=0; this._genLevel(); } return; }
-      this._genLevel();
-    }
-  }
-  onRender(ctx) {
-    ctx.clearRect(0,0,this.W,this.H); this.drawScrollingBg(ctx);
-    // 复制离线canvas并着色已填充像素
-    const imgData = this.octx.getImageData(0,0,Math.floor(this.W),Math.floor(this.H));
-    const r=parseInt(this.targetColor.slice(1,3),16), g=parseInt(this.targetColor.slice(3,5),16), b=parseInt(this.targetColor.slice(5,7),16);
-    for (let i=0;i<this.filled.length;i++) {
-      if (this.filled[i]) { const idx=i*4; imgData.data[idx]=r; imgData.data[idx+1]=g; imgData.data[idx+2]=b; }
-    }
-    // 用临时canvas合成
-    const tmp = document.createElement('canvas'); tmp.width=imgData.width; tmp.height=imgData.height;
-    tmp.getContext('2d').putImageData(imgData,0,0);
+  onRender(ctx){
+    ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
+    const r=parseInt(this.activeColor.slice(1,3),16),g=parseInt(this.activeColor.slice(3,5),16),b=parseInt(this.activeColor.slice(5,7),16);
+    const imgData=this.octx.getImageData(0,0,Math.floor(this.W),Math.floor(this.H));
+    for(let i=0;i<this.filled.length;i++){if(this.filled[i]){const idx=i*4;imgData.data[idx]=r;imgData.data[idx+1]=g;imgData.data[idx+2]=b}}
+    const tmp=document.createElement('canvas');tmp.width=imgData.width;tmp.height=imgData.height;tmp.getContext('2d').putImageData(imgData,0,0);
     ctx.drawImage(tmp,0,0);
-    // 进度提示
-    ctx.fillStyle = '#FFF'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
-    ctx.strokeText(`涂色 · ${Math.round(this.completion*100)}% · ${this.currentLevel+1}/${this.cfg.levels}`,this.W/2,24);
-    ctx.fillText(`涂色 · ${Math.round(this.completion*100)}% · ${this.currentLevel+1}/${this.cfg.levels}`,this.W/2,24);
+    ctx.fillStyle='#FFF';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    ctx.strokeText('涂色·'+Math.round(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    ctx.fillText('涂色·'+Math.round(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
   }
 }
-GAME_REGISTRY.colorfill = ColorFillGame;
+GAME_REGISTRY.colorfill=ColorFillGame;
 
 // ============================================================
-// 游戏3：对称画 SymmetryDrawGame
+// 游戏2：描线画图 TraceLineGame
 // ============================================================
-class SymmetryDrawGame extends BaseGame {
-  onStart() {
-    const cfg = GAME_CONFIGS.symmetry.difficulties[this.difficulty];
-    this.cfg = cfg; this.targetTrials = cfg.levels; this.currentLevel = 0;
-    this.setupBg('hstripes', ['#FF4444','#44CC44'], 40, 25, 'diagonal', ['#222222','#FFFFFF'], 35, 20);
-    this.userPath = []; this.isDrawing = false; this.mirrorX = this.W/2;
-    this._genLevel();
+class TraceLineGame extends BaseGame {
+  onStart(){
+    const cfg=GAME_CONFIGS.traceline.difficulties[this.difficulty];
+    this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
+    this.setupBg('diagonal',['#FF4444','#4488FF'],40,25,'zigzag',['#222222','#FFFFFF'],35,20);
+    this.userPath=[];this.isDrawing=false;this._genLevel();
   }
-  _genLevel() {
-    const cfg = this.cfg; const w=this.W, h=this.H;
-    this.mirrorX = w/2; const cx = this.mirrorX, cy = h/2;
-    this.targetPoints = [];
-    const r = Math.min(w*0.3, h*0.35);
-    for (let i=0;i<cfg.points;i++) {
-      const a = i/cfg.points*Math.PI*2-Math.PI/2+Utils.rand(-0.3,0.3);
-      const rr = r*Utils.rand(0.5,1);
-      this.targetPoints.push({ x: cx-Math.cos(a)*rr*0.6, y: cy+Math.sin(a)*rr });
-    }
-    this.userPath = []; this.isDrawing = false; this.feedback = null; this.feedbackTime = 0;
-    this.levelStartTime = performance.now();
+  _genLevel(){
+    const cfg=this.cfg;const keys=Object.keys(SHAPES);
+    this.shapeName=keys[Utils.randInt(0,keys.length-1)];
+    const cx=this.W/2,cy=this.H/2,r=Math.min(this.W,this.H)*0.32;
+    this.outline=getShapeOutline(this.shapeName,cx,cy,r);
+    // 生成虚线点
+    this.dots=generateDottedOutline(this.outline,Math.max(20,Math.floor(40-this.difficulty*3)));
+    // 渐隐首尾标记：起点绿色大点，终点红色大点
+    this.startDot=this.dots[0];this.endDot=this.dots[this.dots.length-1];
+    this.userPath=[];this.isDrawing=false;this.hasStarted=false;
+    this.feedback=null;this.feedbackTime=0;this.levelStartTime=performance.now();
   }
-  onInput(e) {
-    if (this.finished || this.feedback) return;
-    if (e.type==='pointerdown' && e.x>this.mirrorX) { this.isDrawing=true; this.userPath=[]; }
-    if (e.type==='pointermove' && this.isDrawing) { const p={x:Utils.clamp(e.x,this.mirrorX+5,this.W-5),y:Utils.clamp(e.y,5,this.H-5)}; this.userPath.push(p); }
-    if (e.type==='pointerup' && this.isDrawing) { this.isDrawing=false; this._check(); }
+  onInput(e){
+    if(this.finished||this.feedback)return;
+    if(e.type==='pointerdown'){this.isDrawing=true;this.userPath=[];this.hasStarted=false}
+    if(e.type==='pointermove'&&this.isDrawing){this.userPath.push({x:e.x,y:e.y});if(!this.hasStarted&&this.userPath.length>=2)this.hasStarted=true}
+    if(e.type==='pointerup'&&this.isDrawing){this.isDrawing=false;if(this.userPath.length>=5)this._check()}
   }
-  _check() {
-    if (this.userPath.length<3) return;
-    // 镜像用户路径到左边，与目标点对比
-    let totalDist = 0; const targetSet = [...this.targetPoints];
-    const userMirrored = this.userPath.map(p=>({x:2*this.mirrorX-p.x, y:p.y}));
-    for (const tp of targetSet) {
-      let minD = Infinity;
-      for (const up of userMirrored) { const d=Utils.dist(tp.x,tp.y,up.x,up.y); if(d<minD)minD=d; }
-      totalDist += minD;
-    }
-    const avgDist = totalDist/this.targetPoints.length;
-    if (avgDist <= this.cfg.tolerance*2) {
-      const rt = performance.now()-this.levelStartTime;
-      this.recordResult(true, rt); Audio.success(); this.feedback='correct';
-    } else if (avgDist <= this.cfg.tolerance*3) {
-      const rt = performance.now()-this.levelStartTime;
-      this.recordResult(true, rt); Audio.success(); this.feedback='correct';
-    } else {
-      this.recordResult(false, performance.now()-this.levelStartTime);
-      Audio.mistake(); this.feedback='wrong';
-    }
-    this.feedbackTime = performance.now();
+  _check(){
+    // 计算用户路径与虚线点的匹配度
+    let score=0;const n=Math.min(this.dots.length,40);
+    const sampledDots=[];for(let i=0;i<n;i++)sampledDots.push(this.dots[Math.floor(i/n*this.dots.length)]);
+    // 对每个采样点找最近用户点
+    for(const dot of sampledDots){let md=Infinity;for(const p of this.userPath){const d=Utils.dist(dot.x,dot.y,p.x,p.y);if(d<md)md=d}if(md<=this.cfg.tolerance*2)score++}
+    const acc=score/sampledDots.length;
+    if(acc>=0.6){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='correct'}
+    else{this.recordResult(false,performance.now()-this.levelStartTime);Audio.mistake();this.feedback='wrong'}
+    this.feedbackTime=performance.now();
   }
-  onUpdate(dt) {
-    if (this.finished) return;
-    if (this.feedback && performance.now()-this.feedbackTime>800) {
-      this.currentLevel++;
-      if (this.currentLevel>=this.cfg.levels) { if (!this.finish()) { this.targetTrials+=this.cfg.levels; this.currentLevel=0; this._genLevel(); } return; }
-      this._genLevel();
-    }
+  onUpdate(dt){
+    if(this.finished)return;
+    if(this.feedback&&performance.now()-this.feedbackTime>800){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
   }
-  onRender(ctx) {
-    ctx.clearRect(0,0,this.W,this.H); this.drawScrollingBg(ctx);
-    // 中线
-    ctx.strokeStyle = '#CCC'; ctx.lineWidth = 1; ctx.setLineDash([5,5]);
-    ctx.beginPath(); ctx.moveTo(this.mirrorX,0); ctx.lineTo(this.mirrorX,this.H); ctx.stroke(); ctx.setLineDash([]);
-    // 提示
-    ctx.fillStyle = '#FFF'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-    ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
-    ctx.strokeText('参考',this.mirrorX/2,24); ctx.fillText('参考',this.mirrorX/2,24);
-    ctx.strokeText('在这里画对称图形 →',this.mirrorX+this.mirrorX/2,24); ctx.fillText('在这里画对称图形 →',this.mirrorX+this.mirrorX/2,24);
-    // 目标点（左半）
-    this.targetPoints.forEach(p => { ctx.fillStyle='#FFB84D';ctx.beginPath();ctx.arc(p.x,p.y,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke(); });
-    // 连线目标点
-    if (this.targetPoints.length>1) { ctx.strokeStyle='#FFB84D';ctx.lineWidth=3;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(this.targetPoints[0].x,this.targetPoints[0].y);for(let i=1;i<this.targetPoints.length;i++)ctx.lineTo(this.targetPoints[i].x,this.targetPoints[i].y);ctx.closePath();ctx.stroke();ctx.setLineDash([]); }
-    // 用户路径（右半）
-    if (this.userPath.length>1) { ctx.strokeStyle='#4A9EFF';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(this.userPath[0].x,this.userPath[0].y);for(let i=1;i<this.userPath.length;i++)ctx.lineTo(this.userPath[i].x,this.userPath[i].y);ctx.stroke(); }
+  onRender(ctx){
+    ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
+    // 标题
+    ctx.fillStyle='#FFF';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    ctx.strokeText('描线·'+this.shapeName+'·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    ctx.fillText('描线·'+this.shapeName+'·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    // 虚线点
+    this.dots.forEach(d=>{ctx.fillStyle='#888';ctx.beginPath();ctx.arc(d.x,d.y,3,0,Math.PI*2);ctx.fill()});
+    // 起点标记
+    ctx.fillStyle='#4ADE80';ctx.beginPath();ctx.arc(this.startDot.x,this.startDot.y,7,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
+    // 终点标记
+    ctx.fillStyle='#FF6B6B';ctx.beginPath();ctx.arc(this.endDot.x,this.endDot.y,7,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // 用户路径
+    if(this.userPath.length>1){ctx.strokeStyle='#4A9EFF';ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(this.userPath[0].x,this.userPath[0].y);for(let i=1;i<this.userPath.length;i++)ctx.lineTo(this.userPath[i].x,this.userPath[i].y);ctx.stroke()}
     // 反馈
-    if (this.feedback) {
-      ctx.fillStyle = this.feedback==='correct'?'#4ADE80':'#FF6B6B';
-      ctx.font='bold 24px sans-serif'; ctx.textAlign='center';
-      ctx.fillText(this.feedback==='correct'?'✓':'✗',this.W*3/4,this.H-30);
-    }
-  }
-}
-GAME_REGISTRY.symmetry = SymmetryDrawGame;
-
-// ============================================================
-// 游戏4：剪窗花 PaperCutGame
-// ============================================================
-class PaperCutGame extends BaseGame {
-  onStart() {
-    const cfg = GAME_CONFIGS.papercut.difficulties[this.difficulty];
-    this.cfg = cfg; this.targetTrials = cfg.levels; this.currentLevel = 0;
-    this.setupBg('diagonal', ['#FF4444','#4488FF'], 40, 25, 'zigzag', ['#222222','#FFFFFF'], 35, 20);
-    this.userCuts = []; this.isDrawing = false;
-    this._genLevel();
-  }
-  _genLevel() {
-    const cfg = this.cfg;
-    const cx = this.W/2, cy = this.H/2, r = Math.min(this.W,this.H)*0.35;
-    // 生成扇形目标切割线（显示在四分之一扇区）
-    this.sectorCenter = { x: this.W*0.75, y: this.H*0.7 };
-    this.sectorRadius = r;
-    this.targetCuts = [];
-    for (let i=0;i<cfg.cuts;i++) {
-      const a1 = Utils.rand(-Math.PI/2, 0);
-      const a2 = Utils.rand(a1+0.3, Math.min(a1+1.2,0));
-      const d1 = r*Utils.rand(0.2,0.7), d2 = r*Utils.rand(0.2,0.7);
-      this.targetCuts.push({ a1,d1,a2,d2 });
-    }
-    this.userCuts = []; this.currentCut = []; this.isDrawing = false;
-    this.feedback = null; this.feedbackTime = 0;
-    this.levelStartTime = performance.now();
-  }
-  onInput(e) {
-    if (this.finished || this.feedback) return;
-    if (e.type==='pointerdown') { this.isDrawing=true; this.currentCut=[]; }
-    if (e.type==='pointermove' && this.isDrawing) {
-      const dx=e.x-this.sectorCenter.x, dy=e.y-this.sectorCenter.y;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if (dist<this.sectorRadius*1.1 && e.x>=this.sectorCenter.x-10 && e.y<=this.sectorCenter.y+10) {
-        this.currentCut.push({x:e.x,y:e.y});
-      }
-    }
-    if (e.type==='pointerup' && this.isDrawing) {
-      this.isDrawing=false;
-      if (this.currentCut.length>2) { this.userCuts.push([...this.currentCut]); Audio.click(); }
-      this.currentCut=[];
-    }
-  }
-  _checkCuts() {
-    if (this.userCuts.length < this.cfg.cuts) return false;
-    let score = 0;
-    for (const tc of this.targetCuts) {
-      // 检查是否有用户切割线近似匹配
-      let bestMatch = Infinity;
-      for (const uc of this.userCuts) {
-        const uFirst = uc[0], uLast = uc[uc.length-1];
-        const ta = this._polar(tc.a1, tc.d1), tb = this._polar(tc.a2, tc.d2);
-        const d = Utils.dist(uFirst.x,uFirst.y,ta.x,ta.y)+Utils.dist(uLast.x,uLast.y,tb.x,tb.y);
-        if (d<bestMatch) bestMatch=d;
-      }
-      if (bestMatch < this.cfg.tolerance*3) score++;
-    }
-    return score >= this.cfg.cuts;
-  }
-  _polar(a, d) {
-    return { x: this.sectorCenter.x+Math.cos(a)*d, y: this.sectorCenter.y+Math.sin(a)*d };
-  }
-  onUpdate(dt) {
-    if (this.finished) return;
-    if (this.feedback && performance.now()-this.feedbackTime>800) {
-      this.currentLevel++;
-      if (this.currentLevel>=this.cfg.levels) { if (!this.finish()) { this.targetTrials+=this.cfg.levels; this.currentLevel=0; this._genLevel(); } return; }
-      this._genLevel();
-    }
-  }
-  onRender(ctx) {
-    ctx.clearRect(0,0,this.W,this.H); this.drawScrollingBg(ctx);
-    // 扇形背景
-    const cx=this.sectorCenter.x, cy=this.sectorCenter.y, r=this.sectorRadius;
-    ctx.fillStyle = '#FFFDE7'; ctx.beginPath();
-    ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2,0); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2,0); ctx.closePath(); ctx.stroke();
+    if(this.feedback){ctx.fillStyle=this.feedback==='correct'?'#4ADE80':'#FF6B6B';ctx.font='bold 30px sans-serif';ctx.textAlign='center';ctx.fillText(this.feedback==='correct'?'✓':'✗',this.W/2,this.H-30)}
     // 提示
-    ctx.fillStyle = '#FFF'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-    ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
-    ctx.strokeText(`剪窗花 · 画${this.cfg.cuts}条切割线 · ${this.currentLevel+1}/${this.cfg.levels}`,this.W/2,24);
-    ctx.fillText(`剪窗花 · 画${this.cfg.cuts}条切割线 · ${this.currentLevel+1}/${this.cfg.levels}`,this.W/2,24);
-    ctx.font = '12px sans-serif'; ctx.fillStyle = '#888';
-    ctx.fillText('在扇形区域画线切割', cx, cy-15);
-    // 目标切割线（虚线提示）
-    ctx.strokeStyle = '#FFB84D'; ctx.lineWidth = 2; ctx.setLineDash([4,4]);
-    this.targetCuts.forEach(tc => {
-      const a=this._polar(tc.a1,tc.d1), b=this._polar(tc.a2,tc.d2);
-      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-    });
-    ctx.setLineDash([]);
-    // 用户切割线
-    ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    this.userCuts.forEach(uc => {
-      if (uc.length<2) return;
-      ctx.beginPath(); ctx.moveTo(uc[0].x,uc[0].y);
-      for (let i=1;i<uc.length;i++) ctx.lineTo(uc[i].x,uc[i].y); ctx.stroke();
-    });
-    // 当前正在画
-    if (this.currentCut.length>1) {
-      ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(this.currentCut[0].x,this.currentCut[0].y);
-      for (let i=1;i<this.currentCut.length;i++) ctx.lineTo(this.currentCut[i].x,this.currentCut[i].y); ctx.stroke();
-    }
-    // 完成按钮
-    if (this.userCuts.length >= this.cfg.cuts) {
-      ctx.fillStyle = '#4ADE80'; DrawUtils.drawRoundRect(ctx, this.W/2-40, this.H-50, 80, 36, 18); ctx.fill();
-      ctx.fillStyle = '#FFF'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('展开窗花', this.W/2, this.H-28);
-      this._expandBtn = { x: this.W/2-40, y: this.H-50, w: 80, h: 36 };
-    } else { this._expandBtn = null; }
-  }
-  onExpandClick() {
-    if (!this._expandBtn) return;
-    if (this._checkCuts()) {
-      const rt = performance.now()-this.levelStartTime;
-      this.recordResult(true, rt); Audio.success(); this.feedback = 'correct'; this.feedbackTime = performance.now();
-    } else {
-      this.recordResult(false, performance.now()-this.levelStartTime);
-      Audio.mistake(); this.feedback = 'wrong'; this.feedbackTime = performance.now();
-    }
+    ctx.fillStyle='#999';ctx.font='12px sans-serif';ctx.fillText('从绿点开始，沿虚线描到红点',this.W/2,this.H-10);
   }
 }
-GAME_REGISTRY.papercut = PaperCutGame;
+GAME_REGISTRY.traceline=TraceLineGame;
 
 // ============================================================
-// 渲染器
+// 游戏3：虚线画图 DotDrawGame (左参考+右虚线+涂色)
+// ============================================================
+class DotDrawGame extends BaseGame {
+  onStart(){
+    const cfg=GAME_CONFIGS.dotdraw.difficulties[this.difficulty];
+    this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
+    this.activeColor=PALETTE_COLORS[0];
+    this.setupBg('checker',['#FF4444','#44CC44'],40,20,'hstripes',['#222222','#FFFFFF'],35,18);
+    this._initOffscreen();this._genLevel();this._renderPalette();
+  }
+  _initOffscreen(){this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filled=new Uint8Array(Math.floor(this.W)*Math.floor(this.H))}
+  _renderPalette(){
+    const ctrl=document.getElementById('game-controls');if(!ctrl)return;
+    ctrl.innerHTML='<div class="flex justify-center gap-2 p-2 flex-wrap max-w-md mx-auto">'+PALETTE_COLORS.map((c,i)=>'<button data-dcolor="'+c+'" class="color-btn w-9 h-9 rounded-full border-2 '+(c===this.activeColor?'border-gray-800 scale-110':'border-gray-300')+'" style="background:'+c+'"></button>').join('')+'</div>';
+    ctrl.querySelectorAll('[data-dcolor]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.dcolor;this._renderPalette();Audio.click()})});
+  }
+  _genLevel(){
+    const cfg=this.cfg;const keys=Object.keys(SHAPES);
+    this.shapeName=keys[Utils.randInt(0,keys.length-1)];
+    const colors=['#FF4444','#FF8C00','#FFD700','#4ADE80','#4488FF','#9B6BFF','#EC4899','#8B4513'];
+    this.refColor=colors[Utils.randInt(0,colors.length-1)];
+    // 左参考区
+    const lcx=this.W*0.22,lcy=this.H/2,lr=Math.min(this.W,this.H)*0.18;
+    this.leftOutline=getShapeOutline(this.shapeName,lcx,lcy,lr);
+    // 右绘画区：虚线
+    const rcx=this.W*0.72,rcy=this.H/2,rr=Math.min(this.W,this.H)*0.22;
+    this.rightOutline=getShapeOutline(this.shapeName,rcx,rcy,rr);
+    this.dotCount=Math.max(18,Math.floor(35-this.difficulty*3));
+    this.dots=generateDottedOutline(this.rightOutline,this.dotCount);
+    this.startDot=this.dots[0];this.endDot=this.dots[this.dots.length-1];
+    // 涂色状态
+    this.filled.fill(0);this.filledPixels=0;
+    const ctx=this.octx,w=Math.floor(this.W),h=Math.floor(this.H);
+    ctx.clearRect(0,0,w,h);ctx.fillStyle='#FFF';ctx.fillRect(0,0,w,h);
+    ctx.beginPath();ctx.moveTo(this.rightOutline[0].x,this.rightOutline[0].y);
+    for(let i=1;i<this.rightOutline.length;i++)ctx.lineTo(this.rightOutline[i].x,this.rightOutline[i].y);
+    ctx.closePath();ctx.fillStyle='#F8F8F8';ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=3;ctx.stroke();
+    const img=ctx.getImageData(0,0,w,h).data;this.totalPixels=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(img[i]<250||img[i+1]<250||img[i+2]<250)this.totalPixels++}
+    // 状态机: trace(描线) -> color(涂色)
+    this.phase='trace';this.userPath=[];this.isDrawing=false;this.hasStarted=false;
+    this.traceDone=false;this.colorCompletion=0;
+    this.feedback=null;this.feedbackTime=0;this.levelStartTime=performance.now();
+  }
+  onInput(e){
+    if(this.finished||this.feedback)return;
+    if(this.phase==='trace')this._handleTrace(e);
+    else this._handleColor(e);
+  }
+  _handleTrace(e){
+    if(e.type==='pointerdown'){this.isDrawing=true;this.userPath=[];this.hasStarted=false}
+    if(e.type==='pointermove'&&this.isDrawing){this.userPath.push({x:e.x,y:e.y});if(!this.hasStarted&&this.userPath.length>=2)this.hasStarted=true}
+    if(e.type==='pointerup'&&this.isDrawing){this.isDrawing=false;if(this.userPath.length>=5&&this._checkTrace()){this.traceDone=true;this.phase='color';Audio.success()}else{Audio.mistake()}}
+  }
+  _checkTrace(){
+    let score=0;const n=Math.min(this.dotCount,30);
+    const sampled=[];for(let i=0;i<n;i++)sampled.push(this.dots[Math.floor(i/n*this.dots.length)]);
+    for(const dot of sampled){let md=Infinity;for(const p of this.userPath){const d=Utils.dist(dot.x,dot.y,p.x,p.y);if(d<md)md=d}if(md<=this.cfg.tolerance*2)score++}
+    return score/sampled.length>=0.5;
+  }
+  _handleColor(e){
+    if(e.type==='pointerdown')this.isDrawing=true;
+    if(e.type==='pointerup')this.isDrawing=false;
+    if(!this.isDrawing&&e.type!=='move')return;
+    if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
+    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.cfg.brushR;
+    for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+      if(dx*dx+dy*dy>br*br)continue;
+      const px=x+dx,py=y+dy;if(px<0||py<0||px>=Math.floor(this.W)||py>=Math.floor(this.H))continue;
+      const idx=py*Math.floor(this.W)+px;if(this.filled[idx])continue;
+      const pd=ctx.getImageData(px,py,1,1).data;
+      if(pd[0]<250||pd[1]<250||pd[2]<250){this.filled[idx]=1;this.filledPixels++}
+    }
+    this.colorCompletion=this.totalPixels?this.filledPixels/this.totalPixels:0;
+    if(this.colorCompletion>=0.9&&!this.feedback){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now()}
+  }
+  onUpdate(dt){
+    if(this.finished)return;
+    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+  }
+  onRender(ctx){
+    ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
+    // 分隔线
+    const midX=this.W*0.47;
+    ctx.strokeStyle='#CCC';ctx.lineWidth=2;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(midX,30);ctx.lineTo(midX,this.H-50);ctx.stroke();ctx.setLineDash([]);
+    // 左：参考图（已涂色）
+    ctx.save();ctx.beginPath();ctx.rect(0,0,midX,this.H);ctx.clip();
+    ctx.fillStyle='#FFF';ctx.strokeStyle='#000';ctx.lineWidth=2;
+    ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('参考',this.W*0.11,20);
+    // 画参考轮廓并涂色
+    ctx.beginPath();ctx.moveTo(this.leftOutline[0].x,this.leftOutline[0].y);
+    for(let i=1;i<this.leftOutline.length;i++)ctx.lineTo(this.leftOutline[i].x,this.leftOutline[i].y);
+    ctx.closePath();ctx.fillStyle=this.refColor;ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
+    ctx.restore();
+    // 右：虚线+用户描线+涂色
+    ctx.save();ctx.beginPath();ctx.rect(midX,0,this.W-midX,this.H);ctx.clip();
+    ctx.fillStyle='#FFF';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    if(this.phase==='trace')ctx.fillText('沿虚线描轮廓',this.W*0.73,20);
+    else ctx.fillText('涂色·'+Math.round(this.colorCompletion*100)+'%',this.W*0.73,20);
+    // 涂色结果
+    const r=parseInt(this.activeColor.slice(1,3),16),g=parseInt(this.activeColor.slice(3,5),16),b=parseInt(this.activeColor.slice(5,7),16);
+    const imgData=this.octx.getImageData(0,0,Math.floor(this.W),Math.floor(this.H));
+    for(let i=0;i<this.filled.length;i++){if(this.filled[i]){const idx=i*4;imgData.data[idx]=r;imgData.data[idx+1]=g;imgData.data[idx+2]=b}}
+    const tmp=document.createElement('canvas');tmp.width=imgData.width;tmp.height=imgData.height;tmp.getContext('2d').putImageData(imgData,0,0);
+    ctx.drawImage(tmp,0,0);
+    // 虚线点
+    this.dots.forEach(d=>{ctx.fillStyle='#999';ctx.beginPath();ctx.arc(d.x,d.y,3,0,Math.PI*2);ctx.fill()});
+    // 起终点
+    ctx.fillStyle='#4ADE80';ctx.beginPath();ctx.arc(this.startDot.x,this.startDot.y,6,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#FF6B6B';ctx.beginPath();ctx.arc(this.endDot.x,this.endDot.y,6,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // 用户描线
+    if(this.userPath.length>1){ctx.strokeStyle='#4A9EFF';ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(this.userPath[0].x,this.userPath[0].y);for(let i=1;i<this.userPath.length;i++)ctx.lineTo(this.userPath[i].x,this.userPath[i].y);ctx.stroke()}
+    ctx.restore();
+    // 底部提示
+    ctx.fillStyle='#999';ctx.font='12px sans-serif';ctx.textAlign='center';
+    if(this.phase==='trace')ctx.fillText('从绿点→红点描虚线',this.W*0.6,this.H-10);
+    else ctx.fillText('选择颜色涂满图案',this.W*0.6,this.H-10);
+    // 标题
+    ctx.fillStyle='#333';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText(this.shapeName+'·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,this.H-30);
+    if(this.feedback){ctx.fillStyle='#4ADE80';ctx.font='bold 30px sans-serif';ctx.fillText('✓',this.W*0.73,this.H-50)}
+  }
+}
+GAME_REGISTRY.dotdraw=DotDrawGame;
+
+// ============================================================
+// Renderer
 // ============================================================
 const Renderer = {
-  tplHome() {
-    return `
-    <div class="min-h-screen pb-safe">
-      <div class="text-center pt-12 pb-6 pt-safe">
-        <div class="text-5xl mb-3 animate-float">✋🎨</div>
-        <div class="text-2xl font-bold text-gray-800">精细操作训练</div>
-        <div class="text-sm text-gray-400 mt-1">弱视训练 · 手眼协调 · 精细运动</div>
-      </div>
-      <div class="px-4 max-w-md mx-auto space-y-3">
-        ${Object.values(GAME_CONFIGS).map(g => `
-        <button onclick="GameEngine.startGame('${g.id}',${Store.getDifficulty(g.id)});Audio.click()" class="w-full bg-white rounded-2xl shadow p-4 active:scale-95 transition-transform text-left flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style="background:${g.color}20">${g.icon}</div>
-          <div class="flex-1">
-            <div class="font-bold text-gray-800">${g.name}</div>
-            <div class="text-xs text-gray-400">${g.desc} · ${'★'.repeat(Store.getDifficulty(g.id))}</div>
-          </div>
-          <div class="text-gray-300 text-lg">›</div>
-        </button>
-        `).join('')}
-      </div>
-      <div class="text-center text-xs text-gray-300 mt-8 pb-8">精细操作训练 · 让小手更灵巧</div>
-    </div>`;
+  tplHome(){
+    const games=Object.values(GAME_CONFIGS);
+    return '<div class="min-h-screen pb-safe"><div class="text-center pt-12 pb-6 pt-safe"><div class="text-5xl mb-3 animate-float">✋🎨</div><div class="text-2xl font-bold text-gray-800">精细操作训练</div><div class="text-sm text-gray-400 mt-1">弱视训练·手眼协调·精细运动</div></div><div class="px-4 max-w-md mx-auto space-y-3">'+games.map(g=>'<button onclick="GameEngine.startGame(\''+g.id+'\','+Store.getDifficulty(g.id)+');Audio.click()" class="w-full bg-white rounded-2xl shadow p-4 active:scale-95 transition-transform text-left flex items-center gap-4"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style="background:'+g.color+'20">'+g.icon+'</div><div class="flex-1"><div class="font-bold text-gray-800">'+g.name+'</div><div class="text-xs text-gray-400">'+g.desc+'·'+'★'.repeat(Store.getDifficulty(g.id))+'</div></div><div class="text-gray-300 text-lg">›</div></button>').join('')+'</div><div class="text-center text-xs text-gray-300 mt-8 pb-8">精细操作训练·让小手更灵巧</div></div>';
   },
-  render() {
-    const path = Router.getPath();
-    document.getElementById('app').innerHTML = path==='/' ? this.tplHome() : '';
-  }
+  render(){document.getElementById('app').innerHTML=Router.getPath()==='/'?this.tplHome():''}
 };
 
 // ============================================================
-// 初始化
+// Init
 // ============================================================
-Store.init(); Audio.init();
-
-// 暴露到全局作用域，供HTML onclick使用
-window.GameEngine = GameEngine;
-window.Audio = Audio;
-window.goHome = function() { Router.navigate('/'); Renderer.render(); };
-
-// 在GameEngine的handleInput中处理PaperCut的展开按钮
-const origHandleInput = GameEngine._handleInput;
-GameEngine._handleInput = function(e) {
-  if (this._currentGame && this._currentGame.onExpandClick && this._currentGame._expandBtn) {
-    const rect = this._canvas.getBoundingClientRect();
-    const x = e.clientX-rect.left, y = e.clientY-rect.top;
-    const btn = this._currentGame._expandBtn;
-    if (x>=btn.x && x<=btn.x+btn.w && y>=btn.y && y<=btn.y+btn.h) {
-      this._currentGame.onExpandClick();
-      return;
-    }
-  }
-  origHandleInput.call(this, e);
-};
-
+Store.init();Audio.init();
+window.GameEngine=GameEngine;
+window.Audio=Audio;
+window.goHome=function(){Router.navigate('/');Renderer.render()};
 Renderer.render();
 
 })();
