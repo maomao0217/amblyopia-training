@@ -938,7 +938,9 @@ const Renderer = {
 // ============================================================
 Store.init(); Audio.init();
 
-// PaperCutGame 的展开按钮点击处理 - 在全局处理
+// 暴露到全局作用域，供HTML onclick使用
+window.GameEngine = GameEngine;
+window.Audio = Audio;
 window.goHome = function() { Router.navigate('/'); Renderer.render(); };
 
 // 在GameEngine的handleInput中处理PaperCut的展开按钮
