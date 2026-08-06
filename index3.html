@@ -353,7 +353,7 @@ const GameEngine = {
     if (dt>=1) { this._countdownRemaining=Math.max(0,this._countdownRemaining-dt); this._countdownLastTick=now; displayEl.textContent=Utils.fmtMMSS(this._countdownRemaining); }
     if (this._countdownRemaining<=0) { this._onCountdownEnd(); }
   },
-  _onCountdownEnd() { this.stop(); document.getElementById('app').innerHTML='<div class="flex items-center justify-center h-screen"><div class="text-center p-8"><div class="text-6xl mb-4">⏰</div><div class="text-xl font-bold text-gray-700 mb-2">时间到啦！</div><div class="text-gray-500 mb-6">小朋友，休息一下眼睛吧～</div><button onclick="App.goHome()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold">回到主页</button></div></div>'; },
+  _onCountdownEnd() { this.stop(); document.getElementById('app').innerHTML='<div class="flex items-center justify-center h-screen"><div class="text-center p-8"><div class="text-6xl mb-4">⏰</div><div class="text-xl font-bold text-gray-700 mb-2">时间到啦！</div><div class="text-gray-500 mb-6">小朋友，休息一下眼睛吧～</div><button onclick="goHome()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold">回到主页</button></div></div>'; },
   _loop(now) {
     if (!this._currentGame||this._currentGame.finished) return;
     const dt = Math.min((now-this._lastTime)/1000, 0.1); this._lastTime = now;
@@ -399,7 +399,7 @@ const GameEngine = {
         <div class="text-gray-400 text-xs mb-1">完成 ${stats.totalTrials} 题</div>
         ${stars>=3?'<div class="text-sm text-warm font-bold mt-2">太棒了！获得3颗星！✨</div>':''}
         ${newDiff>Store.getDifficulty(this._gameId)?'<div class="text-sm text-green-500 font-bold mt-1">难度升级！★→'+'★'.repeat(newDiff)+'</div>':''}
-        <button onclick="App.goHome()" class="mt-6 w-full bg-primary text-white py-3 rounded-2xl font-bold active:scale-95 transition-transform">继续</button>
+        <button onclick="goHome()" class="mt-6 w-full bg-primary text-white py-3 rounded-2xl font-bold active:scale-95 transition-transform">继续</button>
       </div></div>`;
   },
   tplGameShell(config, diff) {
@@ -939,7 +939,7 @@ const Renderer = {
 Store.init(); Audio.init();
 
 // PaperCutGame 的展开按钮点击处理 - 在全局处理
-App.goHome = function() { Router.navigate('/'); Renderer.render(); };
+window.goHome = function() { Router.navigate('/'); Renderer.render(); };
 
 // 在GameEngine的handleInput中处理PaperCut的展开按钮
 const origHandleInput = GameEngine._handleInput;
