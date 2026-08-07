@@ -341,7 +341,7 @@ class ColorFillGame extends BaseGame {
   onInput(e){
     if(this.finished||this.feedback)return;
     if(e.type==='pointerdown')this.isDrawing=true;
-    if(e.type==='pointerup')this.isDrawing=false;
+    if(e.type==='up')this.isDrawing=false;
     if(!this.isDrawing&&e.type!=='move')return;
     if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
     const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.cfg.brushR;
@@ -382,8 +382,7 @@ class TraceLineGame extends BaseGame {
   onStart(){
     const cfg=GAME_CONFIGS.traceline.difficulties[this.difficulty];
     this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
-    this.setupBg('diagonal',['#FF4444','#4488FF'],40,25,'zigzag',['#222222','#FFFFFF'],35,20);
-    this.userPath=[];this.isDrawing=false;this._genLevel();
+    this.bgEnabled=false;this.userPath=[];this.isDrawing=false;this._genLevel();
   }
   _genLevel(){
     const cfg=this.cfg;const keys=Object.keys(SHAPES);
@@ -398,8 +397,8 @@ class TraceLineGame extends BaseGame {
   onInput(e){
     if(this.finished||this.feedback)return;
     if(e.type==='pointerdown'){this.isDrawing=true;this.userPath=[];this.hasStarted=false}
-    if(e.type==='pointermove'&&this.isDrawing){this.userPath.push({x:e.x,y:e.y});if(!this.hasStarted&&this.userPath.length>=2)this.hasStarted=true}
-    if(e.type==='pointerup'&&this.isDrawing){this.isDrawing=false;if(this.userPath.length>=5)this._check()}
+    if(e.type==='move'&&this.isDrawing){this.userPath.push({x:e.x,y:e.y});if(!this.hasStarted&&this.userPath.length>=2)this.hasStarted=true}
+    if(e.type==='up'&&this.isDrawing){this.isDrawing=false;if(this.userPath.length>=5)this._check()}
   }
   _check(){
     let score=0;const n=Math.min(this.dots.length,40);
@@ -487,7 +486,7 @@ class DotDrawGame extends BaseGame {
   onInput(e){
     if(this.finished||this.feedback)return;
     if(e.type==='pointerdown')this.isDrawing=true;
-    if(e.type==='pointerup')this.isDrawing=false;
+    if(e.type==='up')this.isDrawing=false;
     if(!this.isDrawing&&e.type!=='move')return;
     if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
     const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.cfg.brushR;
@@ -532,12 +531,24 @@ class DotDrawGame extends BaseGame {
     if(this.feedback){ctx.fillStyle='#4ADE80';ctx.font='bold 30px sans-serif';ctx.fillText('✓',this.W*0.73,this.H-55)}
   }
   _drawColoredShape(ctx,outline,regions){
+    ctx.save();
     ctx.beginPath();ctx.moveTo(outline[0].x,outline[0].y);
     for(let i=1;i<outline.length;i++)ctx.lineTo(outline[i].x,outline[i].y);
-    ctx.closePath();
-    if(regions.length===1){ctx.fillStyle=regions[0].color;ctx.fill()}
-    else{ctx.fillStyle=regions[0].color;ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.stroke()}
-    ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
+    ctx.closePath();ctx.clip();
+    if(regions.length===1){ctx.fillStyle=regions[0].color;ctx.fillRect(0,0,this.W,this.H)}
+    else{
+      // 按垂直分区着色
+      const minY=Math.min(...outline.map(p=>p.y)),maxY=Math.max(...outline.map(p=>p.y));
+      const bandH=(maxY-minY)/regions.length;
+      regions.forEach((reg,i)=>{
+        ctx.fillStyle=reg.color;
+        ctx.fillRect(0,minY+i*bandH,this.W,bandH+1);
+      });
+    }
+    ctx.restore();
+    ctx.beginPath();ctx.moveTo(outline[0].x,outline[0].y);
+    for(let i=1;i<outline.length;i++)ctx.lineTo(outline[i].x,outline[i].y);
+    ctx.closePath();ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
   }
 }
 GAME_REGISTRY.dotdraw=DotDrawGame;
@@ -545,10 +556,13 @@ GAME_REGISTRY.dotdraw=DotDrawGame;
 // ============================================================
 // Renderer
 // ============================================================
+let _selectedDiff = {};
 const Renderer = {
+  getDifficulty(gid){ return _selectedDiff[gid] || Store.getDifficulty(gid); },
   tplHome(){
     const games=Object.values(GAME_CONFIGS);
-    return '<div class="min-h-screen pb-safe"><div class="text-center pt-12 pb-6 pt-safe"><div class="text-5xl mb-3 animate-float">✋🎨</div><div class="text-2xl font-bold text-gray-800">精细操作训练</div><div class="text-sm text-gray-400 mt-1">弱视训练·手眼协调·精细运动</div></div><div class="px-4 max-w-md mx-auto space-y-3">'+games.map(g=>'<button onclick="GameEngine.startGame(\''+g.id+'\','+Store.getDifficulty(g.id)+');Audio.click()" class="w-full bg-white rounded-2xl shadow p-4 active:scale-95 transition-transform text-left flex items-center gap-4"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style="background:'+g.color+'20">'+g.icon+'</div><div class="flex-1"><div class="font-bold text-gray-800">'+g.name+'</div><div class="text-xs text-gray-400">'+g.desc+'·'+'★'.repeat(Store.getDifficulty(g.id))+'</div></div><div class="text-gray-300 text-lg">›</div></button>').join('')+'</div><div class="text-center text-xs text-gray-300 mt-8 pb-8">精细操作训练·让小手更灵巧</div></div>';
+    const self=this;
+    return '<div class="min-h-screen pb-safe"><div class="text-center pt-12 pb-6 pt-safe"><div class="text-5xl mb-3 animate-float">✋🎨</div><div class="text-2xl font-bold text-gray-800">精细操作训练</div><div class="text-sm text-gray-400 mt-1">弱视训练·手眼协调·精细运动</div></div><div class="px-4 max-w-md mx-auto space-y-3">'+games.map(g=>{const d=self.getDifficulty(g.id);return '<div class="bg-white rounded-2xl shadow overflow-hidden"><button onclick="GameEngine.startGame(\''+g.id+'\','+d+');Audio.click()" class="w-full p-4 active:scale-95 transition-transform text-left flex items-center gap-4"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style="background:'+g.color+'20">'+g.icon+'</div><div class="flex-1"><div class="font-bold text-gray-800">'+g.name+'</div><div class="text-xs text-gray-400">'+g.desc+'</div></div><div class="text-gray-300 text-lg">›</div></button><div class="flex justify-center gap-1 pb-2" onclick="event.stopPropagation()">'+[1,2,3,4,5].map(s=>'<button onclick="event.stopPropagation();_selectedDiff[\''+g.id+'\']='+s+';Renderer.render()" class="w-8 h-8 rounded-full text-sm '+(s<=d?'text-yellow-500':'text-gray-300')+'">'+(s<=d?'★':'☆')+'</button>').join('')+'</div></div>'}).join('')+'</div><div class="text-center text-xs text-gray-300 mt-8 pb-8">精细操作训练·让小手更灵巧</div></div>';
   },
   render(){document.getElementById('app').innerHTML=Router.getPath()==='/'?this.tplHome():''}
 };
@@ -559,6 +573,7 @@ const Renderer = {
 Store.init();Audio.init();
 window.GameEngine=GameEngine;
 window.Audio=Audio;
+window._selectedDiff=_selectedDiff;
 window.goHome=function(){Router.navigate('/');Renderer.render()};
 Renderer.render();
 
