@@ -193,8 +193,8 @@ const GameEngine = {
       this._currentGame=new GC(this._ctx2d,this._canvasW,this._canvasH,diff,{onProgress:p=>this._updateProgress(p),onEnd:s=>this._onGameEnd(s)});
       this._currentGame.onStart();
       canvas.addEventListener('pointerdown',e=>this._handleInput(e));
-      canvas.addEventListener('pointermove',e=>{if(!this._currentGame||this._currentGame.finished)return;const r=canvas.getBoundingClientRect();this._currentGame.onInput({x:e.clientX-r.left,y:e.clientY-r.top,type:'move'})});
-      canvas.addEventListener('pointerup',e=>{if(!this._currentGame||this._currentGame.finished)return;const r=canvas.getBoundingClientRect();this._currentGame.onInput({x:e.clientX-r.left,y:e.clientY-r.top,type:'up'})});
+      canvas.addEventListener('pointermove',e=>{if(!this._currentGame||this._currentGame.finished)return;const r=canvas.getBoundingClientRect();const sx=this._canvasW/r.width,sy=this._canvasH/r.height;this._currentGame.onInput({x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy,type:'move'})});
+      canvas.addEventListener('pointerup',e=>{if(!this._currentGame||this._currentGame.finished)return;const r=canvas.getBoundingClientRect();const sx=this._canvasW/r.width,sy=this._canvasH/r.height;this._currentGame.onInput({x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy,type:'up'})});
       if(!config.noTimeLimit)this._startCountdown();this._lastTime=performance.now();this._loop(this._lastTime);
     },50);
   },
@@ -203,7 +203,7 @@ const GameEngine = {
   _updateCountdown(now){const el=document.getElementById('countdown-display');if(!el)return;const dt=(now-this._countdownLastTick)/1000;if(dt>=1){this._countdownRemaining=Math.max(0,this._countdownRemaining-dt);this._countdownLastTick=now;el.textContent=Utils.fmtMMSS(this._countdownRemaining)}if(this._countdownRemaining<=0)this._onCountdownEnd()},
   _onCountdownEnd(){this.stop();document.getElementById('app').innerHTML='<div class="flex items-center justify-center h-screen"><div class="text-center p-8"><div class="text-6xl mb-4">⏰</div><div class="text-xl font-bold text-gray-700 mb-2">时间到啦！</div><div class="text-gray-500 mb-6">小朋友，休息一下眼睛吧～</div><button onclick="goHome()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold">回到主页</button></div></div>'},
   _loop(now){if(!this._currentGame||this._currentGame.finished)return;const dt=Math.min((now-this._lastTime)/1000,0.1);this._lastTime=now;this._updateCountdown(now);try{this._currentGame.onUpdate(dt);this._currentGame.onRender(this._ctx2d)}catch(e){console.error(e)}this._rafId=requestAnimationFrame(t=>this._loop(t))},
-  _handleInput(e){if(!this._currentGame)return;const r=this._canvas.getBoundingClientRect();this._currentGame.onInput({x:e.clientX-r.left,y:e.clientY-r.top,type:e.type})},
+  _handleInput(e){if(!this._currentGame)return;const r=this._canvas.getBoundingClientRect();const sx=this._canvasW/r.width,sy=this._canvasH/r.height;this._currentGame.onInput({x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy,type:e.type})},
   _updateProgress(p){const b=document.getElementById('game-progress-bar'),t=document.getElementById('game-progress-text');if(b)b.style.width=Math.min(100,p.pct*100)+'%';if(t&&p.targetTrials)t.textContent=p.trials+'/'+p.targetTrials},
   stop(){if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null}this._currentGame=null},
   exitGame(){this.stop();Router.navigate('/')},
@@ -318,6 +318,7 @@ class ColorFillGame extends BaseGame {
     const cfg=GAME_CONFIGS.colorfill.difficulties[this.difficulty];
     this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
     this.activeColor=PALETTE_COLORS[0];this.isErasing=false;
+    this.brushMult=0.65;this.currentBrushR=Math.round(cfg.brushR*this.brushMult);
     this.setupColorSwitchBg();
     this._initOffscreen();this._genLevel();
     this._renderPalette();
@@ -326,12 +327,16 @@ class ColorFillGame extends BaseGame {
   _renderPalette(){
     const ctrl=document.getElementById('game-controls');if(!ctrl)return;
     const self=this;
+    const sizes=[{l:'S',m:0.4},{l:'M',m:0.65},{l:'L',m:1.0}];
     ctrl.innerHTML='<div class="flex justify-center gap-2 p-2 flex-wrap max-w-md mx-auto items-center">'+
       PALETTE_COLORS.map((c,i)=>'<button data-color="'+c+'" class="color-btn w-10 h-10 rounded-full border-2 '+(c===this.activeColor&&!this.isErasing?'border-gray-800 scale-110':'border-gray-300')+'" style="background:'+c+'"></button>').join('')+
+      '<span class="text-xs text-gray-400 mx-1">笔刷</span>'+
+      sizes.map(s=>'<button data-brush="'+s.m+'" class="w-8 h-8 rounded-full text-xs font-bold border-2 '+(this.brushMult===s.m?'bg-primary text-white border-primary':'bg-white text-gray-500 border-gray-300')+'">'+s.l+'</button>').join('')+
       '<button id="eraser-btn" class="color-btn w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg '+(this.isErasing?'border-gray-800 scale-110 bg-gray-100':'border-gray-300 bg-white')+'">🧹</button>'+
       '<button id="skip-btn" class="px-3 py-2 rounded-xl bg-warm text-white text-sm font-bold active:scale-95 transition-transform">下一题 →</button>'+
       '</div>';
     ctrl.querySelectorAll('[data-color]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.color;this.isErasing=false;this._renderPalette();Audio.click()})});
+    ctrl.querySelectorAll('[data-brush]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.brushMult=parseFloat(b.dataset.brush);this.currentBrushR=Math.round(this.cfg.brushR*this.brushMult);this._renderPalette();Audio.click()})});
     const eraserBtn=ctrl.querySelector('#eraser-btn');if(eraserBtn)eraserBtn.addEventListener('pointerdown',e=>{e.preventDefault();this.isErasing=!this.isErasing;this._renderPalette();Audio.click()});
     const skipBtn=ctrl.querySelector('#skip-btn');if(skipBtn)skipBtn.addEventListener('pointerdown',e=>{e.preventDefault();this._skipLevel();});
   }
@@ -357,7 +362,7 @@ class ColorFillGame extends BaseGame {
     if(e.type==='up')this.isDrawing=false;
     if(!this.isDrawing&&e.type!=='move')return;
     if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
-    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.cfg.brushR,w=Math.floor(this.W),h=Math.floor(this.H);
+    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.currentBrushR,w=Math.floor(this.W),h=Math.floor(this.H);
     if(this.isErasing){
       for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
         if(dx*dx+dy*dy>br*br)continue;
@@ -473,18 +478,23 @@ class DotDrawGame extends BaseGame {
     const cfg=GAME_CONFIGS.dotdraw.difficulties[this.difficulty];
     this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
     this.activeColor=PALETTE_COLORS[0];this._colorIdx=0;this.isErasing=false;
+    this.brushMult=0.65;this.currentBrushR=Math.round(cfg.brushR*this.brushMult);
     this.setupBg('checker',['#FF4444','#44CC44'],40,20,'hstripes',['#222222','#FFFFFF'],35,18);
     this._initOffscreen();this._genLevel();this._renderPalette();
   }
   _initOffscreen(){const sz=Math.floor(this.W)*Math.floor(this.H);this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filledColor=new Uint8Array(sz);this.filledColor.fill(255)}
   _renderPalette(){
     const ctrl=document.getElementById('game-controls');if(!ctrl)return;
-    ctrl.innerHTML='<div class="flex justify-center gap-2 p-2 flex-wrap max-w-md mx-auto items-center">'+
+    const sizes=[{l:'S',m:0.4},{l:'M',m:0.65},{l:'L',m:1.0}];
+    ctrl.innerHTML='<div class="flex justify-center gap-1 p-2 flex-wrap max-w-md mx-auto items-center">'+
       PALETTE_COLORS.map((c,i)=>'<button data-dcolor="'+c+'" class="color-btn w-9 h-9 rounded-full border-2 '+(i===this._colorIdx&&!this.isErasing?'border-gray-800 scale-110':'border-gray-300')+'" style="background:'+c+'"></button>').join('')+
+      '<span class="text-xs text-gray-400 mx-1">笔刷</span>'+
+      sizes.map(s=>'<button data-brush="'+s.m+'" class="w-7 h-7 rounded-full text-xs font-bold border-2 '+(this.brushMult===s.m?'bg-primary text-white border-primary':'bg-white text-gray-500 border-gray-300')+'">'+s.l+'</button>').join('')+
       '<button id="eraser-btn" class="color-btn w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm '+(this.isErasing?'border-gray-800 scale-110 bg-gray-100':'border-gray-300 bg-white')+'">🧹</button>'+
       '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一题 →</button>'+
       '</div>';
     ctrl.querySelectorAll('[data-dcolor]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.dcolor;this._colorIdx=PALETTE_COLORS.indexOf(this.activeColor);this.isErasing=false;this._renderPalette();Audio.click()})});
+    ctrl.querySelectorAll('[data-brush]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.brushMult=parseFloat(b.dataset.brush);this.currentBrushR=Math.round(this.cfg.brushR*this.brushMult);this._renderPalette();Audio.click()})});
     const eraserBtn=ctrl.querySelector('#eraser-btn');if(eraserBtn)eraserBtn.addEventListener('pointerdown',e=>{e.preventDefault();this.isErasing=!this.isErasing;this._renderPalette();Audio.click()});
     const skipBtn=ctrl.querySelector('#skip-btn');if(skipBtn)skipBtn.addEventListener('pointerdown',e=>{e.preventDefault();this._skipLevel();});
   }
@@ -517,7 +527,7 @@ class DotDrawGame extends BaseGame {
     if(e.type==='up')this.isDrawing=false;
     if(!this.isDrawing&&e.type!=='move')return;
     if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
-    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.cfg.brushR,w=Math.floor(this.W),h=Math.floor(this.H);
+    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.currentBrushR,w=Math.floor(this.W),h=Math.floor(this.H);
     if(this.isErasing){
       for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
         if(dx*dx+dy*dy>br*br)continue;
@@ -841,6 +851,8 @@ class ComplexColorGame extends BaseGame {
     this.currentLevel = 0;
     this.activeColor = PALETTE_COLORS[0];
     this.isErasing = false;
+    this.brushMult = 0.65;
+    this.currentBrushR = Math.round(cfg.brushR * this.brushMult);
     this.bgEnabled = false;
     this._initOffscreen();
     this._sceneIndices = Utils.shuffle([...Array(COMPLEX_SCENES.length).keys()]).slice(0, cfg.scenes);
@@ -864,12 +876,15 @@ class ComplexColorGame extends BaseGame {
     if (!ctrl) return;
     const sceneColors = getSceneColors(this.scene);
     this._allColors = [...new Set([...sceneColors, ...PALETTE_COLORS])];
-    ctrl.innerHTML = '<div class="flex justify-center gap-2 p-2 flex-wrap max-w-md mx-auto items-center">' +
+    const sizes = [{l:'S',m:0.4},{l:'M',m:0.65},{l:'L',m:1.0}];
+    ctrl.innerHTML = '<div class="flex justify-center gap-1 p-2 flex-wrap max-w-md mx-auto items-center">' +
       this._allColors.map((c, i) =>
         '<button data-ccolor="' + c + '" class="color-btn w-9 h-9 rounded-full border-2 ' +
         (c === this.activeColor && !this.isErasing ? 'border-gray-800 scale-110' : 'border-gray-300') +
         '" style="background:' + c + '"></button>'
       ).join('') +
+      '<span class="text-xs text-gray-400 mx-1">笔刷</span>' +
+      sizes.map(s => '<button data-brush="' + s.m + '" class="w-7 h-7 rounded-full text-xs font-bold border-2 ' + (this.brushMult === s.m ? 'bg-primary text-white border-primary' : 'bg-white text-gray-500 border-gray-300') + '">' + s.l + '</button>').join('') +
       '<button id="eraser-btn" class="color-btn w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm ' + (this.isErasing ? 'border-gray-800 scale-110 bg-gray-100' : 'border-gray-300 bg-white') + '">🧹</button>' +
       '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一题 →</button>' +
       '</div>';
@@ -878,6 +893,15 @@ class ComplexColorGame extends BaseGame {
         e.preventDefault();
         this.activeColor = b.dataset.ccolor;
         this.isErasing = false;
+        this._renderPalette();
+        Audio.click();
+      });
+    });
+    ctrl.querySelectorAll('[data-brush]').forEach(b => {
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        this.brushMult = parseFloat(b.dataset.brush);
+        this.currentBrushR = Math.round(this.cfg.brushR * this.brushMult);
         this._renderPalette();
         Audio.click();
       });
@@ -933,7 +957,7 @@ class ComplexColorGame extends BaseGame {
     if (!this.isDrawing && e.type !== 'move') return;
     if (e.x < 0 || e.y < 0 || e.x >= this.W || e.y >= this.H) return;
     const ctx = this.octx, x = Math.floor(e.x), y = Math.floor(e.y);
-    const br = this.cfg.brushR, w = Math.floor(this.W), h = Math.floor(this.H);
+    const br = this.currentBrushR, w = Math.floor(this.W), h = Math.floor(this.H);
     const colorIdx = this._allColors.indexOf(this.activeColor);
     if (this.isErasing) {
       for (let dy = -br; dy <= br; dy++) {
