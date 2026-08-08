@@ -232,23 +232,23 @@ const GAME_CONFIGS = {
   colorfill: {
     id:'colorfill',name:'涂色',icon:'🎨',color:'#EC4899',
     desc:'选择颜色给图案涂色',clinical:'精细控制+颜色辨别',
-    difficulties:{1:{targetPct:1.0,brushR:22,levels:3},2:{targetPct:1.0,brushR:18,levels:4},3:{targetPct:1.0,brushR:14,levels:5},4:{targetPct:1.0,brushR:11,levels:6},5:{targetPct:1.0,brushR:8,levels:7}}
+    difficulties:{1:{targetPct:1.0,brushR:30,levels:3},2:{targetPct:1.0,brushR:22,levels:4},3:{targetPct:1.0,brushR:16,levels:5},4:{targetPct:1.0,brushR:11,levels:6},5:{targetPct:1.0,brushR:7,levels:7}}
   },
   traceline: {
     id:'traceline',name:'描线画图',icon:'✏️',color:'#4A9EFF',
     desc:'沿虚线描出动物轮廓',clinical:'手眼协调+精细运动',
-    difficulties:{1:{tolerance:28,levels:3},2:{tolerance:22,levels:4},3:{tolerance:17,levels:5},4:{tolerance:13,levels:6},5:{tolerance:10,levels:7}}
+    difficulties:{1:{tolerance:36,levels:3},2:{tolerance:26,levels:4},3:{tolerance:18,levels:5},4:{tolerance:12,levels:6},5:{tolerance:8,levels:7}}
   },
   dotdraw: {
     id:'dotdraw',name:'虚线画图',icon:'🖼️',color:'#10B981',
     desc:'参考左图描右图并涂色',clinical:'空间感知+精细运动+颜色辨别',
-    difficulties:{1:{tolerance:28,brushR:20,levels:3},2:{tolerance:22,brushR:16,levels:4},3:{tolerance:17,brushR:13,levels:5},4:{tolerance:13,brushR:10,levels:6},5:{tolerance:10,brushR:8,levels:7}}
+    difficulties:{1:{tolerance:36,brushR:24,levels:3},2:{tolerance:26,brushR:18,levels:4},3:{tolerance:18,brushR:13,levels:5},4:{tolerance:12,brushR:9,levels:6},5:{tolerance:8,brushR:6,levels:7}}
   },
 	complexcolor: {
 	    id:'complexcolor',name:'参考填色',icon:'🖼️',color:'#F59E0B',
 	    desc:'参考左图给复杂场景填色',clinical:'颜色辨别+精细控制+空间感知',
 	    noTimeLimit:true,
-	    difficulties:{1:{targetPct:1.0,brushR:22,scenes:2},2:{targetPct:1.0,brushR:18,scenes:3},3:{targetPct:1.0,brushR:14,scenes:4},4:{targetPct:1.0,brushR:11,scenes:5},5:{targetPct:1.0,brushR:8,scenes:6}}
+	    difficulties:{1:{targetPct:1.0,brushR:30,scenes:2},2:{targetPct:1.0,brushR:22,scenes:3},3:{targetPct:1.0,brushR:16,scenes:4},4:{targetPct:1.0,brushR:11,scenes:5},5:{targetPct:1.0,brushR:7,scenes:6}}
 	}
 };
 
@@ -268,7 +268,18 @@ const SHAPES = {
   pear:[{x:0.5,y:0.08},{x:0.6,y:0.15},{x:0.7,y:0.25},{x:0.7,y:0.45},{x:0.65,y:0.6},{x:0.55,y:0.75},{x:0.5,y:0.85},{x:0.4,y:0.75},{x:0.3,y:0.55},{x:0.3,y:0.35},{x:0.4,y:0.2}],
   banana:[{x:0.55,y:0.05},{x:0.9,y:0.2},{x:0.85,y:0.5},{x:0.6,y:0.7},{x:0.3,y:0.55},{x:0.1,y:0.35},{x:0.1,y:0.2},{x:0.3,y:0.1}],
   tree:[{x:0.5,y:0.05},{x:0.7,y:0.3},{x:0.9,y:0.35},{x:0.85,y:0.5},{x:0.95,y:0.75},{x:0.7,y:0.65},{x:0.65,y:0.9},{x:0.5,y:0.7},{x:0.35,y:0.9},{x:0.3,y:0.65},{x:0.05,y:0.75},{x:0.15,y:0.5},{x:0.1,y:0.35},{x:0.3,y:0.3}],
-  car:[{x:0.2,y:0.3},{x:0.5,y:0.25},{x:0.75,y:0.3},{x:0.9,y:0.45},{x:0.92,y:0.65},{x:0.08,y:0.65},{x:0.1,y:0.45}]
+  car:[{x:0.2,y:0.3},{x:0.5,y:0.25},{x:0.75,y:0.3},{x:0.9,y:0.45},{x:0.92,y:0.65},{x:0.08,y:0.65},{x:0.1,y:0.45}],
+
+  bird:[{x:0.5,y:0.08},{x:0.68,y:0.2},{x:0.75,y:0.4},{x:0.65,y:0.55},{x:0.5,y:0.65},{x:0.35,y:0.55},{x:0.25,y:0.4},{x:0.32,y:0.2}],
+  turtle:[{x:0.5,y:0.12},{x:0.72,y:0.25},{x:0.78,y:0.5},{x:0.72,y:0.72},{x:0.5,y:0.8},{x:0.28,y:0.72},{x:0.22,y:0.5},{x:0.28,y:0.25}],
+  strawberry:[{x:0.5,y:0.04},{x:0.68,y:0.15},{x:0.76,y:0.35},{x:0.72,y:0.55},{x:0.6,y:0.75},{x:0.5,y:0.84},{x:0.36,y:0.75},{x:0.24,y:0.55},{x:0.24,y:0.35},{x:0.32,y:0.15}],
+  mushroom:[{x:0.5,y:0.04},{x:0.72,y:0.14},{x:0.82,y:0.35},{x:0.72,y:0.42},{x:0.58,y:0.48},{x:0.5,y:0.85},{x:0.42,y:0.48},{x:0.28,y:0.42},{x:0.18,y:0.35},{x:0.28,y:0.14}],
+  crown:[{x:0.5,y:0.03},{x:0.58,y:0.18},{x:0.68,y:0.06},{x:0.76,y:0.18},{x:0.88,y:0.08},{x:0.92,y:0.28},{x:0.85,y:0.55},{x:0.15,y:0.55},{x:0.08,y:0.28},{x:0.12,y:0.08},{x:0.24,y:0.18},{x:0.32,y:0.06},{x:0.42,y:0.18}],
+  rocket:[{x:0.5,y:0.03},{x:0.6,y:0.18},{x:0.65,y:0.38},{x:0.72,y:0.58},{x:0.68,y:0.78},{x:0.6,y:0.85},{x:0.5,y:0.9},{x:0.4,y:0.85},{x:0.32,y:0.78},{x:0.28,y:0.58},{x:0.35,y:0.38},{x:0.4,y:0.18}],
+  grapes:[{x:0.5,y:0.06},{x:0.62,y:0.12},{x:0.7,y:0.28},{x:0.72,y:0.48},{x:0.65,y:0.62},{x:0.55,y:0.72},{x:0.45,y:0.72},{x:0.35,y:0.62},{x:0.28,y:0.48},{x:0.3,y:0.28},{x:0.38,y:0.12}],
+  icecream:[{x:0.5,y:0.04},{x:0.68,y:0.12},{x:0.74,y:0.3},{x:0.66,y:0.46},{x:0.55,y:0.5},{x:0.5,y:0.85},{x:0.45,y:0.5},{x:0.34,y:0.46},{x:0.26,y:0.3},{x:0.32,y:0.12}],
+  dog:[{x:0.5,y:0.15},{x:0.62,y:0.18},{x:0.7,y:0.32},{x:0.72,y:0.48},{x:0.55,y:0.6},{x:0.6,y:0.75},{x:0.5,y:0.82},{x:0.4,y:0.75},{x:0.45,y:0.6},{x:0.28,y:0.48},{x:0.3,y:0.32},{x:0.38,y:0.18}],
+  pig:[{x:0.5,y:0.12},{x:0.65,y:0.18},{x:0.72,y:0.35},{x:0.7,y:0.55},{x:0.65,y:0.7},{x:0.5,y:0.78},{x:0.35,y:0.7},{x:0.3,y:0.55},{x:0.28,y:0.35},{x:0.35,y:0.18}],
 };
 
 // 多色区域定义：每个形状分为2-3个区域，用不同颜色
@@ -284,7 +295,8 @@ const SHAPE_REGIONS = {
   pear:{regions:[{name:'skin',colors:['#A8E06C','#90C95A','#C8F080','#B8D870']},{name:'stem',colors:['#8B4513','#654321','#6B3410','#A0522D']}]}
 };
 
-const SHAPE_NAMES={fish:'鱼',star:'星',cat:'猫',rabbit:'兔',butterfly:'蝴蝶',house:'房子',flower:'花',heart:'爱心',apple:'苹果',pear:'梨',banana:'香蕉',tree:'树',car:'汽车'};
+const SHAPE_NAMES={fish:'鱼',star:'星',cat:'猫',rabbit:'兔',butterfly:'蝴蝶',house:'房子',flower:'花',heart:'爱心',apple:'苹果',pear:'梨',banana:'香蕉',tree:'树',car:'汽车',bird:'鸟',turtle:'乌龟',strawberry:'草莓',mushroom:'蘑菇',crown:'皇冠',rocket:'火箭',grapes:'葡萄',icecream:'冰淇淋',dog:'狗',pig:'猪'};
+const SHAPE_DIFFICULTY={heart:1,star:1,fish:1,house:1,apple:1,banana:1,pear:2,tree:2,car:2,cat:2,rabbit:2,flower:3,butterfly:3,bird:3,turtle:3,dog:3,pig:3,strawberry:4,grapes:4,icecream:4,mushroom:5,crown:5,rocket:5};
 
 function getShapeOutline(shapeName,cx,cy,size){
   const pts=SHAPES[shapeName];if(!pts)return[];
@@ -344,7 +356,7 @@ class ColorFillGame extends BaseGame {
     const cfg=this.cfg;this.filled.fill(0);this.filledPixels=0;
     const ctx=this.octx,w=Math.floor(this.W),h=Math.floor(this.H);
     ctx.clearRect(0,0,w,h);ctx.fillStyle='#FFF';ctx.fillRect(0,0,w,h);
-    const keys=Object.keys(SHAPES);this.shapeName=keys[Utils.randInt(0,keys.length-1)];
+    const availShapes=Object.keys(SHAPES).filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);this.shapeName=availShapes[Utils.randInt(0,availShapes.length-1)];
     const cx=this.W/2,cy=this.H/2,r=Math.min(this.W,this.H)*0.32;
     this.outline=getShapeOutline(this.shapeName,cx,cy,r);
     // 画轮廓
@@ -417,8 +429,8 @@ class TraceLineGame extends BaseGame {
     this.bgEnabled=false;this.userPath=[];this.isDrawing=false;this._genLevel();
   }
   _genLevel(){
-    const cfg=this.cfg;const keys=Object.keys(SHAPES);
-    this.shapeName=keys[Utils.randInt(0,keys.length-1)];
+    const cfg=this.cfg;const availShapes=Object.keys(SHAPES).filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);
+    this.shapeName=availShapes[Utils.randInt(0,availShapes.length-1)];
     const cx=this.W/2,cy=this.H/2,r=Math.min(this.W,this.H)*0.32;
     this.outline=getShapeOutline(this.shapeName,cx,cy,r);
     this.dots=generateDottedOutline(this.outline,Math.max(25,Math.floor(45-this.difficulty*3)));
@@ -500,7 +512,7 @@ class DotDrawGame extends BaseGame {
   }
   _genLevel(){
     const cfg=this.cfg;
-    const regionKeys=Object.keys(SHAPE_REGIONS);const nonRegionKeys=Object.keys(SHAPES);
+    const regionKeys=Object.keys(SHAPE_REGIONS);const nonRegionKeys=Object.keys(SHAPES).filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);
     const allKeys=[...new Set([...regionKeys,...nonRegionKeys])];
     this.shapeName=allKeys[Utils.randInt(0,allKeys.length-1)];
     const regDef=SHAPE_REGIONS[this.shapeName];
@@ -772,7 +784,165 @@ const COMPLEX_SCENES = [
       {t:'circle',x:0.8,y:0.58,r:0.025,c:'#FF6B6B'},
       {t:'circle',x:0.35,y:0.6,r:0.025,c:'#FFD700'},
     ]
-  }
+  },
+  {
+    name: '游乐场',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'rect',x:0.35,y:0.3,w:0.3,h:0.25,c:'#FF8C00'},
+      {t:'triangle',points:[0.32,0.3,0.5,0.15,0.68,0.3],c:'#FF4444'},
+      {t:'rect',x:0.4,y:0.38,w:0.08,h:0.17,c:'#FFD700'},
+      {t:'rect',x:0.52,y:0.4,w:0.08,h:0.15,c:'#4488FF'},
+      {t:'circle',x:0.15,y:0.4,r:0.08,c:'#FF6B6B'},
+      {t:'rect',x:0.12,y:0.48,w:0.06,h:0.07,c:'#8B4513'},
+      {t:'circle',x:0.8,y:0.38,r:0.07,c:'#4ADE80'},
+      {t:'rect',x:0.77,y:0.45,w:0.06,h:0.1,c:'#8B4513'},
+      {t:'circle',x:0.5,y:0.62,r:0.04,c:'#FFB84D'},
+      {t:'circle',x:0.38,y:0.63,r:0.03,c:'#FFB84D'},
+      {t:'circle',x:0.62,y:0.63,r:0.03,c:'#FFB84D'},
+      {t:'circle',x:0.7,y:0.12,r:0.04,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '海滩',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#87CEEB'},
+      {t:'circle',x:0.85,y:0.1,r:0.06,c:'#FFD700'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.25,c:'#F4D03F'},
+      {t:'rect',x:0,y:0.75,w:1,h:0.25,c:'#1E90FF'},
+      {t:'rect',x:0.1,y:0.47,w:0.15,h:0.03,c:'#8B4513'},
+      {t:'triangle',points:[0.08,0.47,0.175,0.3,0.27,0.47],c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.44,r:0.05,c:'#FFFFFF'},
+      {t:'circle',x:0.55,y:0.42,r:0.03,c:'#FFFFFF'},
+      {t:'circle',x:0.6,y:0.45,r:0.025,c:'#FFFFFF'},
+      {t:'circle',x:0.35,y:0.68,r:0.03,c:'#FF6B6B'},
+      {t:'rect',x:0.7,y:0.6,w:0.04,h:0.15,c:'#228B22'},
+      {t:'circle',x:0.72,y:0.55,r:0.05,c:'#228B22'},
+      {t:'rect',x:0.2,y:0.62,w:0.03,h:0.13,c:'#228B22'},
+      {t:'circle',x:0.215,y:0.58,r:0.04,c:'#228B22'},
+    ]
+  },
+  {
+    name: '动物园',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#4ADE80'},
+      {t:'rect',x:0.05,y:0.25,w:0.18,h:0.3,c:'#696969'},
+      {t:'rect',x:0.07,y:0.28,w:0.04,h:0.24,c:'#DEB887'},
+      {t:'circle',x:0.12,y:0.35,r:0.04,c:'#FFB84D'},
+      {t:'circle',x:0.1,y:0.33,r:0.008,c:'#333'},
+      {t:'circle',x:0.14,y:0.33,r:0.008,c:'#333'},
+      {t:'rect',x:0.3,y:0.35,w:0.16,h:0.2,c:'#696969'},
+      {t:'circle',x:0.38,y:0.42,r:0.04,c:'#8B4513'},
+      {t:'circle',x:0.35,y:0.4,r:0.01,c:'#333'},
+      {t:'circle',x:0.41,y:0.4,r:0.01,c:'#333'},
+      {t:'rect',x:0.55,y:0.4,w:0.14,h:0.15,c:'#696969'},
+      {t:'circle',x:0.62,y:0.45,r:0.035,c:'#FFD700'},
+      {t:'circle',x:0.6,y:0.44,r:0.008,c:'#333'},
+      {t:'circle',x:0.64,y:0.44,r:0.008,c:'#333'},
+      {t:'rect',x:0.75,y:0.35,w:0.15,h:0.2,c:'#696969'},
+      {t:'circle',x:0.82,y:0.42,r:0.04,c:'#4ADE80'},
+      {t:'circle',x:0.8,y:0.4,r:0.01,c:'#333'},
+      {t:'circle',x:0.84,y:0.4,r:0.01,c:'#333'},
+      {t:'rect',x:0.2,y:0.5,w:0.6,h:0.02,c:'#DEB887'},
+    ]
+  },
+  {
+    name: '城堡',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#4ADE80'},
+      {t:'rect',x:0.25,y:0.2,w:0.5,h:0.35,c:'#D3D3D3'},
+      {t:'rect',x:0.3,y:0.08,w:0.1,h:0.47,c:'#A9A9A9'},
+      {t:'triangle',points:[0.27,0.08,0.35,0.0,0.43,0.08],c:'#FF4444'},
+      {t:'rect',x:0.5,y:0.15,w:0.1,h:0.4,c:'#A9A9A9'},
+      {t:'triangle',points:[0.47,0.15,0.55,0.05,0.63,0.15],c:'#FF4444'},
+      {t:'rect',x:0.65,y:0.2,w:0.08,h:0.35,c:'#A9A9A9'},
+      {t:'triangle',points:[0.62,0.2,0.69,0.12,0.76,0.2],c:'#FF4444'},
+      {t:'rect',x:0.42,y:0.35,w:0.16,h:0.2,c:'#8B4513'},
+      {t:'rect',x:0.46,y:0.38,w:0.08,h:0.17,c:'#654321'},
+      {t:'rect',x:0.05,y:0.48,w:0.12,h:0.05,c:'#DEB887'},
+      {t:'circle',x:0.8,y:0.12,r:0.06,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '教室',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.5,c:'#DEB887'},
+      {t:'rect',x:0.1,y:0.06,w:0.8,h:0.35,c:'#2E8B57'},
+      {t:'rect',x:0.12,y:0.08,w:0.76,h:0.31,c:'#3CB371'},
+      {t:'rect',x:0.3,y:0.45,w:0.4,h:0.05,c:'#8B4513'},
+      {t:'rect',x:0.33,y:0.35,w:0.15,h:0.1,c:'#A0522D'},
+      {t:'rect',x:0.5,y:0.35,w:0.15,h:0.1,c:'#A0522D'},
+      {t:'rect',x:0.7,y:0.28,w:0.05,h:0.22,c:'#696969'},
+      {t:'circle',x:0.15,y:0.15,r:0.03,c:'#FFD700'},
+      {t:'circle',x:0.25,y:0.18,r:0.025,c:'#FF6B6B'},
+      {t:'rect',x:0.78,y:0.4,w:0.1,h:0.08,c:'#FFB84D'},
+      {t:'circle',x:0.85,y:0.16,r:0.04,c:'#4488FF'},
+    ]
+  },
+  {
+    name: '一家人吃饭',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.5,c:'#DEB887'},
+      {t:'rect',x:0.2,y:0.38,w:0.6,h:0.14,c:'#8B4513'},
+      {t:'circle',x:0.35,y:0.33,r:0.04,c:'#FFFFFF'},
+      {t:'circle',x:0.5,y:0.33,r:0.04,c:'#FFFFFF'},
+      {t:'circle',x:0.65,y:0.33,r:0.04,c:'#FFFFFF'},
+      {t:'circle',x:0.15,y:0.15,r:0.05,c:'#FFDAB9'},
+      {t:'rect',x:0.1,y:0.2,w:0.1,h:0.18,c:'#4488FF'},
+      {t:'circle',x:0.88,y:0.12,r:0.05,c:'#FFDAB9'},
+      {t:'rect',x:0.83,y:0.17,w:0.1,h:0.21,c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.18,r:0.04,c:'#FFDAB9'},
+      {t:'rect',x:0.46,y:0.22,w:0.08,h:0.16,c:'#4ADE80'},
+      {t:'rect',x:0.05,y:0.45,w:0.12,h:0.06,c:'#A0522D'},
+      {t:'rect',x:0.8,y:0.48,w:0.12,h:0.04,c:'#A0522D'},
+    ]
+  },
+  {
+    name: '小猪佩奇',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'circle',x:0.5,y:0.25,r:0.1,c:'#FFB6C1'},
+      {t:'ellipse',x:0.5,y:0.27,w:0.06,h:0.04,c:'#FF69B4'},
+      {t:'circle',x:0.488,y:0.265,r:0.008,c:'#FF1493'},
+      {t:'circle',x:0.512,y:0.265,r:0.008,c:'#FF1493'},
+      {t:'circle',x:0.5,y:0.23,r:0.012,c:'#333'},
+      {t:'circle',x:0.493,y:0.228,r:0.004,c:'#FFF'},
+      {t:'circle',x:0.507,y:0.228,r:0.004,c:'#FFF'},
+      {t:'triangle',points:[0.43,0.2,0.45,0.12,0.47,0.2],c:'#FFB6C1'},
+      {t:'triangle',points:[0.53,0.2,0.55,0.12,0.57,0.2],c:'#FFB6C1'},
+      {t:'rect',x:0.44,y:0.33,w:0.12,h:0.15,c:'#FF4444'},
+      {t:'rect',x:0.44,y:0.35,w:0.04,h:0.06,c:'#FFB6C1'},
+      {t:'rect',x:0.52,y:0.35,w:0.04,h:0.06,c:'#FFB6C1'},
+      {t:'rect',x:0.47,y:0.48,w:0.02,h:0.07,c:'#FFB6C1'},
+      {t:'rect',x:0.51,y:0.48,w:0.02,h:0.07,c:'#FFB6C1'},
+      {t:'circle',x:0.8,y:0.15,r:0.05,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '爸爸妈妈和宝宝',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#DEB887'},
+      {t:'circle',x:0.3,y:0.12,r:0.055,c:'#FFDAB9'},
+      {t:'rect',x:0.24,y:0.175,w:0.12,h:0.25,c:'#4488FF'},
+      {t:'rect',x:0.26,y:0.22,w:0.08,h:0.12,c:'#FFFFFF'},
+      {t:'circle',x:0.7,y:0.1,r:0.055,c:'#FFDAB9'},
+      {t:'rect',x:0.64,y:0.155,w:0.12,h:0.27,c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.2,r:0.04,c:'#FFDAB9'},
+      {t:'rect',x:0.46,y:0.24,w:0.08,h:0.14,c:'#FFD700'},
+      {t:'circle',x:0.12,y:0.2,r:0.04,c:'#E8D8C8'},
+      {t:'rect',x:0.07,y:0.24,w:0.1,h:0.18,c:'#8B7355'},
+      {t:'circle',x:0.88,y:0.18,r:0.04,c:'#E8D8C8'},
+      {t:'rect',x:0.83,y:0.22,w:0.1,h:0.18,c:'#696969'},
+      {t:'rect',x:0.05,y:0.4,w:0.9,h:0.02,c:'#8B4513'},
+    ]
+  },
 ];
 
 function drawSceneElements(ctx, elements, ox, oy, sw, sh, mode) {
@@ -840,6 +1010,11 @@ function getSceneColors(scene) {
   return colors.slice(0, 8);
 }
 
+const SCENE_DIFFICULTY = {
+  '公园':1,'农场':2,'海底世界':3,'游乐场':3,'一家人吃饭':3,'小猪佩奇':3,'生日派对':4,'海滩':4,'太空':4,'动物园':4,'爸爸妈妈和宝宝':4,'一家人在做饭':5,'城堡':5,'教室':5
+};
+
+
 // ============================================================
 // 游戏4：参考填色 ComplexColorGame（无时间限制）
 // ============================================================
@@ -855,7 +1030,8 @@ class ComplexColorGame extends BaseGame {
     this.currentBrushR = Math.round(cfg.brushR * this.brushMult);
     this.bgEnabled = false;
     this._initOffscreen();
-    this._sceneIndices = Utils.shuffle([...Array(COMPLEX_SCENES.length).keys()]).slice(0, cfg.scenes);
+    const eligibleScenes = COMPLEX_SCENES.map((s,i)=>i).filter(i=>(SCENE_DIFFICULTY[COMPLEX_SCENES[i].name]||3)<=this.difficulty+1);
+    this._sceneIndices = Utils.shuffle(eligibleScenes.length>=cfg.scenes?eligibleScenes:[...Array(COMPLEX_SCENES.length).keys()]).slice(0, cfg.scenes);
     this._sceneIdx = 0;
     this._genLevel();
     this._renderPalette();
@@ -1010,7 +1186,8 @@ class ComplexColorGame extends BaseGame {
         if (!this.finish()) {
           this.targetTrials += this.cfg.scenes;
           this.currentLevel = 0;
-          this._sceneIndices = Utils.shuffle([...Array(COMPLEX_SCENES.length).keys()]).slice(0, this.cfg.scenes);
+          const eligScenes=COMPLEX_SCENES.map((s,i)=>i).filter(i=>(SCENE_DIFFICULTY[COMPLEX_SCENES[i].name]||3)<=this.difficulty+1);
+          this._sceneIndices = Utils.shuffle(eligScenes.length>=this.cfg.scenes?eligScenes:[...Array(COMPLEX_SCENES.length).keys()]).slice(0, this.cfg.scenes);
           this._sceneIdx = 0;
           this._genLevel();
         }
