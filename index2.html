@@ -2793,8 +2793,7 @@ const GameEngine = {
   },
 
   stop() {
-    console.log('[DEBUG-d4f2] GameEngine.stop() called, _rafId:', this._rafId);
-    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
     if (this._countdownTimerId) { clearInterval(this._countdownTimerId); this._countdownTimerId = null; }
     this._currentGame = null;
   },
@@ -2809,10 +2808,8 @@ const GameEngine = {
   },
 
   _onGameEnd(stats) {
-    console.log('[DEBUG-d4f2] _onGameEnd called, stopping game');
-    this.stop();
-    console.log('[DEBUG-d4f2] stop() completed, _currentGame:', this._currentGame);
-    const gameId = this._gameId;
+this.stop();
+const gameId = this._gameId;
     const isDaily = this._isDailyTask;
 
     // 记录结果
@@ -3379,8 +3376,7 @@ class BaseGame {
     console.log('[DEBUG-d4f2] finish() called, stats:', this.getStats());
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
-    console.log('[DEBUG-d4f2] onEnd callback completed');
-    return true;
+return true;
   }
 
   // 当finish被延迟时调用，子类可重写来继续生成游戏内容
@@ -3817,7 +3813,6 @@ class DiffSpotGame extends BaseGame {
     if (this.finished) return;
     // 超时
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
-      this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
@@ -4506,7 +4501,6 @@ class HiddenTargetGame extends BaseGame {
   onUpdate(dt) {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
-      this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
@@ -5309,8 +5303,7 @@ class MazeGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
-    console.log('[DEBUG-d4f2] FindNum onStart: levels='+cfg.levels+' targets='+cfg.targets+' count='+cfg.count+' targetTrials='+this.targetTrials);
-    this.setupColorSwitchBg();
+this.setupColorSwitchBg();
     this._genLevel();
   }
 
@@ -5447,7 +5440,6 @@ class MazeGame extends BaseGame {
   onUpdate(dt) {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
-      this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
@@ -5601,7 +5593,7 @@ class FindNumGame extends BaseGame {
   onStart() {
     const cfg = GAME_CONFIGS.findnum.difficulties[this.difficulty];
     this.cfg = cfg;
-    this.targetTrials = cfg.levels;
+    this.targetTrials = cfg.levels * cfg.targets;
     this.currentLevel = 0;
     this.setupColorSwitchBg();
     this._genLevel();
@@ -5653,16 +5645,13 @@ class FindNumGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
-            console.log('[DEBUG-d4f2] FindNum level complete: currentLevel='+this.currentLevel+' levels='+this.cfg.levels+' targetTrials='+this.targetTrials);
-            if (this.currentLevel >= this.cfg.levels) {
-              console.log('[DEBUG-d4f2] FindNum ALL LEVELS DONE - calling finish()');
-              this.finish();
+if (this.currentLevel >= this.cfg.levels) {
+this.finish();
               return;
             }
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
-          this.recordResult(false, performance.now() - this.levelStartTime);
           Audio.mistake();
         }
         return;
@@ -5673,7 +5662,6 @@ class FindNumGame extends BaseGame {
   onUpdate(dt) {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
-      this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
@@ -5724,7 +5712,7 @@ class FindLetterGame extends BaseGame {
   onStart() {
     const cfg = GAME_CONFIGS.findletter.difficulties[this.difficulty];
     this.cfg = cfg;
-    this.targetTrials = cfg.levels;
+    this.targetTrials = cfg.levels * cfg.targets;
     this.currentLevel = 0;
     this.letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     this.setupBg('zigzag', ['#FF4444', '#4488FF'], 40, 30);
@@ -5777,16 +5765,13 @@ class FindLetterGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
-            console.log('[DEBUG-d4f2] FindNum level complete: currentLevel='+this.currentLevel+' levels='+this.cfg.levels+' targetTrials='+this.targetTrials);
-            if (this.currentLevel >= this.cfg.levels) {
-              console.log('[DEBUG-d4f2] FindNum ALL LEVELS DONE - calling finish()');
-              this.finish();
+if (this.currentLevel >= this.cfg.levels) {
+this.finish();
               return;
             }
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
-          this.recordResult(false, performance.now() - this.levelStartTime);
           Audio.mistake();
         }
         return;
@@ -5797,7 +5782,6 @@ class FindLetterGame extends BaseGame {
   onUpdate(dt) {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
-      this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
@@ -6861,7 +6845,6 @@ class ConnectLineGame extends BaseGame {
             }
           }
         } else {
-          this.recordResult(false, performance.now() - this.levelStartTime);
           Audio.mistake();
         }
       }
@@ -9767,8 +9750,7 @@ class ComplexColorGame extends BaseGame {
     console.log('[DEBUG-d4f2] finish() called, stats:', this.getStats());
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
-    console.log('[DEBUG-d4f2] onEnd callback completed');
-    return true;
+return true;
   }
 }
 registerGame('complexcolor', ComplexColorGame);
