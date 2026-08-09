@@ -2789,7 +2789,7 @@ const GameEngine = {
     const bar = document.getElementById('game-progress-bar');
     const text = document.getElementById('game-progress-text');
     if (bar) bar.style.width = Math.min(100, p.pct * 100) + '%';
-    if (text && p.targetTrials) text.textContent = `${p.trials} / ${p.targetTrials}`;
+    if (text && p.targetTrials) text.textContent = `${Math.min(p.trials, p.targetTrials)} / ${p.targetTrials}`;
   },
 
   stop() {
@@ -5593,7 +5593,7 @@ class FindNumGame extends BaseGame {
   onStart() {
     const cfg = GAME_CONFIGS.findnum.difficulties[this.difficulty];
     this.cfg = cfg;
-    this.targetTrials = cfg.levels * cfg.targets;
+    this.targetTrials = cfg.levels * cfg.targets * 3;
     this.currentLevel = 0;
     this.setupColorSwitchBg();
     this._genLevel();
@@ -5652,6 +5652,7 @@ this.finish();
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
+          this.recordResult(false, performance.now() - this.levelStartTime);
           Audio.mistake();
         }
         return;
@@ -5712,7 +5713,7 @@ class FindLetterGame extends BaseGame {
   onStart() {
     const cfg = GAME_CONFIGS.findletter.difficulties[this.difficulty];
     this.cfg = cfg;
-    this.targetTrials = cfg.levels * cfg.targets;
+    this.targetTrials = cfg.levels * cfg.targets * 3;
     this.currentLevel = 0;
     this.letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     this.setupBg('zigzag', ['#FF4444', '#4488FF'], 40, 30);
@@ -5772,6 +5773,7 @@ this.finish();
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
+          this.recordResult(false, performance.now() - this.levelStartTime);
           Audio.mistake();
         }
         return;
@@ -6845,6 +6847,7 @@ class ConnectLineGame extends BaseGame {
             }
           }
         } else {
+          this.recordResult(false, performance.now() - this.levelStartTime);
           Audio.mistake();
         }
       }
