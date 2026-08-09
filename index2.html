@@ -765,22 +765,22 @@ const GAME_CONFIGS = {
     id:'evideo', name:'E字方向识别', icon:'👁️', color:'#4A9EFF', category:'core',
     desc:'识别E字方向', clinical:'E字视力表训练，锻炼方向分辨敏锐度',
     difficulties: {
-      1:{size:220,trials:30,timeout:0,color:'#000',bg:'none'},
-      2:{size:140,trials:24,timeout:6000,color:'#000',bg:'none'},
-      3:{size:90,trials:30,timeout:5000,color:'#000',bg:'grid'},
-      4:{size:55,trials:18,timeout:4000,color:'#333',bg:'dots'},
-      5:{size:30,trials:20,timeout:3000,color:'#666',bg:'noise'}
+      1:{size:220,trials:39,timeout:0,color:'#000',bg:'none'},
+      2:{size:140,trials:31,timeout:6000,color:'#000',bg:'none'},
+      3:{size:90,trials:39,timeout:5000,color:'#000',bg:'grid'},
+      4:{size:55,trials:23,timeout:4000,color:'#333',bg:'dots'},
+      5:{size:30,trials:26,timeout:3000,color:'#666',bg:'noise'}
     }
   },
   landoltc: {
     id:'landoltc', name:'Landolt C', icon:'©️', color:'#3B82F6', category:'core',
     desc:'识别C环缺口方向', clinical:'国际标准Landolt C视力表，精细视力训练',
     difficulties: {
-      1:{outerR:110,gap:30,trials:24,timeout:0,color:'#000',bg:'none'},
-      2:{outerR:80,gap:22,trials:30,timeout:6000,color:'#000',bg:'none'},
-      3:{outerR:55,gap:16,trials:24,timeout:5000,color:'#333',bg:'grid'},
-      4:{outerR:38,gap:12,trials:30,timeout:4000,color:'#555',bg:'dots'},
-      5:{outerR:26,gap:8,trials:18,timeout:3000,color:'#777',bg:'noise'}
+      1:{outerR:110,gap:30,trials:31,timeout:0,color:'#000',bg:'none'},
+      2:{outerR:80,gap:22,trials:39,timeout:6000,color:'#000',bg:'none'},
+      3:{outerR:55,gap:16,trials:31,timeout:5000,color:'#333',bg:'grid'},
+      4:{outerR:38,gap:12,trials:39,timeout:4000,color:'#555',bg:'dots'},
+      5:{outerR:26,gap:8,trials:23,timeout:3000,color:'#777',bg:'noise'}
     }
   },
   diffspot: {
@@ -875,11 +875,11 @@ const GAME_CONFIGS = {
     id:'tracing', name:'描线', icon:'✏️', color:'#06B6D4', category:'core',
     desc:'沿轨迹画线', clinical:'精细视觉控制与眼手协调',
     difficulties: {
-      1:{pathType:'line',tolerance:40,pathWidth:30,trials:12},
-      2:{pathType:'polyline',tolerance:32,pathWidth:24,trials:12},
-      3:{pathType:'arc',tolerance:26,pathWidth:20,trials:16},
-      4:{pathType:'sine',tolerance:22,pathWidth:16,trials:16},
-      5:{pathType:'spiral',tolerance:18,pathWidth:12,trials:20}
+      1:{pathType:'line',tolerance:40,pathWidth:30,trials:15},
+      2:{pathType:'polyline',tolerance:32,pathWidth:24,trials:15},
+      3:{pathType:'arc',tolerance:26,pathWidth:20,trials:20},
+      4:{pathType:'sine',tolerance:22,pathWidth:16,trials:20},
+      5:{pathType:'spiral',tolerance:18,pathWidth:12,trials:26}
     }
   },
   maze: {
@@ -898,11 +898,11 @@ const GAME_CONFIGS = {
     id:'shrinknum', name:'数字识别', icon:'🔢', color:'#F97316', category:'optional',
     desc:'识别逐渐缩小的数字', clinical:'精细视力训练，数字视标',
     difficulties: {
-      1:{fontSize:180,shrink:0.95,minSize:30,trials:24,timeout:0},
-      2:{fontSize:140,shrink:0.92,minSize:24,trials:28,timeout:6000},
-      3:{fontSize:100,shrink:0.88,minSize:20,trials:16,timeout:5000},
-      4:{fontSize:70,shrink:0.85,minSize:16,trials:18,timeout:4000},
-      5:{fontSize:50,shrink:0.80,minSize:12,trials:20,timeout:3000}
+      1:{fontSize:180,shrink:0.95,minSize:30,trials:31,timeout:0},
+      2:{fontSize:140,shrink:0.92,minSize:24,trials:36,timeout:6000},
+      3:{fontSize:100,shrink:0.88,minSize:20,trials:20,timeout:5000},
+      4:{fontSize:70,shrink:0.85,minSize:16,trials:23,timeout:4000},
+      5:{fontSize:50,shrink:0.80,minSize:12,trials:26,timeout:3000}
     }
   },
   findnum: {
@@ -942,22 +942,22 @@ const GAME_CONFIGS = {
     id:'butterfly', name:'蝴蝶飞', icon:'🦋', color:'#D946EF', category:'optional',
     desc:'追踪飞舞的蝴蝶', clinical:'平滑追随与眼手协调',
     difficulties: {
-      1:{speed:100,size:36,tolerance:50,trials:24,trail:'line'},
-      2:{speed:160,size:30,tolerance:42,trials:28,trail:'circle'},
-      3:{speed:220,size:24,tolerance:34,trials:16,trail:'sine'},
-      4:{speed:290,size:20,tolerance:28,trials:18,trail:'lissajous'},
-      5:{speed:360,size:16,tolerance:22,trials:20,trail:'random'}
+      1:{speed:100,size:36,tolerance:50,trials:31,trail:'line'},
+      2:{speed:160,size:30,tolerance:42,trials:36,trail:'circle'},
+      3:{speed:220,size:24,tolerance:34,trials:20,trail:'sine'},
+      4:{speed:290,size:20,tolerance:28,trials:23,trail:'lissajous'},
+      5:{speed:360,size:16,tolerance:22,trials:26,trail:'random'}
     }
   },
   laserdot: {
     id:'laserdot', name:'激光笔', icon:'🔴', color:'#DC2626', category:'optional',
     desc:'追踪跳跃红点', clinical:'扫视训练，视觉定位',
     difficulties: {
-      1:{jumpInterval:2.0,radius:30,tolerance:50,trials:24},
-      2:{jumpInterval:1.5,radius:24,tolerance:42,trials:28},
-      3:{jumpInterval:1.2,radius:20,tolerance:34,trials:16},
-      4:{jumpInterval:0.9,radius:16,tolerance:28,trials:18},
-      5:{jumpInterval:0.7,radius:12,tolerance:22,trials:20}
+      1:{jumpInterval:2.0,radius:30,tolerance:50,trials:31},
+      2:{jumpInterval:1.5,radius:24,tolerance:42,trials:36},
+      3:{jumpInterval:1.2,radius:20,tolerance:34,trials:20},
+      4:{jumpInterval:0.9,radius:16,tolerance:28,trials:23},
+      5:{jumpInterval:0.7,radius:12,tolerance:22,trials:26}
     }
   },
   fruitninja: {
@@ -986,33 +986,33 @@ const GAME_CONFIGS = {
     id:'starhold', name:'星星保持', icon:'✨', color:'#FCD34D', category:'optional',
     desc:'持续注视星星', clinical:'持续注视稳定性训练',
     difficulties: {
-      1:{holdTime:5,decay:0.15,clickInterval:1.5,radius:50,trials:16},
-      2:{holdTime:7,decay:0.20,clickInterval:1.3,radius:42,trials:16},
-      3:{holdTime:10,decay:0.25,clickInterval:1.1,radius:34,trials:20},
-      4:{holdTime:12,decay:0.30,clickInterval:0.9,radius:28,trials:20},
-      5:{holdTime:15,decay:0.35,clickInterval:0.7,radius:22,trials:18}
+      1:{holdTime:5,decay:0.15,clickInterval:1.5,radius:50,trials:20},
+      2:{holdTime:7,decay:0.20,clickInterval:1.3,radius:42,trials:20},
+      3:{holdTime:10,decay:0.25,clickInterval:1.1,radius:34,trials:26},
+      4:{holdTime:12,decay:0.30,clickInterval:0.9,radius:28,trials:26},
+      5:{holdTime:15,decay:0.35,clickInterval:0.7,radius:22,trials:23}
     }
   },
   fadeout: {
     id:'fadeout', name:'消失目标', icon:'👻', color:'#94A3B8', category:'optional',
     desc:'目标淡出时点击', clinical:'持续注视与时机判断',
     difficulties: {
-      1:{fadeTime:3.0,timeWindow:0.6,radius:50,trials:30},
-      2:{fadeTime:2.5,timeWindow:0.5,radius:42,trials:24},
-      3:{fadeTime:2.0,timeWindow:0.4,radius:34,trials:28},
-      4:{fadeTime:1.5,timeWindow:0.35,radius:28,trials:16},
-      5:{fadeTime:1.2,timeWindow:0.3,radius:22,trials:18}
+      1:{fadeTime:3.0,timeWindow:0.6,radius:50,trials:39},
+      2:{fadeTime:2.5,timeWindow:0.5,radius:42,trials:31},
+      3:{fadeTime:2.0,timeWindow:0.4,radius:34,trials:36},
+      4:{fadeTime:1.5,timeWindow:0.35,radius:28,trials:20},
+      5:{fadeTime:1.2,timeWindow:0.3,radius:22,trials:23}
     }
   },
   seqmemory: {
     id:'seqmemory', name:'顺序记忆', icon:'🎵', color:'#6366F1', category:'optional',
     desc:'记住闪烁顺序', clinical:'视觉顺序记忆训练',
     difficulties: {
-      1:{pads:4,seqLen:3,flashInterval:0.8,trials:12},
-      2:{pads:6,seqLen:4,flashInterval:0.7,trials:12},
-      3:{pads:6,seqLen:5,flashInterval:0.6,trials:16},
-      4:{pads:9,seqLen:6,flashInterval:0.5,trials:16},
-      5:{pads:9,seqLen:8,flashInterval:0.4,trials:20}
+      1:{pads:4,seqLen:3,flashInterval:0.8,trials:15},
+      2:{pads:6,seqLen:4,flashInterval:0.7,trials:15},
+      3:{pads:6,seqLen:5,flashInterval:0.6,trials:20},
+      4:{pads:9,seqLen:6,flashInterval:0.5,trials:20},
+      5:{pads:9,seqLen:8,flashInterval:0.4,trials:26}
     }
   },
   connectline: {
@@ -1030,55 +1030,55 @@ const GAME_CONFIGS = {
     id:'shadowmatch', name:'阴影匹配', icon:'🌑', color:'#475569', category:'optional',
     desc:'找对应影子', clinical:'形状辨识与视觉匹配',
     difficulties: {
-      1:{candidates:3,fontSize:64,trials:20},
-      2:{candidates:4,fontSize:56,trials:18},
-      3:{candidates:5,fontSize:48,trials:21},
-      4:{candidates:6,fontSize:42,trials:24},
-      5:{candidates:8,fontSize:36,trials:30}
+      1:{candidates:3,fontSize:64,trials:26},
+      2:{candidates:4,fontSize:56,trials:23},
+      3:{candidates:5,fontSize:48,trials:27},
+      4:{candidates:6,fontSize:42,trials:31},
+      5:{candidates:8,fontSize:36,trials:39}
     }
   },
   fillpiece: {
     id:'fillpiece', name:'拼完整图形', icon:'🖼️', color:'#7C3AED', category:'optional',
     desc:'拖入缺失碎片', clinical:'完形知觉与精细辨别',
     difficulties: {
-      1:{imgSize:240,gapPct:0.25,candidates:3,trials:16},
-      2:{imgSize:200,gapPct:0.22,candidates:3,trials:20},
-      3:{imgSize:170,gapPct:0.20,candidates:4,trials:18},
-      4:{imgSize:145,gapPct:0.18,candidates:4,trials:21},
-      5:{imgSize:120,gapPct:0.15,candidates:5,trials:24}
+      1:{imgSize:240,gapPct:0.25,candidates:3,trials:20},
+      2:{imgSize:200,gapPct:0.22,candidates:3,trials:26},
+      3:{imgSize:170,gapPct:0.20,candidates:4,trials:23},
+      4:{imgSize:145,gapPct:0.18,candidates:4,trials:27},
+      5:{imgSize:120,gapPct:0.15,candidates:5,trials:31}
     }
   },
   whichfaster: {
     id:'whichfaster', name:'哪个更快', icon:'⚡', color:'#F59E0B', category:'optional',
     desc:'比较两个球速度', clinical:'动态视觉速度比较判断',
     difficulties: {
-      1:{ratio:2.0,radius:32,laneGap:120,speedRange:[60,120],trials:24},
-      2:{ratio:1.7,radius:28,laneGap:110,speedRange:[80,140],trials:30},
-      3:{ratio:1.4,radius:24,laneGap:100,speedRange:[100,180],trials:24},
-      4:{ratio:1.25,radius:20,laneGap:90,speedRange:[130,220],trials:28},
-      5:{ratio:1.15,radius:18,laneGap:80,speedRange:[160,260],trials:16}
+      1:{ratio:2.0,radius:32,laneGap:120,speedRange:[60,120],trials:31},
+      2:{ratio:1.7,radius:28,laneGap:110,speedRange:[80,140],trials:39},
+      3:{ratio:1.4,radius:24,laneGap:100,speedRange:[100,180],trials:31},
+      4:{ratio:1.25,radius:20,laneGap:90,speedRange:[130,220],trials:36},
+      5:{ratio:1.15,radius:18,laneGap:80,speedRange:[160,260],trials:20}
     }
   },
   linkmatch: {
     id:'linkmatch', name:'连连看', icon:'🔗', color:'#8B5CF6', category:'optional',
     desc:'连接相同图案消除', clinical:'视觉搜索与图形匹配',
     difficulties: {
-      1:{cols:4,rows:3,pairs:12,timeout:0,trials:8},
-      2:{cols:4,rows:4,pairs:16,timeout:0,trials:12},
-      3:{cols:6,rows:4,pairs:24,timeout:0,trials:12},
-      4:{cols:6,rows:4,pairs:24,timeout:30,trials:16},
-      5:{cols:8,rows:4,pairs:32,timeout:25,trials:16}
+      1:{cols:4,rows:3,pairs:12,timeout:0,trials:10},
+      2:{cols:4,rows:4,pairs:16,timeout:0,trials:15},
+      3:{cols:6,rows:4,pairs:24,timeout:0,trials:15},
+      4:{cols:6,rows:4,pairs:24,timeout:30,trials:20},
+      5:{cols:8,rows:4,pairs:32,timeout:25,trials:20}
     }
   },
   roping: {
     id:'roping', name:'套牛', icon:'🐮', color:'#F59E0B', category:'optional',
     desc:'套住奔跑的牛', clinical:'手眼协调与反应速度',
     difficulties: {
-      1:{cows:5,speed:60,ropeTime:0.6,trials:20},
-      2:{cows:6,speed:80,ropeTime:0.5,trials:18},
-      3:{cows:7,speed:100,ropeTime:0.45,trials:21},
-      4:{cows:8,speed:120,ropeTime:0.4,trials:24},
-      5:{cows:10,speed:150,ropeTime:0.35,trials:30}
+      1:{cows:5,speed:60,ropeTime:0.6,trials:26},
+      2:{cows:6,speed:80,ropeTime:0.5,trials:23},
+      3:{cows:7,speed:100,ropeTime:0.45,trials:27},
+      4:{cows:8,speed:120,ropeTime:0.4,trials:31},
+      5:{cows:10,speed:150,ropeTime:0.35,trials:39}
     }
   },
   racing: {
@@ -1096,11 +1096,11 @@ const GAME_CONFIGS = {
     id:'tankshooter', name:'坦克射击', icon:'🔫', color:'#10B981', category:'optional',
     desc:'移动坦克射击目标', clinical:'空间定位与手眼协调',
     difficulties: {
-      1:{enemies:8,enemySpeed:40,spawnInterval:2.5,trials:24},
-      2:{enemies:10,enemySpeed:55,spawnInterval:2.0,trials:30},
-      3:{enemies:12,enemySpeed:70,spawnInterval:1.7,trials:24},
-      4:{enemies:15,enemySpeed:85,spawnInterval:1.4,trials:30},
-      5:{enemies:18,enemySpeed:100,spawnInterval:1.1,trials:18}
+      1:{enemies:8,enemySpeed:40,spawnInterval:2.5,trials:31},
+      2:{enemies:10,enemySpeed:55,spawnInterval:2.0,trials:39},
+      3:{enemies:12,enemySpeed:70,spawnInterval:1.7,trials:31},
+      4:{enemies:15,enemySpeed:85,spawnInterval:1.4,trials:39},
+      5:{enemies:18,enemySpeed:100,spawnInterval:1.1,trials:23}
     }
   },
   brickbreak: {
@@ -1118,11 +1118,11 @@ const GAME_CONFIGS = {
     id:'fishing', name:'钓鱼', icon:'🎣', color:'#06B6D4', category:'optional',
     desc:'找到目标鱼并点击钓起', clinical:'视觉搜索与图形辨别',
     difficulties: {
-      1:{fishCount:6,targets:5,speed:30,distractors:2,trials:20},
-      2:{fishCount:8,targets:6,speed:45,distractors:3,trials:18},
-      3:{fishCount:10,targets:7,speed:60,distractors:4,trials:21},
-      4:{fishCount:12,targets:8,speed:75,distractors:5,trials:24},
-      5:{fishCount:15,targets:10,speed:90,distractors:6,trials:30}
+      1:{fishCount:6,targets:5,speed:30,distractors:2,trials:26},
+      2:{fishCount:8,targets:6,speed:45,distractors:3,trials:23},
+      3:{fishCount:10,targets:7,speed:60,distractors:4,trials:27},
+      4:{fishCount:12,targets:8,speed:75,distractors:5,trials:31},
+      5:{fishCount:15,targets:10,speed:90,distractors:6,trials:39}
     }
   },
   colorsort: {
@@ -1140,11 +1140,11 @@ const GAME_CONFIGS = {
     id:'rotatepuz', name:'旋转拼图', icon:'🔄', color:'#8B5CF6', category:'optional',
     desc:'匹配旋转后的图形', clinical:'心理旋转与空间知觉',
     difficulties: {
-      1:{trials:24,rotations:[0,90,180,270],shapes:4},
-      2:{trials:30,rotations:[0,45,90,135,180,225,270,315],shapes:6},
-      3:{trials:24,rotations:[0,45,90,135,180,225,270,315],shapes:8},
-      4:{trials:28,rotations:[0,45,90,135,180,225,270,315],shapes:10},
-      5:{trials:16,rotations:[0,30,60,90,120,150,180,210,240,270,300,330],shapes:12}
+      1:{trials:31,rotations:[0,90,180,270],shapes:4},
+      2:{trials:39,rotations:[0,45,90,135,180,225,270,315],shapes:6},
+      3:{trials:31,rotations:[0,45,90,135,180,225,270,315],shapes:8},
+      4:{trials:36,rotations:[0,45,90,135,180,225,270,315],shapes:10},
+      5:{trials:20,rotations:[0,30,60,90,120,150,180,210,240,270,300,330],shapes:12}
     }
   },
   colorfill: {
@@ -2495,16 +2495,6 @@ const Renderer = {
               <input id="set-train" type="hidden" value="${s.dailyTrainingGoal}">
             </div>
             <div>
-              <label class="text-sm text-gray-500 block mb-1">单次游玩最长时间（分钟）⏱️</label>
-              <div class="flex gap-2">
-                ${[2,5,10,15,30].map(m => `
-                  <button onclick="document.getElementById('set-maxplay').value=${m};Audio.click();window._updateBtnGroup('set-maxplay-btns',${m})" id="set-maxplay-btns-${m}" class="flex-1 py-2 rounded-xl font-medium ${(s.maxPlayMinutes||10)===m?'bg-soft-red text-white':'bg-gray-50 text-gray-600'}">${m}分</button>
-                `).join('')}
-              </div>
-              <p class="text-xs text-gray-400 mt-1">时间到后会自动关闭游戏，保护小朋友的眼睛</p>
-              <input id="set-maxplay" type="hidden" value="${s.maxPlayMinutes||30}">
-            </div>
-            <div>
               <label class="text-sm text-gray-500 block mb-1">每天遮眼目标（小时）</label>
               <div class="flex gap-2">
                 ${[1,2,3,4,6].map(h => `
@@ -2701,8 +2691,9 @@ const GameEngine = {
   _startCountdown() {
     const timerEl = document.getElementById('countdown-timer');
     if (!timerEl) return;
-    const max = parseInt(timerEl.dataset.max) || 1800;
-    this._countdownRemaining = parseInt(timerEl.dataset.remaining) || max;
+    const today = Store.getTodayRecord();
+    const goal = (Store.getSettings().dailyTrainingGoal || 20) * 60;
+    this._countdownRemaining = Math.max(0, goal - (today.trainingSeconds || 0));
     this._countdownLastTick = performance.now();
   },
 
@@ -2725,9 +2716,10 @@ const GameEngine = {
         if (this._countdownRemaining <= 5) Audio.tick();
       }
 
-      // 时间到！
+      // 时间到仅提示，不结束游戏
       if (this._countdownRemaining <= 0) {
-        this._onCountdownEnd();
+        this._countdownRemaining = 0;
+        displayEl.textContent = '00:00';
       }
     }
   },
@@ -3381,19 +3373,6 @@ class BaseGame {
 
   finish() {
     if (this.finished) return true;
-    const minTime = (Store.getSettings().maxPlayMinutes || 10) * 60;
-    const elapsed = (performance.now() - this.startTime) / 1000;
-    if (elapsed < minTime && !this._forceFinish) {
-      if (!this._pendingFinish) {
-        this._pendingFinish = true;
-        setTimeout(() => {
-          this._forceFinish = true;
-          this.finish();
-        }, Math.ceil((minTime - elapsed) * 1000));
-      }
-      this.onContinuePlaying();
-      return false;
-    }
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
     return true;
@@ -4152,7 +4131,7 @@ function saveSettings() {
   const age = parseInt(document.getElementById('set-age').value) || 5;
   const eye = document.getElementById('set-eye').value || 'left';
   const trainGoal = parseInt(document.getElementById('set-train').value) || 20;
-  const maxPlay = parseInt(document.getElementById('set-maxplay').value) || 30;
+  const maxPlay = 10;
   const patchGoal = parseInt(document.getElementById('set-patch').value) || 120;
   const reminder = document.getElementById('set-reminder').value;
   const diffOverrideRaw = document.getElementById('set-diff-override').value;
@@ -4165,7 +4144,7 @@ function saveSettings() {
     childName: name,
     age,
     amblyopicEye: eye,
-    maxPlayMinutes: maxPlay,
+    
     dailyTrainingGoal: trainGoal,
     dailyPatchingGoal: patchGoal,
     reminderTime: reminder,
