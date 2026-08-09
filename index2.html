@@ -3467,7 +3467,7 @@ class EVideoGame extends BaseGame {
     // 反馈后 500ms 进入下一题
     if (this.feedback && now - this.feedbackTime > 500) {
       if (this.totalTrials >= this.targetTrials) {
-        { this.totalTrials = 0; if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
+        { this.totalTrials = 0; this.finish(); return; }
         return;
       }
       this._nextTrial();
@@ -3622,7 +3622,7 @@ class PursuitGame extends BaseGame {
         this.totalTrials++;
         this.callbacks.onProgress(this.getProgress());
         Audio.mistake();
-        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.totalPauses; } return; }
+        if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
         this.isPaused = false;
         this.nextPauseTime = Utils.rand(this.cfg.pauseInterval[0], this.cfg.pauseInterval[1]);
         this._genPath();
@@ -3638,7 +3638,7 @@ class PursuitGame extends BaseGame {
       this.recordResult(true, rt);
       this.successCount++;
       Audio.success();
-      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.totalPauses; } return; }
+      if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
       this.isPaused = false;
       this.nextPauseTime = Utils.rand(this.cfg.pauseInterval[0], this.cfg.pauseInterval[1]);
       this._genPath();
@@ -4350,7 +4350,7 @@ class LandoltCGame extends BaseGame {
     if (this.finished) return;
     const now = performance.now();
     if (this.feedback && now - this.feedbackTime > 500) {
-      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
+      if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
       this._nextTrial();
     }
     if (this.cfg.timeout > 0 && !this.feedback) {
@@ -5551,7 +5551,7 @@ class ShrinkNumGame extends BaseGame {
     if (this.finished) return;
     const now = performance.now();
     if (this.feedback && now - this.feedbackTime > 500) {
-      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
+      if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
       this._nextTrial();
     }
     if (this.cfg.timeout > 0 && !this.feedback) {
@@ -5959,7 +5959,7 @@ class ButterflyGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
+        if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
         this.trialStartTime = performance.now();
       }
     }
@@ -6048,7 +6048,7 @@ class LaserDotGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._jump(); } return; }
+        if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
         this._jump();
       }
       return;
@@ -6533,7 +6533,7 @@ class FadeOutGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._genTrial(); } return; }
+        if (this.currentTrial >= this.cfg.trials) { this.finish(); return; }
         this._genTrial();
       }
       return;
@@ -6970,7 +6970,7 @@ class ShadowMatchGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._genTrial(); } return; }
+        if (this.currentTrial >= this.cfg.trials) { this.finish(); return; }
         this._genTrial();
       }
     }
@@ -7242,7 +7242,7 @@ class WhichFasterGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._genTrial(); } return; }
+        if (this.currentTrial >= this.cfg.trials) { this.finish(); return; }
         this._genTrial();
       }
       return;
@@ -8065,7 +8065,7 @@ class FishingGame extends BaseGame {
       if (f.y < 70 || f.y > this.H - 30) f.vy *= -1;
     });
     if (this.caughtInRound >= this.targetsNeeded) {
-      if (this.correctTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
+      if (this.correctTrials >= this.targetTrials) { this.finish(); return; }
       this._newRound();
     }
   }
@@ -8774,7 +8774,7 @@ class ColorFillGame extends BaseGame {
   }
   onUpdate(dt){
     if(this.finished)return;
-    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
   }
   onRender(ctx){
     ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
@@ -8827,7 +8827,7 @@ class TraceLineGame extends BaseGame {
   }
   onUpdate(dt){
     if(this.finished)return;
-    if(this.feedback&&performance.now()-this.feedbackTime>800){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+    if(this.feedback&&performance.now()-this.feedbackTime>800){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
   }
   onRender(ctx){
     ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
@@ -8939,7 +8939,7 @@ class DotDrawGame extends BaseGame {
   }
   onUpdate(dt){
     if(this.finished)return;
-    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
   }
   onRender(ctx){
     ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
@@ -9641,14 +9641,7 @@ class ComplexColorGame extends BaseGame {
     if (this.feedback && performance.now() - this.feedbackTime > 800) {
       this.currentLevel++;
       if (this.currentLevel >= this.cfg.scenes) {
-        if (!this.finish()) {
-          this.targetTrials += this.cfg.scenes;
-          this.currentLevel = 0;
-          const eligScenes=COMPLEX_SCENES.map((s,i)=>i).filter(i=>(SCENE_DIFFICULTY[COMPLEX_SCENES[i].name]||3)<=this.difficulty+2);
-          this._sceneIndices = Utils.shuffle(eligScenes.length>=this.cfg.scenes?eligScenes:[...Array(COMPLEX_SCENES.length).keys()]).slice(0, this.cfg.scenes);
-          this._sceneIdx = 0;
-          this._genLevel();
-        }
+        this.finish();
         return;
       }
       this._sceneIdx++;
