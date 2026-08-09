@@ -2689,6 +2689,7 @@ const GameEngine = {
       });
 
       // 启动倒计时
+      this._sessionStartTime = performance.now();
       if(!config.noTimeLimit)this._startCountdown();
 
       // 启动主循环
@@ -2735,17 +2736,19 @@ const GameEngine = {
     this.stop();
     Audio.alarm();
 
-    // 记录训练时间
-    const elapsed = this._countdownRemaining <= 0 ?
-      (Store.getSettings().maxPlayMinutes || 10) * 60 : 0;
-    if (elapsed > 0) Store.addTrainingTime(elapsed);
+    // 记录本次训练时间
+    const sessionSec = Math.round((performance.now() - (this._sessionStartTime || performance.now())) / 1000);
+    if (sessionSec > 0) Store.addTrainingTime(sessionSec);
+    Store.updateDailyRecord(Utils.todayStr(), { trainingCompleted: true });
 
-    // 显示时间到弹窗
+    // 显示今日训练完成弹窗
+    const today = Store.getTodayRecord();
+    const totalMin = Math.round((today.trainingSeconds || 0) / 60);
     document.getElementById('app').innerHTML = '';
     document.getElementById('modal-root').innerHTML = '';
     Modal.show({
-      title: '⏰ 时间到啦！',
-      body: '小朋友，今天的训练时间已经到了哦～<br><br>休息一下眼睛，明天再来继续训练吧！👋',
+      title: '🎉 今日训练完成！',
+      body: `小朋友太棒了！<br><br>今天共训练了 <b>${totalMin} 分钟</b><br>获得 <b>${today.starsEarned || 0} 颗星</b> ⭐<br><br>休息一下眼睛，明天再来继续训练吧！👋`,
       actions: [
         { text: '好的，知道了', style: 'bg-primary text-white', onClick: (close) => { close(); Router.navigate('/'); } }
       ]
@@ -2956,11 +2959,14 @@ const GameEngine = {
 
   tplGameShell(config, diff) {
     const settings = Store.getSettings();
-    const maxSec = (settings.maxPlayMinutes || 10) * 60;
+    const today = Store.getTodayRecord();
+    const dailyGoal = (settings.dailyTrainingGoal || 20) * 60;
+    const remaining = Math.max(0, dailyGoal - (today.trainingSeconds || 0));
+    const maxSec = Math.max(60, remaining);
     return `
     <div class="fixed inset-0 bg-cream z-50 flex flex-col">
-      <!-- 训练倒计时 -->
-      <div id="countdown-timer" class="fixed top-4 right-4 z-[100] bg-white/90 backdrop-blur rounded-2xl shadow-lg px-3 py-2 flex items-center gap-2 text-sm" style="top:calc(env(safe-area-inset-top, 16px) + 4px)" data-max="${maxSec}" data-remaining="${maxSec}">
+      <!-- 今日训练倒计时 -->
+      <div id="countdown-timer" class="fixed top-4 right-4 z-[100] bg-white/90 backdrop-blur rounded-2xl shadow-lg px-3 py-2 flex items-center gap-2 text-sm" style="top:calc(env(safe-area-inset-top, 16px) + 4px)" data-max="${maxSec}" data-remaining="${maxSec}" data-daily="${dailyGoal}">
         <span>⏱️</span>
         <span id="countdown-display" class="font-bold text-gray-700">${Utils.fmtMMSS(maxSec)}</span>
       </div>
