@@ -765,9 +765,9 @@ const GAME_CONFIGS = {
     id:'evideo', name:'E字方向识别', icon:'👁️', color:'#4A9EFF', category:'core',
     desc:'识别E字方向', clinical:'E字视力表训练，锻炼方向分辨敏锐度',
     difficulties: {
-      1:{size:220,trials:10,timeout:0,color:'#000',bg:'none'},
-      2:{size:140,trials:12,timeout:6000,color:'#000',bg:'none'},
-      3:{size:90,trials:15,timeout:5000,color:'#000',bg:'grid'},
+      1:{size:220,trials:30,timeout:0,color:'#000',bg:'none'},
+      2:{size:140,trials:24,timeout:6000,color:'#000',bg:'none'},
+      3:{size:90,trials:30,timeout:5000,color:'#000',bg:'grid'},
       4:{size:55,trials:18,timeout:4000,color:'#333',bg:'dots'},
       5:{size:30,trials:20,timeout:3000,color:'#666',bg:'noise'}
     }
@@ -776,10 +776,10 @@ const GAME_CONFIGS = {
     id:'landoltc', name:'Landolt C', icon:'©️', color:'#3B82F6', category:'core',
     desc:'识别C环缺口方向', clinical:'国际标准Landolt C视力表，精细视力训练',
     difficulties: {
-      1:{outerR:110,gap:30,trials:8,timeout:0,color:'#000',bg:'none'},
-      2:{outerR:80,gap:22,trials:10,timeout:6000,color:'#000',bg:'none'},
-      3:{outerR:55,gap:16,trials:12,timeout:5000,color:'#333',bg:'grid'},
-      4:{outerR:38,gap:12,trials:15,timeout:4000,color:'#555',bg:'dots'},
+      1:{outerR:110,gap:30,trials:24,timeout:0,color:'#000',bg:'none'},
+      2:{outerR:80,gap:22,trials:30,timeout:6000,color:'#000',bg:'none'},
+      3:{outerR:55,gap:16,trials:24,timeout:5000,color:'#333',bg:'grid'},
+      4:{outerR:38,gap:12,trials:30,timeout:4000,color:'#555',bg:'dots'},
       5:{outerR:26,gap:8,trials:18,timeout:3000,color:'#777',bg:'noise'}
     }
   },
@@ -787,9 +787,9 @@ const GAME_CONFIGS = {
     id:'diffspot', name:'找不同', icon:'🔍', color:'#9B6BFF', category:'core',
     desc:'找出视标差异', clinical:'视觉搜索和分辨，融入视标元素',
     difficulties: {
-      1:{diffs:1,elements:6,types:['size'],elemSize:60,levels:3,timeout:0},
-      2:{diffs:2,elements:9,types:['size','direction'],elemSize:50,levels:4,timeout:60},
-      3:{diffs:3,elements:12,types:['direction','color'],elemSize:40,levels:5,timeout:45},
+      1:{diffs:1,elements:6,types:['size'],elemSize:60,levels:9,timeout:0},
+      2:{diffs:2,elements:9,types:['size','direction'],elemSize:50,levels:8,timeout:60},
+      3:{diffs:3,elements:12,types:['direction','color'],elemSize:40,levels:10,timeout:45},
       4:{diffs:4,elements:16,types:['direction','missing'],elemSize:30,levels:6,timeout:35},
       5:{diffs:5,elements:20,types:['direction','size','color','missing'],elemSize:25,levels:8,timeout:25}
     }
@@ -798,8 +798,8 @@ const GAME_CONFIGS = {
     id:'hiddentarget', name:'找隐藏目标', icon:'🐰', color:'#22C55E', category:'core',
     desc:'找出隐藏的小动物', clinical:'视觉搜索能力训练',
     difficulties: {
-      1:{elements:12,targets:1,distractors:2,fontSize:48,levels:4,timeout:0},
-      2:{elements:20,targets:1,distractors:3,fontSize:40,levels:5,timeout:20},
+      1:{elements:12,targets:1,distractors:2,fontSize:48,levels:8,timeout:0},
+      2:{elements:20,targets:1,distractors:3,fontSize:40,levels:10,timeout:20},
       3:{elements:30,targets:2,distractors:4,fontSize:32,levels:6,timeout:18},
       4:{elements:50,targets:3,distractors:5,fontSize:28,levels:7,timeout:15},
       5:{elements:80,targets:4,distractors:6,fontSize:24,levels:8,timeout:12}
@@ -809,7 +809,7 @@ const GAME_CONFIGS = {
     id:'contrastcolor', name:'对比色查找', icon:'🎨', color:'#EC4899', category:'core',
     desc:'找颜色不同的圆', clinical:'对比敏感度训练，弱视核心训练项',
     difficulties: {
-      1:{count:9,deltaL:0,deltaH:180,radius:50,levels:5},
+      1:{count:9,deltaL:0,deltaH:180,radius:50,levels:10},
       2:{count:16,deltaL:0,deltaH:120,radius:40,levels:6},
       3:{count:25,deltaL:6,deltaH:60,radius:32,levels:7},
       4:{count:36,deltaL:10,deltaH:0,radius:26,levels:8},
@@ -820,11 +820,11 @@ const GAME_CONFIGS = {
     id:'pursuit', name:'动态追踪', icon:'⭐', color:'#FFB84D', category:'core',
     desc:'盯住移动目标', clinical:'训练平稳追随运动，提升持续注视能力',
     difficulties: {
-      1:{speed:60,pauseInterval:[3,5],pauseDur:2000,tolerance:60,trail:'circle',totalPauses:8,targetSize:40},
-      2:{speed:100,pauseInterval:[2.5,4],pauseDur:1500,tolerance:50,trail:'sine',totalPauses:10,targetSize:32},
-      3:{speed:150,pauseInterval:[2,3.5],pauseDur:1200,tolerance:40,trail:'lissajous',totalPauses:12,targetSize:26},
-      4:{speed:200,pauseInterval:[1.5,3],pauseDur:900,tolerance:30,trail:'lissajous',totalPauses:14,targetSize:20},
-      5:{speed:280,pauseInterval:[1,2.5],pauseDur:700,tolerance:20,trail:'random',totalPauses:16,targetSize:16}
+      1:{speed:60,pauseInterval:[3,5],pauseDur:2000,tolerance:60,trail:'circle',totalPauses:24,targetSize:40},
+      2:{speed:100,pauseInterval:[2.5,4],pauseDur:1500,tolerance:50,trail:'sine',totalPauses:30,targetSize:32},
+      3:{speed:150,pauseInterval:[2,3.5],pauseDur:1200,tolerance:40,trail:'lissajous',totalPauses:36,targetSize:26},
+      4:{speed:200,pauseInterval:[1.5,3],pauseDur:900,tolerance:30,trail:'lissajous',totalPauses:42,targetSize:20},
+      5:{speed:280,pauseInterval:[1,2.5],pauseDur:700,tolerance:20,trail:'random',totalPauses:48,targetSize:16}
     }
   },
   balloon: {
@@ -853,44 +853,44 @@ const GAME_CONFIGS = {
     id:'puzzle', name:'拼图', icon:'🧩', color:'#FF6B6B', category:'core',
     desc:'拼合图形', clinical:'空间视觉和精细辨别',
     difficulties: {
-      1:{pieces:4,grid:[2,2],hint:'full',levels:2},
-      2:{pieces:6,grid:[2,3],hint:'full',levels:3},
-      3:{pieces:9,grid:[3,3],hint:'half',levels:3},
-      4:{pieces:12,grid:[3,4],hint:'outline',levels:4},
-      5:{pieces:16,grid:[4,4],hint:'none',levels:5}
+      1:{pieces:4,grid:[2,2],hint:'full',levels:6},
+      2:{pieces:6,grid:[2,3],hint:'full',levels:9},
+      3:{pieces:9,grid:[3,3],hint:'half',levels:9},
+      4:{pieces:12,grid:[3,4],hint:'outline',levels:8},
+      5:{pieces:16,grid:[4,4],hint:'none',levels:10}
     }
   },
   memorycard: {
     id:'memorycard', name:'翻牌记忆', icon:'🃏', color:'#8B5CF6', category:'core',
     desc:'翻牌配对记忆', clinical:'视觉记忆能力训练',
     difficulties: {
-      1:{cols:3,rows:2,pairs:3,flipDur:1500,levels:3},
-      2:{cols:4,rows:3,pairs:6,flipDur:1300,levels:4},
-      3:{cols:4,rows:4,pairs:8,flipDur:1100,levels:5},
-      4:{cols:5,rows:4,pairs:10,flipDur:900,levels:6},
-      5:{cols:6,rows:5,pairs:15,flipDur:700,levels:8}
+      1:{cols:3,rows:2,pairs:6,flipDur:1500,levels:9},
+      2:{cols:4,rows:3,pairs:12,flipDur:1300,levels:8},
+      3:{cols:4,rows:4,pairs:16,flipDur:1100,levels:10},
+      4:{cols:5,rows:4,pairs:20,flipDur:900,levels:6},
+      5:{cols:6,rows:5,pairs:30,flipDur:700,levels:8}
     }
   },
   tracing: {
     id:'tracing', name:'描线', icon:'✏️', color:'#06B6D4', category:'core',
     desc:'沿轨迹画线', clinical:'精细视觉控制与眼手协调',
     difficulties: {
-      1:{pathType:'line',tolerance:40,pathWidth:30,trials:3},
-      2:{pathType:'polyline',tolerance:32,pathWidth:24,trials:3},
-      3:{pathType:'arc',tolerance:26,pathWidth:20,trials:4},
-      4:{pathType:'sine',tolerance:22,pathWidth:16,trials:4},
-      5:{pathType:'spiral',tolerance:18,pathWidth:12,trials:5}
+      1:{pathType:'line',tolerance:40,pathWidth:30,trials:12},
+      2:{pathType:'polyline',tolerance:32,pathWidth:24,trials:12},
+      3:{pathType:'arc',tolerance:26,pathWidth:20,trials:16},
+      4:{pathType:'sine',tolerance:22,pathWidth:16,trials:16},
+      5:{pathType:'spiral',tolerance:18,pathWidth:12,trials:20}
     }
   },
   maze: {
     id:'maze', name:'迷宫', icon:'🌀', color:'#10B981', category:'core',
     desc:'走出迷宫', clinical:'持续注视与视觉规划能力',
     difficulties: {
-      1:{cols:5,rows:5,cellSize:70,levels:3,timeout:0},
-      2:{cols:7,rows:7,cellSize:60,levels:3,timeout:60},
-      3:{cols:9,rows:9,cellSize:50,levels:4,timeout:50},
-      4:{cols:11,rows:11,cellSize:42,levels:4,timeout:40},
-      5:{cols:13,rows:13,cellSize:36,levels:5,timeout:35}
+      1:{cols:5,rows:5,cellSize:70,levels:9,timeout:0},
+      2:{cols:7,rows:7,cellSize:60,levels:9,timeout:60},
+      3:{cols:9,rows:9,cellSize:50,levels:8,timeout:50},
+      4:{cols:11,rows:11,cellSize:42,levels:8,timeout:40},
+      5:{cols:13,rows:13,cellSize:36,levels:10,timeout:35}
     }
   },
   // ===== 15个备选游戏 =====
@@ -898,8 +898,8 @@ const GAME_CONFIGS = {
     id:'shrinknum', name:'数字识别', icon:'🔢', color:'#F97316', category:'optional',
     desc:'识别逐渐缩小的数字', clinical:'精细视力训练，数字视标',
     difficulties: {
-      1:{fontSize:180,shrink:0.95,minSize:30,trials:12,timeout:0},
-      2:{fontSize:140,shrink:0.92,minSize:24,trials:14,timeout:6000},
+      1:{fontSize:180,shrink:0.95,minSize:30,trials:24,timeout:0},
+      2:{fontSize:140,shrink:0.92,minSize:24,trials:28,timeout:6000},
       3:{fontSize:100,shrink:0.88,minSize:20,trials:16,timeout:5000},
       4:{fontSize:70,shrink:0.85,minSize:16,trials:18,timeout:4000},
       5:{fontSize:50,shrink:0.80,minSize:12,trials:20,timeout:3000}
@@ -909,8 +909,8 @@ const GAME_CONFIGS = {
     id:'findnum', name:'找数字', icon:'🔟', color:'#84CC16', category:'optional',
     desc:'在数字中找目标', clinical:'视觉搜索训练',
     difficulties: {
-      1:{count:15,targets:3,fontSize:40,levels:4,timeout:0},
-      2:{count:25,targets:4,fontSize:36,levels:5,timeout:30},
+      1:{count:15,targets:3,fontSize:40,levels:8,timeout:0},
+      2:{count:25,targets:4,fontSize:36,levels:10,timeout:30},
       3:{count:40,targets:5,fontSize:32,levels:6,timeout:25},
       4:{count:60,targets:6,fontSize:28,levels:7,timeout:20},
       5:{count:90,targets:8,fontSize:24,levels:8,timeout:15}
@@ -920,8 +920,8 @@ const GAME_CONFIGS = {
     id:'findletter', name:'找字母', icon:'🔤', color:'#14B8A6', category:'optional',
     desc:'在字母中找目标', clinical:'视觉搜索训练',
     difficulties: {
-      1:{count:15,targets:3,fontSize:42,levels:4,timeout:0},
-      2:{count:25,targets:4,fontSize:38,levels:5,timeout:30},
+      1:{count:15,targets:3,fontSize:42,levels:8,timeout:0},
+      2:{count:25,targets:4,fontSize:38,levels:10,timeout:30},
       3:{count:40,targets:5,fontSize:34,levels:6,timeout:25},
       4:{count:60,targets:6,fontSize:30,levels:7,timeout:20},
       5:{count:90,targets:8,fontSize:26,levels:8,timeout:15}
@@ -931,7 +931,7 @@ const GAME_CONFIGS = {
     id:'findcolor', name:'找颜色', icon:'🌈', color:'#A855F7', category:'optional',
     desc:'100个圆找不同色', clinical:'对比敏感度压轴训练',
     difficulties: {
-      1:{count:100,deltaL:0,deltaH:180,radius:22,levels:5},
+      1:{count:100,deltaL:0,deltaH:180,radius:22,levels:10},
       2:{count:100,deltaL:0,deltaH:120,radius:20,levels:6},
       3:{count:100,deltaL:4,deltaH:60,radius:18,levels:7},
       4:{count:100,deltaL:6,deltaH:30,radius:16,levels:8},
@@ -942,8 +942,8 @@ const GAME_CONFIGS = {
     id:'butterfly', name:'蝴蝶飞', icon:'🦋', color:'#D946EF', category:'optional',
     desc:'追踪飞舞的蝴蝶', clinical:'平滑追随与眼手协调',
     difficulties: {
-      1:{speed:100,size:36,tolerance:50,trials:12,trail:'line'},
-      2:{speed:160,size:30,tolerance:42,trials:14,trail:'circle'},
+      1:{speed:100,size:36,tolerance:50,trials:24,trail:'line'},
+      2:{speed:160,size:30,tolerance:42,trials:28,trail:'circle'},
       3:{speed:220,size:24,tolerance:34,trials:16,trail:'sine'},
       4:{speed:290,size:20,tolerance:28,trials:18,trail:'lissajous'},
       5:{speed:360,size:16,tolerance:22,trials:20,trail:'random'}
@@ -953,8 +953,8 @@ const GAME_CONFIGS = {
     id:'laserdot', name:'激光笔', icon:'🔴', color:'#DC2626', category:'optional',
     desc:'追踪跳跃红点', clinical:'扫视训练，视觉定位',
     difficulties: {
-      1:{jumpInterval:2.0,radius:30,tolerance:50,trials:12},
-      2:{jumpInterval:1.5,radius:24,tolerance:42,trials:14},
+      1:{jumpInterval:2.0,radius:30,tolerance:50,trials:24},
+      2:{jumpInterval:1.5,radius:24,tolerance:42,trials:28},
       3:{jumpInterval:1.2,radius:20,tolerance:34,trials:16},
       4:{jumpInterval:0.9,radius:16,tolerance:28,trials:18},
       5:{jumpInterval:0.7,radius:12,tolerance:22,trials:20}
@@ -986,20 +986,20 @@ const GAME_CONFIGS = {
     id:'starhold', name:'星星保持', icon:'✨', color:'#FCD34D', category:'optional',
     desc:'持续注视星星', clinical:'持续注视稳定性训练',
     difficulties: {
-      1:{holdTime:5,decay:0.15,clickInterval:1.5,radius:50,trials:4},
-      2:{holdTime:7,decay:0.20,clickInterval:1.3,radius:42,trials:4},
-      3:{holdTime:10,decay:0.25,clickInterval:1.1,radius:34,trials:5},
-      4:{holdTime:12,decay:0.30,clickInterval:0.9,radius:28,trials:5},
-      5:{holdTime:15,decay:0.35,clickInterval:0.7,radius:22,trials:6}
+      1:{holdTime:5,decay:0.15,clickInterval:1.5,radius:50,trials:16},
+      2:{holdTime:7,decay:0.20,clickInterval:1.3,radius:42,trials:16},
+      3:{holdTime:10,decay:0.25,clickInterval:1.1,radius:34,trials:20},
+      4:{holdTime:12,decay:0.30,clickInterval:0.9,radius:28,trials:20},
+      5:{holdTime:15,decay:0.35,clickInterval:0.7,radius:22,trials:18}
     }
   },
   fadeout: {
     id:'fadeout', name:'消失目标', icon:'👻', color:'#94A3B8', category:'optional',
     desc:'目标淡出时点击', clinical:'持续注视与时机判断',
     difficulties: {
-      1:{fadeTime:3.0,timeWindow:0.6,radius:50,trials:10},
-      2:{fadeTime:2.5,timeWindow:0.5,radius:42,trials:12},
-      3:{fadeTime:2.0,timeWindow:0.4,radius:34,trials:14},
+      1:{fadeTime:3.0,timeWindow:0.6,radius:50,trials:30},
+      2:{fadeTime:2.5,timeWindow:0.5,radius:42,trials:24},
+      3:{fadeTime:2.0,timeWindow:0.4,radius:34,trials:28},
       4:{fadeTime:1.5,timeWindow:0.35,radius:28,trials:16},
       5:{fadeTime:1.2,timeWindow:0.3,radius:22,trials:18}
     }
@@ -1008,54 +1008,54 @@ const GAME_CONFIGS = {
     id:'seqmemory', name:'顺序记忆', icon:'🎵', color:'#6366F1', category:'optional',
     desc:'记住闪烁顺序', clinical:'视觉顺序记忆训练',
     difficulties: {
-      1:{pads:4,seqLen:3,flashInterval:0.8,trials:3},
-      2:{pads:6,seqLen:4,flashInterval:0.7,trials:3},
-      3:{pads:6,seqLen:5,flashInterval:0.6,trials:4},
-      4:{pads:9,seqLen:6,flashInterval:0.5,trials:4},
-      5:{pads:9,seqLen:8,flashInterval:0.4,trials:5}
+      1:{pads:4,seqLen:3,flashInterval:0.8,trials:12},
+      2:{pads:6,seqLen:4,flashInterval:0.7,trials:12},
+      3:{pads:6,seqLen:5,flashInterval:0.6,trials:16},
+      4:{pads:9,seqLen:6,flashInterval:0.5,trials:16},
+      5:{pads:9,seqLen:8,flashInterval:0.4,trials:20}
     }
   },
   connectline: {
     id:'connectline', name:'连线', icon:'🔗', color:'#0EA5E9', category:'optional',
     desc:'连接相关物品', clinical:'视觉关联与空间知觉',
     difficulties: {
-      1:{pairs:3,distractors:0,levels:3},
-      2:{pairs:4,distractors:0,levels:3},
-      3:{pairs:5,distractors:1,levels:4},
-      4:{pairs:6,distractors:2,levels:4},
-      5:{pairs:8,distractors:3,levels:5}
+      1:{pairs:6,distractors:0,levels:9},
+      2:{pairs:8,distractors:0,levels:9},
+      3:{pairs:10,distractors:1,levels:8},
+      4:{pairs:12,distractors:2,levels:8},
+      5:{pairs:16,distractors:3,levels:10}
     }
   },
   shadowmatch: {
     id:'shadowmatch', name:'阴影匹配', icon:'🌑', color:'#475569', category:'optional',
     desc:'找对应影子', clinical:'形状辨识与视觉匹配',
     difficulties: {
-      1:{candidates:3,fontSize:64,trials:5},
-      2:{candidates:4,fontSize:56,trials:6},
-      3:{candidates:5,fontSize:48,trials:7},
-      4:{candidates:6,fontSize:42,trials:8},
-      5:{candidates:8,fontSize:36,trials:10}
+      1:{candidates:3,fontSize:64,trials:20},
+      2:{candidates:4,fontSize:56,trials:18},
+      3:{candidates:5,fontSize:48,trials:21},
+      4:{candidates:6,fontSize:42,trials:24},
+      5:{candidates:8,fontSize:36,trials:30}
     }
   },
   fillpiece: {
     id:'fillpiece', name:'拼完整图形', icon:'🖼️', color:'#7C3AED', category:'optional',
     desc:'拖入缺失碎片', clinical:'完形知觉与精细辨别',
     difficulties: {
-      1:{imgSize:240,gapPct:0.25,candidates:3,trials:4},
-      2:{imgSize:200,gapPct:0.22,candidates:3,trials:5},
-      3:{imgSize:170,gapPct:0.20,candidates:4,trials:6},
-      4:{imgSize:145,gapPct:0.18,candidates:4,trials:7},
-      5:{imgSize:120,gapPct:0.15,candidates:5,trials:8}
+      1:{imgSize:240,gapPct:0.25,candidates:3,trials:16},
+      2:{imgSize:200,gapPct:0.22,candidates:3,trials:20},
+      3:{imgSize:170,gapPct:0.20,candidates:4,trials:18},
+      4:{imgSize:145,gapPct:0.18,candidates:4,trials:21},
+      5:{imgSize:120,gapPct:0.15,candidates:5,trials:24}
     }
   },
   whichfaster: {
     id:'whichfaster', name:'哪个更快', icon:'⚡', color:'#F59E0B', category:'optional',
     desc:'比较两个球速度', clinical:'动态视觉速度比较判断',
     difficulties: {
-      1:{ratio:2.0,radius:32,laneGap:120,speedRange:[60,120],trials:8},
-      2:{ratio:1.7,radius:28,laneGap:110,speedRange:[80,140],trials:10},
-      3:{ratio:1.4,radius:24,laneGap:100,speedRange:[100,180],trials:12},
-      4:{ratio:1.25,radius:20,laneGap:90,speedRange:[130,220],trials:14},
+      1:{ratio:2.0,radius:32,laneGap:120,speedRange:[60,120],trials:24},
+      2:{ratio:1.7,radius:28,laneGap:110,speedRange:[80,140],trials:30},
+      3:{ratio:1.4,radius:24,laneGap:100,speedRange:[100,180],trials:24},
+      4:{ratio:1.25,radius:20,laneGap:90,speedRange:[130,220],trials:28},
       5:{ratio:1.15,radius:18,laneGap:80,speedRange:[160,260],trials:16}
     }
   },
@@ -1063,43 +1063,43 @@ const GAME_CONFIGS = {
     id:'linkmatch', name:'连连看', icon:'🔗', color:'#8B5CF6', category:'optional',
     desc:'连接相同图案消除', clinical:'视觉搜索与图形匹配',
     difficulties: {
-      1:{cols:4,rows:3,pairs:6,timeout:0,trials:2},
-      2:{cols:4,rows:4,pairs:8,timeout:0,trials:3},
-      3:{cols:6,rows:4,pairs:12,timeout:0,trials:3},
-      4:{cols:6,rows:4,pairs:12,timeout:30,trials:4},
-      5:{cols:8,rows:4,pairs:16,timeout:25,trials:4}
+      1:{cols:4,rows:3,pairs:12,timeout:0,trials:8},
+      2:{cols:4,rows:4,pairs:16,timeout:0,trials:12},
+      3:{cols:6,rows:4,pairs:24,timeout:0,trials:12},
+      4:{cols:6,rows:4,pairs:24,timeout:30,trials:16},
+      5:{cols:8,rows:4,pairs:32,timeout:25,trials:16}
     }
   },
   roping: {
     id:'roping', name:'套牛', icon:'🐮', color:'#F59E0B', category:'optional',
     desc:'套住奔跑的牛', clinical:'手眼协调与反应速度',
     difficulties: {
-      1:{cows:5,speed:60,ropeTime:0.6,trials:5},
-      2:{cows:6,speed:80,ropeTime:0.5,trials:6},
-      3:{cows:7,speed:100,ropeTime:0.45,trials:7},
-      4:{cows:8,speed:120,ropeTime:0.4,trials:8},
-      5:{cows:10,speed:150,ropeTime:0.35,trials:10}
+      1:{cows:5,speed:60,ropeTime:0.6,trials:20},
+      2:{cows:6,speed:80,ropeTime:0.5,trials:18},
+      3:{cows:7,speed:100,ropeTime:0.45,trials:21},
+      4:{cows:8,speed:120,ropeTime:0.4,trials:24},
+      5:{cows:10,speed:150,ropeTime:0.35,trials:30}
     }
   },
   racing: {
     id:'racing', name:'赛车', icon:'🏎️', color:'#EF4444', category:'optional',
     desc:'躲避障碍车辆', clinical:'视觉追踪与快速反应',
     difficulties: {
-      1:{speed:120,spawnInterval:2.0,obstacles:8,duration:30},
-      2:{speed:160,spawnInterval:1.7,obstacles:10,duration:30},
-      3:{speed:200,spawnInterval:1.4,obstacles:12,duration:35},
-      4:{speed:250,spawnInterval:1.1,obstacles:15,duration:35},
-      5:{speed:300,spawnInterval:0.8,obstacles:18,duration:40}
+      1:{speed:120,spawnInterval:2.0,obstacles:24,duration:30},
+      2:{speed:160,spawnInterval:1.7,obstacles:30,duration:30},
+      3:{speed:200,spawnInterval:1.4,obstacles:36,duration:35},
+      4:{speed:250,spawnInterval:1.1,obstacles:45,duration:35},
+      5:{speed:300,spawnInterval:0.8,obstacles:54,duration:40}
     }
   },
   tankshooter: {
     id:'tankshooter', name:'坦克射击', icon:'🔫', color:'#10B981', category:'optional',
     desc:'移动坦克射击目标', clinical:'空间定位与手眼协调',
     difficulties: {
-      1:{enemies:8,enemySpeed:40,spawnInterval:2.5,trials:8},
-      2:{enemies:10,enemySpeed:55,spawnInterval:2.0,trials:10},
-      3:{enemies:12,enemySpeed:70,spawnInterval:1.7,trials:12},
-      4:{enemies:15,enemySpeed:85,spawnInterval:1.4,trials:15},
+      1:{enemies:8,enemySpeed:40,spawnInterval:2.5,trials:24},
+      2:{enemies:10,enemySpeed:55,spawnInterval:2.0,trials:30},
+      3:{enemies:12,enemySpeed:70,spawnInterval:1.7,trials:24},
+      4:{enemies:15,enemySpeed:85,spawnInterval:1.4,trials:30},
       5:{enemies:18,enemySpeed:100,spawnInterval:1.1,trials:18}
     }
   },
@@ -1118,11 +1118,11 @@ const GAME_CONFIGS = {
     id:'fishing', name:'钓鱼', icon:'🎣', color:'#06B6D4', category:'optional',
     desc:'找到目标鱼并点击钓起', clinical:'视觉搜索与图形辨别',
     difficulties: {
-      1:{fishCount:6,targets:5,speed:30,distractors:2,trials:5},
-      2:{fishCount:8,targets:6,speed:45,distractors:3,trials:6},
-      3:{fishCount:10,targets:7,speed:60,distractors:4,trials:7},
-      4:{fishCount:12,targets:8,speed:75,distractors:5,trials:8},
-      5:{fishCount:15,targets:10,speed:90,distractors:6,trials:10}
+      1:{fishCount:6,targets:5,speed:30,distractors:2,trials:20},
+      2:{fishCount:8,targets:6,speed:45,distractors:3,trials:18},
+      3:{fishCount:10,targets:7,speed:60,distractors:4,trials:21},
+      4:{fishCount:12,targets:8,speed:75,distractors:5,trials:24},
+      5:{fishCount:15,targets:10,speed:90,distractors:6,trials:30}
     }
   },
   colorsort: {
@@ -1140,27 +1140,27 @@ const GAME_CONFIGS = {
     id:'rotatepuz', name:'旋转拼图', icon:'🔄', color:'#8B5CF6', category:'optional',
     desc:'匹配旋转后的图形', clinical:'心理旋转与空间知觉',
     difficulties: {
-      1:{trials:8,rotations:[0,90,180,270],shapes:4},
-      2:{trials:10,rotations:[0,45,90,135,180,225,270,315],shapes:6},
-      3:{trials:12,rotations:[0,45,90,135,180,225,270,315],shapes:8},
-      4:{trials:14,rotations:[0,45,90,135,180,225,270,315],shapes:10},
+      1:{trials:24,rotations:[0,90,180,270],shapes:4},
+      2:{trials:30,rotations:[0,45,90,135,180,225,270,315],shapes:6},
+      3:{trials:24,rotations:[0,45,90,135,180,225,270,315],shapes:8},
+      4:{trials:28,rotations:[0,45,90,135,180,225,270,315],shapes:10},
       5:{trials:16,rotations:[0,30,60,90,120,150,180,210,240,270,300,330],shapes:12}
     }
   },
   colorfill: {
     id: 'colorfill', name: '涂色', icon: '🎨', color: '#EC4899',
     desc: '选择颜色给图案涂色', clinical: '精细控制+颜色辨别',
-    difficulties: {1:{targetPct:1.0,brushR:30,levels:3},2:{targetPct:1.0,brushR:22,levels:4},3:{targetPct:1.0,brushR:16,levels:5},4:{targetPct:1.0,brushR:11,levels:6},5:{targetPct:1.0,brushR:7,levels:7}}
+    difficulties: {1:{targetPct:1.0,brushR:30,levels:9},2:{targetPct:1.0,brushR:22,levels:8},3:{targetPct:1.0,brushR:16,levels:10},4:{targetPct:1.0,brushR:11,levels:6},5:{targetPct:1.0,brushR:7,levels:7}}
   },
   traceline: {
     id: 'traceline', name: '描线画图', icon: '✏️', color: '#4A9EFF',
     desc: '沿虚线描出动物轮廓', clinical: '手眼协调+精细运动',
-    difficulties: {1:{tolerance:36,levels:3},2:{tolerance:26,levels:4},3:{tolerance:18,levels:5},4:{tolerance:12,levels:6},5:{tolerance:8,levels:7}}
+    difficulties: {1:{tolerance:36,levels:9},2:{tolerance:26,levels:8},3:{tolerance:18,levels:10},4:{tolerance:12,levels:6},5:{tolerance:8,levels:7}}
   },
   dotdraw: {
     id: 'dotdraw', name: '虚线画图', icon: '🖼️', color: '#10B981',
     desc: '参考左图描右图并涂色', clinical: '空间感知+精细运动+颜色辨别',
-    difficulties: {1:{tolerance:36,brushR:24,levels:3},2:{tolerance:26,brushR:18,levels:4},3:{tolerance:18,brushR:13,levels:5},4:{tolerance:12,brushR:9,levels:6},5:{tolerance:8,brushR:6,levels:7}}
+    difficulties: {1:{tolerance:36,brushR:24,levels:9},2:{tolerance:26,brushR:18,levels:8},3:{tolerance:18,brushR:13,levels:10},4:{tolerance:12,brushR:9,levels:6},5:{tolerance:8,brushR:6,levels:7}}
   },
   complexcolor: {
     id: 'complexcolor', name: '参考填色', icon: '🖼️', color: '#F59E0B',
