@@ -3467,7 +3467,7 @@ class EVideoGame extends BaseGame {
     // 反馈后 500ms 进入下一题
     if (this.feedback && now - this.feedbackTime > 500) {
       if (this.totalTrials >= this.targetTrials) {
-        { this.totalTrials = 0; this.currentTrial = 0; this.targetTrials += this.cfg.trials; this._nextTrial(); return; }
+        { this.totalTrials = 0; if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
         return;
       }
       this._nextTrial();
@@ -3622,7 +3622,7 @@ class PursuitGame extends BaseGame {
         this.totalTrials++;
         this.callbacks.onProgress(this.getProgress());
         Audio.mistake();
-        if (this.totalTrials >= this.targetTrials) { this.totalTrials = 0; this.targetTrials += this.cfg.totalPauses; return; }
+        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.totalPauses; } return; }
         this.isPaused = false;
         this.nextPauseTime = Utils.rand(this.cfg.pauseInterval[0], this.cfg.pauseInterval[1]);
         this._genPath();
@@ -3638,7 +3638,7 @@ class PursuitGame extends BaseGame {
       this.recordResult(true, rt);
       this.successCount++;
       Audio.success();
-      if (this.totalTrials >= this.targetTrials) { this.totalTrials = 0; this.targetTrials += this.cfg.totalPauses; return; }
+      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.totalPauses; } return; }
       this.isPaused = false;
       this.nextPauseTime = Utils.rand(this.cfg.pauseInterval[0], this.cfg.pauseInterval[1]);
       this._genPath();
@@ -3814,7 +3814,7 @@ class DiffSpotGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.currentLevel = 0; this.targetTrials += this.cfg.levels; this._genLevel(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -4350,7 +4350,7 @@ class LandoltCGame extends BaseGame {
     if (this.finished) return;
     const now = performance.now();
     if (this.feedback && now - this.feedbackTime > 500) {
-      if (this.totalTrials >= this.targetTrials) { this.totalTrials = 0; this.targetTrials += this.cfg.trials; this._nextTrial(); return; }
+      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
       this._nextTrial();
     }
     if (this.cfg.timeout > 0 && !this.feedback) {
@@ -4482,7 +4482,7 @@ class HiddenTargetGame extends BaseGame {
         const rt = performance.now() - this.levelStartTime;
         this.recordResult(true, rt);
         this.currentLevel++;
-        if (this.currentLevel >= this.cfg.levels) { this.currentLevel = 0; this.targetTrials += this.cfg.levels; this._genLevel(); return; }
+        if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
         setTimeout(() => this._genLevel(), 500);
       }
     } else {
@@ -4503,7 +4503,7 @@ class HiddenTargetGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.currentLevel = 0; this.targetTrials += this.cfg.levels; this._genLevel(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5443,7 +5443,7 @@ class MazeGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.currentLevel = 0; this.targetTrials += this.cfg.levels; this._genLevel(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5551,7 +5551,7 @@ class ShrinkNumGame extends BaseGame {
     if (this.finished) return;
     const now = performance.now();
     if (this.feedback && now - this.feedbackTime > 500) {
-      if (this.totalTrials >= this.targetTrials) { this.totalTrials = 0; this.targetTrials += this.cfg.trials; this._nextTrial(); return; }
+      if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._nextTrial(); } return; }
       this._nextTrial();
     }
     if (this.cfg.timeout > 0 && !this.feedback) {
@@ -5669,7 +5669,7 @@ class FindNumGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.currentLevel = 0; this.targetTrials += this.cfg.levels; this._genLevel(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5793,7 +5793,7 @@ class FindLetterGame extends BaseGame {
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.recordResult(false, this.cfg.timeout * 1000);
       this.currentLevel++;
-      if (this.currentLevel >= this.cfg.levels) { this.currentLevel = 0; this.targetTrials += this.cfg.levels; this._genLevel(); return; }
+      if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
       this._genLevel();
     }
   }
@@ -5963,7 +5963,7 @@ class ButterflyGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        if (this.totalTrials >= this.targetTrials) { this.totalTrials = 0; this.targetTrials += this.cfg.trials; return; }
+        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
         this.trialStartTime = performance.now();
       }
     }
@@ -6052,7 +6052,7 @@ class LaserDotGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        if (this.totalTrials >= this.targetTrials) { this.totalTrials = 0; this.targetTrials += this.cfg.trials; this._jump(); return; }
+        if (this.totalTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._jump(); } return; }
         this._jump();
       }
       return;
@@ -6537,7 +6537,7 @@ class FadeOutGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { this.currentTrial = 0; this.targetTrials += this.cfg.trials; this._genTrial(); return; }
+        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._genTrial(); } return; }
         this._genTrial();
       }
       return;
@@ -6974,7 +6974,7 @@ class ShadowMatchGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { this.currentTrial = 0; this.targetTrials += this.cfg.trials; this._genTrial(); return; }
+        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._genTrial(); } return; }
         this._genTrial();
       }
     }
@@ -7246,7 +7246,7 @@ class WhichFasterGame extends BaseGame {
       this.feedback -= dt;
       if (this.feedback <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.cfg.trials) { this.currentTrial = 0; this.targetTrials += this.cfg.trials; this._genTrial(); return; }
+        if (this.currentTrial >= this.cfg.trials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; this._genTrial(); } return; }
         this._genTrial();
       }
       return;
@@ -8069,7 +8069,7 @@ class FishingGame extends BaseGame {
       if (f.y < 70 || f.y > this.H - 30) f.vy *= -1;
     });
     if (this.caughtInRound >= this.targetsNeeded) {
-      if (this.correctTrials >= this.targetTrials) { this.correctTrials = 0; this.targetTrials += this.cfg.trials; return; }
+      if (this.correctTrials >= this.targetTrials) { if (!this.finish()) { this.targetTrials += this.cfg.trials; } return; }
       this._newRound();
     }
   }
