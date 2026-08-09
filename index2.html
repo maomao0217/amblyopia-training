@@ -199,6 +199,9 @@ const Store = {
         reminderTime: '19:00',
         soundEnabled: true,
         maxPlayMinutes: 30,
+        gameMode: 'level',
+        dailyTrainingMinutes: 20,
+        sessionMinutes: 10,
         difficultyOverride: null,
         lastDifficultyAdjust: {},
         enabledGames: []
@@ -1145,12 +1148,33 @@ const GAME_CONFIGS = {
       4:{trials:14,rotations:[0,45,90,135,180,225,270,315],shapes:10},
       5:{trials:16,rotations:[0,30,60,90,120,150,180,210,240,270,300,330],shapes:12}
     }
+  },
+  colorfill: {
+    id: 'colorfill', name: '涂色', icon: '🎨', color: '#EC4899',
+    desc: '选择颜色给图案涂色', clinical: '精细控制+颜色辨别',
+    difficulties: {1:{targetPct:1.0,brushR:30,levels:3},2:{targetPct:1.0,brushR:22,levels:4},3:{targetPct:1.0,brushR:16,levels:5},4:{targetPct:1.0,brushR:11,levels:6},5:{targetPct:1.0,brushR:7,levels:7}}
+  },
+  traceline: {
+    id: 'traceline', name: '描线画图', icon: '✏️', color: '#4A9EFF',
+    desc: '沿虚线描出动物轮廓', clinical: '手眼协调+精细运动',
+    difficulties: {1:{tolerance:36,levels:3},2:{tolerance:26,levels:4},3:{tolerance:18,levels:5},4:{tolerance:12,levels:6},5:{tolerance:8,levels:7}}
+  },
+  dotdraw: {
+    id: 'dotdraw', name: '虚线画图', icon: '🖼️', color: '#10B981',
+    desc: '参考左图描右图并涂色', clinical: '空间感知+精细运动+颜色辨别',
+    difficulties: {1:{tolerance:36,brushR:24,levels:3},2:{tolerance:26,brushR:18,levels:4},3:{tolerance:18,brushR:13,levels:5},4:{tolerance:12,brushR:9,levels:6},5:{tolerance:8,brushR:6,levels:7}}
+  },
+  complexcolor: {
+    id: 'complexcolor', name: '参考填色', icon: '🖼️', color: '#F59E0B',
+    desc: '参考左图给复杂场景填色', clinical: '颜色辨别+精细控制+空间感知',
+    noTimeLimit: true,
+    difficulties: {1:{targetPct:1.0,brushR:30,scenes:2},2:{targetPct:1.0,brushR:22,scenes:3},3:{targetPct:1.0,brushR:16,scenes:4},4:{targetPct:1.0,brushR:11,scenes:5},5:{targetPct:1.0,brushR:7,scenes:6}}
   }
 };
 
 // 游戏列表常量
 const CORE_GAME_LIST = ['evideo','landoltc','diffspot','hiddentarget','contrastcolor','pursuit','balloon','whackmole','puzzle','memorycard','tracing','maze'];
-const OPTIONAL_GAME_LIST = ['shrinknum','findnum','findletter','findcolor','butterfly','laserdot','fruitninja','catchcoin','starhold','fadeout','seqmemory','connectline','shadowmatch','fillpiece','whichfaster','linkmatch','roping','racing','tankshooter','brickbreak','fishing','colorsort','rotatepuz'];
+const OPTIONAL_GAME_LIST = ['shrinknum','findnum','findletter','findcolor','butterfly','laserdot','fruitninja','catchcoin','starhold','fadeout','seqmemory','connectline','shadowmatch','fillpiece','whichfaster','linkmatch','roping','racing','tankshooter','brickbreak','fishing','colorsort','rotatepuz','colorfill','traceline','dotdraw','complexcolor'];
 const ALL_GAME_LIST = [...CORE_GAME_LIST, ...OPTIONAL_GAME_LIST];
 function getActiveGameList() {
   const enabled = (Store._state && Store._state.settings.enabledGames) || [];
@@ -2570,7 +2594,27 @@ const Renderer = {
           </div>
         </div>
 
-        <button onclick="saveSettings();Audio.click()" class="w-full bg-primary text-white rounded-2xl py-4 font-bold text-lg active:scale-95 transition-transform mb-4">保存设置</button>
+        <button onclick="saveSettings();Audio.click()" class="w-full bg-primary text-white rounded-2xl py-4 font-bold text-lg active:scale-95 transition-transform mb-4">
+    <div class="mb-4">
+      <label class="block text-sm font-bold text-gray-700 mb-2">🎮 游戏模式</label>
+      <div class="flex gap-2">
+        <button onclick="Store.updateSettings({gameMode:'level'});this.classList.replace('bg-gray-200','bg-primary');this.classList.replace('text-gray-700','text-white');this.nextElementSibling.classList.replace('bg-primary','bg-gray-200');this.nextElementSibling.classList.replace('text-white','text-gray-700')" class="px-4 py-2 rounded-xl text-sm font-bold ${s.gameMode==='level'?'bg-primary text-white':'bg-gray-200 text-gray-700'}">闯关模式</button>
+        <button onclick="Store.updateSettings({gameMode:'time'});this.classList.replace('bg-gray-200','bg-primary');this.classList.replace('text-gray-700','text-white');this.previousElementSibling.classList.replace('bg-primary','bg-gray-200');this.previousElementSibling.classList.replace('text-white','text-gray-700')" class="px-4 py-2 rounded-xl text-sm font-bold ${s.gameMode==='time'?'bg-primary text-white':'bg-gray-200 text-gray-700'}">分钟模式</button>
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-bold text-gray-700 mb-2">📅 每天训练时间（分钟）</label>
+      <select onchange="Store.updateSettings({dailyTrainingMinutes:parseInt(this.value)})" class="w-full p-3 border border-gray-300 rounded-xl text-sm">
+        ${[10,15,20,25,30,45,60].map(m=>'<option value="'+m+'"'+(s.dailyTrainingMinutes===m?' selected':'')+'>'+m+' 分钟</option>').join('')}
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-bold text-gray-700 mb-2">⏱️ 单次游玩最长时间（分钟）</label>
+      <select onchange="Store.updateSettings({sessionMinutes:parseInt(this.value)})" class="w-full p-3 border border-gray-300 rounded-xl text-sm">
+        ${[2,5,10,15,30].map(m=>'<option value="'+m+'"'+(s.sessionMinutes===m?' selected':'')+'>'+m+' 分钟</option>').join('')}
+      </select>
+    </div>
+保存设置</button>
 
         <div class="text-center text-xs text-gray-400 py-4">
           <p>弱视训练小助手 v1.0</p>
@@ -2649,7 +2693,7 @@ const GameEngine = {
       });
 
       // 启动倒计时
-      this._startCountdown();
+      if(!config.noTimeLimit)this._startCountdown();
 
       // 启动主循环
       this._lastTime = performance.now();
@@ -8403,8 +8447,1342 @@ document.addEventListener('DOMContentLoaded', init);
 // 返回公共接口
 return { init, Store, Router, Renderer, Audio, GameEngine, AI, EventBus, PatchingTimer, Modal };
 
+
+
+
+// ==== index3 games ====
+const PALETTE_COLORS = ['#FF4444','#FF8C00','#FFD700','#4ADE80','#4488FF','#9B6BFF','#EC4899','#8B4513','#333333','#FFFFFF'];
+const PALETTE_NAMES = ['红','橙','黄','绿','蓝','紫','粉','棕','黑','白'];
+
+// ============================================================
+// GAME_CONFIGS
+// ============================================================
+const SHAPES = {
+  fish:[{x:0.5,y:0.12},{x:0.6,y:0.15},{x:0.72,y:0.22},{x:0.8,y:0.32},{x:0.85,y:0.42},{x:0.88,y:0.5},{x:0.85,y:0.58},{x:0.78,y:0.65},{x:0.68,y:0.7},{x:0.58,y:0.74},{x:0.5,y:0.78},{x:0.42,y:0.74},{x:0.35,y:0.68},{x:0.25,y:0.65},{x:0.18,y:0.58},{x:0.15,y:0.5},{x:0.18,y:0.42},{x:0.25,y:0.35},{x:0.32,y:0.28},{x:0.4,y:0.22},{x:0.45,y:0.15}],
+  star:[{x:0.5,y:0.05},{x:0.56,y:0.28},{x:0.62,y:0.32},{x:0.85,y:0.35},{x:0.68,y:0.52},{x:0.72,y:0.72},{x:0.58,y:0.62},{x:0.5,y:0.8},{x:0.42,y:0.62},{x:0.28,y:0.72},{x:0.32,y:0.52},{x:0.15,y:0.35},{x:0.38,y:0.32},{x:0.44,y:0.28}],
+  cat:[{x:0.5,y:0.02},{x:0.55,y:0.05},{x:0.62,y:0.06},{x:0.68,y:0.12},{x:0.72,y:0.2},{x:0.78,y:0.28},{x:0.76,y:0.38},{x:0.82,y:0.48},{x:0.8,y:0.58},{x:0.75,y:0.65},{x:0.72,y:0.75},{x:0.62,y:0.78},{x:0.55,y:0.82},{x:0.5,y:0.85},{x:0.42,y:0.8},{x:0.3,y:0.78},{x:0.2,y:0.72},{x:0.15,y:0.62},{x:0.18,y:0.52},{x:0.22,y:0.42},{x:0.28,y:0.35},{x:0.35,y:0.25},{x:0.38,y:0.15},{x:0.42,y:0.08}],
+  rabbit:[{x:0.48,y:0.0},{x:0.52,y:0.0},{x:0.56,y:0.02},{x:0.6,y:0.05},{x:0.65,y:0.1},{x:0.68,y:0.18},{x:0.72,y:0.25},{x:0.78,y:0.28},{x:0.82,y:0.35},{x:0.8,y:0.45},{x:0.75,y:0.5},{x:0.78,y:0.58},{x:0.8,y:0.68},{x:0.75,y:0.75},{x:0.68,y:0.8},{x:0.58,y:0.84},{x:0.5,y:0.86},{x:0.4,y:0.82},{x:0.3,y:0.78},{x:0.22,y:0.7},{x:0.2,y:0.6},{x:0.22,y:0.5},{x:0.25,y:0.42},{x:0.22,y:0.32},{x:0.28,y:0.25},{x:0.32,y:0.18},{x:0.35,y:0.1},{x:0.4,y:0.05}],
+  butterfly:[{x:0.5,y:0.08},{x:0.55,y:0.12},{x:0.65,y:0.08},{x:0.72,y:0.15},{x:0.82,y:0.22},{x:0.88,y:0.35},{x:0.82,y:0.45},{x:0.7,y:0.5},{x:0.75,y:0.58},{x:0.82,y:0.68},{x:0.72,y:0.75},{x:0.62,y:0.7},{x:0.55,y:0.62},{x:0.5,y:0.55},{x:0.45,y:0.62},{x:0.38,y:0.7},{x:0.28,y:0.75},{x:0.18,y:0.68},{x:0.25,y:0.58},{x:0.3,y:0.5},{x:0.18,y:0.45},{x:0.12,y:0.35},{x:0.18,y:0.22},{x:0.28,y:0.15},{x:0.35,y:0.08},{x:0.45,y:0.12}],
+  house:[{x:0.5,y:0.02},{x:0.9,y:0.38},{x:0.9,y:0.9},{x:0.1,y:0.9},{x:0.1,y:0.38}],
+  flower:[{x:0.5,y:0.02},{x:0.55,y:0.08},{x:0.62,y:0.12},{x:0.72,y:0.18},{x:0.82,y:0.28},{x:0.78,y:0.38},{x:0.68,y:0.42},{x:0.6,y:0.48},{x:0.65,y:0.55},{x:0.72,y:0.62},{x:0.75,y:0.72},{x:0.65,y:0.78},{x:0.55,y:0.72},{x:0.5,y:0.65},{x:0.45,y:0.72},{x:0.35,y:0.78},{x:0.25,y:0.72},{x:0.28,y:0.62},{x:0.35,y:0.55},{x:0.4,y:0.48},{x:0.32,y:0.42},{x:0.22,y:0.38},{x:0.18,y:0.28},{x:0.28,y:0.18},{x:0.38,y:0.12},{x:0.45,y:0.08}],
+  heart:[{x:0.5,y:0.88},{x:0.7,y:0.7},{x:0.85,y:0.5},{x:0.9,y:0.35},{x:0.8,y:0.18},{x:0.65,y:0.1},{x:0.5,y:0.18},{x:0.35,y:0.1},{x:0.2,y:0.18},{x:0.1,y:0.35},{x:0.15,y:0.5},{x:0.3,y:0.7}],
+  apple:[{x:0.5,y:0.08},{x:0.58,y:0.12},{x:0.68,y:0.2},{x:0.76,y:0.32},{x:0.82,y:0.45},{x:0.84,y:0.55},{x:0.8,y:0.65},{x:0.72,y:0.75},{x:0.6,y:0.82},{x:0.5,y:0.85},{x:0.38,y:0.82},{x:0.28,y:0.75},{x:0.2,y:0.65},{x:0.16,y:0.55},{x:0.18,y:0.45},{x:0.24,y:0.32},{x:0.32,y:0.2},{x:0.42,y:0.12}],
+  pear:[{x:0.5,y:0.05},{x:0.58,y:0.08},{x:0.65,y:0.15},{x:0.7,y:0.25},{x:0.72,y:0.35},{x:0.7,y:0.45},{x:0.68,y:0.55},{x:0.62,y:0.65},{x:0.56,y:0.75},{x:0.5,y:0.82},{x:0.4,y:0.78},{x:0.32,y:0.68},{x:0.28,y:0.58},{x:0.3,y:0.45},{x:0.32,y:0.35},{x:0.35,y:0.25},{x:0.38,y:0.15},{x:0.42,y:0.1}],
+  banana:[{x:0.45,y:0.05},{x:0.55,y:0.08},{x:0.68,y:0.12},{x:0.78,y:0.2},{x:0.88,y:0.32},{x:0.9,y:0.42},{x:0.85,y:0.5},{x:0.78,y:0.55},{x:0.65,y:0.6},{x:0.5,y:0.62},{x:0.35,y:0.58},{x:0.22,y:0.5},{x:0.15,y:0.4},{x:0.12,y:0.32},{x:0.15,y:0.22},{x:0.22,y:0.15},{x:0.3,y:0.1},{x:0.38,y:0.08}],
+  tree:[{x:0.5,y:0.02},{x:0.58,y:0.08},{x:0.68,y:0.12},{x:0.78,y:0.2},{x:0.88,y:0.3},{x:0.92,y:0.42},{x:0.88,y:0.5},{x:0.8,y:0.55},{x:0.72,y:0.58},{x:0.65,y:0.62},{x:0.62,y:0.72},{x:0.58,y:0.82},{x:0.55,y:0.88},{x:0.5,y:0.92},{x:0.42,y:0.88},{x:0.38,y:0.82},{x:0.35,y:0.72},{x:0.32,y:0.58},{x:0.25,y:0.52},{x:0.15,y:0.45},{x:0.1,y:0.38},{x:0.12,y:0.28},{x:0.2,y:0.2},{x:0.28,y:0.15},{x:0.38,y:0.1},{x:0.45,y:0.05}],
+  car:[{x:0.25,y:0.25},{x:0.45,y:0.22},{x:0.65,y:0.25},{x:0.78,y:0.32},{x:0.88,y:0.42},{x:0.92,y:0.55},{x:0.9,y:0.65},{x:0.82,y:0.7},{x:0.7,y:0.72},{x:0.28,y:0.72},{x:0.15,y:0.68},{x:0.08,y:0.6},{x:0.1,y:0.5},{x:0.15,y:0.42},{x:0.2,y:0.35}],
+  bird:[{x:0.5,y:0.04},{x:0.55,y:0.06},{x:0.62,y:0.1},{x:0.68,y:0.12},{x:0.75,y:0.18},{x:0.78,y:0.22},{x:0.72,y:0.25},{x:0.65,y:0.28},{x:0.62,y:0.35},{x:0.66,y:0.42},{x:0.7,y:0.5},{x:0.72,y:0.58},{x:0.68,y:0.65},{x:0.62,y:0.7},{x:0.55,y:0.75},{x:0.48,y:0.72},{x:0.42,y:0.65},{x:0.38,y:0.58},{x:0.35,y:0.5},{x:0.32,y:0.42},{x:0.3,y:0.35},{x:0.32,y:0.28},{x:0.35,y:0.2},{x:0.4,y:0.12},{x:0.45,y:0.08}],
+  turtle:[{x:0.5,y:0.05},{x:0.55,y:0.06},{x:0.6,y:0.1},{x:0.65,y:0.15},{x:0.68,y:0.2},{x:0.72,y:0.28},{x:0.76,y:0.35},{x:0.78,y:0.42},{x:0.8,y:0.5},{x:0.8,y:0.58},{x:0.78,y:0.65},{x:0.74,y:0.72},{x:0.68,y:0.76},{x:0.6,y:0.78},{x:0.5,y:0.8},{x:0.4,y:0.78},{x:0.32,y:0.76},{x:0.26,y:0.72},{x:0.22,y:0.65},{x:0.2,y:0.58},{x:0.2,y:0.5},{x:0.22,y:0.42},{x:0.24,y:0.35},{x:0.28,y:0.28},{x:0.32,y:0.2},{x:0.35,y:0.15},{x:0.4,y:0.1},{x:0.45,y:0.06}],
+  strawberry:[{x:0.5,y:0.02},{x:0.56,y:0.05},{x:0.62,y:0.1},{x:0.68,y:0.18},{x:0.74,y:0.28},{x:0.78,y:0.38},{x:0.8,y:0.48},{x:0.78,y:0.58},{x:0.72,y:0.68},{x:0.64,y:0.75},{x:0.55,y:0.8},{x:0.5,y:0.82},{x:0.42,y:0.8},{x:0.34,y:0.75},{x:0.26,y:0.68},{x:0.2,y:0.58},{x:0.18,y:0.48},{x:0.2,y:0.38},{x:0.24,y:0.28},{x:0.3,y:0.18},{x:0.36,y:0.1},{x:0.44,y:0.05}],
+  mushroom:[{x:0.5,y:0.02},{x:0.58,y:0.04},{x:0.66,y:0.08},{x:0.74,y:0.15},{x:0.8,y:0.25},{x:0.84,y:0.35},{x:0.82,y:0.42},{x:0.75,y:0.45},{x:0.65,y:0.47},{x:0.58,y:0.48},{x:0.55,y:0.55},{x:0.52,y:0.65},{x:0.5,y:0.78},{x:0.48,y:0.88},{x:0.45,y:0.88},{x:0.42,y:0.78},{x:0.4,y:0.65},{x:0.38,y:0.55},{x:0.35,y:0.48},{x:0.28,y:0.47},{x:0.2,y:0.45},{x:0.16,y:0.42},{x:0.15,y:0.35},{x:0.18,y:0.25},{x:0.24,y:0.15},{x:0.32,y:0.08},{x:0.42,y:0.04}],
+  crown:[{x:0.5,y:0.0},{x:0.55,y:0.08},{x:0.6,y:0.04},{x:0.65,y:0.1},{x:0.7,y:0.03},{x:0.75,y:0.1},{x:0.82,y:0.05},{x:0.88,y:0.12},{x:0.92,y:0.22},{x:0.94,y:0.35},{x:0.9,y:0.48},{x:0.85,y:0.58},{x:0.7,y:0.62},{x:0.3,y:0.62},{x:0.15,y:0.58},{x:0.1,y:0.48},{x:0.06,y:0.35},{x:0.08,y:0.22},{x:0.12,y:0.12},{x:0.18,y:0.05},{x:0.25,y:0.1},{x:0.3,y:0.03},{x:0.35,y:0.1},{x:0.4,y:0.04},{x:0.45,y:0.08}],
+  rocket:[{x:0.5,y:0.02},{x:0.55,y:0.05},{x:0.6,y:0.12},{x:0.64,y:0.22},{x:0.66,y:0.35},{x:0.68,y:0.48},{x:0.7,y:0.58},{x:0.72,y:0.68},{x:0.7,y:0.75},{x:0.65,y:0.82},{x:0.58,y:0.88},{x:0.5,y:0.92},{x:0.42,y:0.88},{x:0.35,y:0.82},{x:0.3,y:0.75},{x:0.28,y:0.68},{x:0.3,y:0.58},{x:0.32,y:0.48},{x:0.34,y:0.35},{x:0.36,y:0.22},{x:0.4,y:0.12},{x:0.45,y:0.05}],
+  grapes:[{x:0.5,y:0.04},{x:0.56,y:0.06},{x:0.62,y:0.1},{x:0.68,y:0.18},{x:0.72,y:0.28},{x:0.74,y:0.38},{x:0.75,y:0.48},{x:0.72,y:0.55},{x:0.66,y:0.6},{x:0.6,y:0.62},{x:0.55,y:0.66},{x:0.52,y:0.72},{x:0.5,y:0.78},{x:0.48,y:0.72},{x:0.45,y:0.66},{x:0.4,y:0.62},{x:0.34,y:0.6},{x:0.28,y:0.55},{x:0.25,y:0.48},{x:0.26,y:0.38},{x:0.28,y:0.28},{x:0.32,y:0.18},{x:0.38,y:0.1},{x:0.44,y:0.06}],
+  icecream:[{x:0.5,y:0.02},{x:0.56,y:0.05},{x:0.62,y:0.1},{x:0.68,y:0.18},{x:0.72,y:0.28},{x:0.74,y:0.38},{x:0.7,y:0.45},{x:0.62,y:0.48},{x:0.55,y:0.5},{x:0.52,y:0.55},{x:0.5,y:0.65},{x:0.5,y:0.85},{x:0.48,y:0.65},{x:0.46,y:0.55},{x:0.42,y:0.5},{x:0.35,y:0.48},{x:0.28,y:0.45},{x:0.25,y:0.38},{x:0.26,y:0.28},{x:0.3,y:0.18},{x:0.36,y:0.1},{x:0.44,y:0.05}],
+  dog:[{x:0.5,y:0.03},{x:0.55,y:0.05},{x:0.6,y:0.06},{x:0.65,y:0.1},{x:0.68,y:0.15},{x:0.66,y:0.2},{x:0.62,y:0.22},{x:0.6,y:0.25},{x:0.62,y:0.28},{x:0.65,y:0.3},{x:0.62,y:0.32},{x:0.55,y:0.32},{x:0.5,y:0.35},{x:0.55,y:0.42},{x:0.62,y:0.48},{x:0.68,y:0.55},{x:0.7,y:0.62},{x:0.68,y:0.68},{x:0.6,y:0.75},{x:0.5,y:0.8},{x:0.4,y:0.75},{x:0.32,y:0.68},{x:0.3,y:0.62},{x:0.32,y:0.55},{x:0.38,y:0.48},{x:0.45,y:0.42},{x:0.5,y:0.35},{x:0.45,y:0.32},{x:0.38,y:0.32},{x:0.35,y:0.3},{x:0.38,y:0.28},{x:0.4,y:0.25},{x:0.38,y:0.22},{x:0.34,y:0.2},{x:0.32,y:0.15},{x:0.35,y:0.1},{x:0.4,y:0.06},{x:0.45,y:0.05}],
+  pig:[{x:0.5,y:0.04},{x:0.55,y:0.05},{x:0.6,y:0.08},{x:0.62,y:0.12},{x:0.58,y:0.14},{x:0.55,y:0.15},{x:0.58,y:0.18},{x:0.62,y:0.2},{x:0.65,y:0.22},{x:0.62,y:0.24},{x:0.55,y:0.25},{x:0.5,y:0.26},{x:0.45,y:0.25},{x:0.38,y:0.24},{x:0.35,y:0.22},{x:0.38,y:0.2},{x:0.42,y:0.18},{x:0.45,y:0.15},{x:0.42,y:0.14},{x:0.38,y:0.12},{x:0.4,y:0.08},{x:0.45,y:0.05},{x:0.5,y:0.28},{x:0.55,y:0.35},{x:0.62,y:0.42},{x:0.68,y:0.5},{x:0.7,y:0.58},{x:0.68,y:0.65},{x:0.62,y:0.72},{x:0.55,y:0.78},{x:0.5,y:0.8},{x:0.45,y:0.78},{x:0.38,y:0.72},{x:0.32,y:0.65},{x:0.3,y:0.58},{x:0.32,y:0.5},{x:0.38,y:0.42},{x:0.45,y:0.35}],
+};
+
+// 多色区域定义：每个形状分为2-3个区域，用不同颜色
+const SHAPE_REGIONS = {
+  fish:{regions:[{name:'body',colors:['#FF8C00','#FFD700','#FF6B6B','#4488FF']},{name:'tail',colors:['#FFD700','#FFB84D','#FF6347','#87CEEB']}]},
+  butterfly:{regions:[{name:'upwing',colors:['#FF6B6B','#EC4899','#FF4500','#9B6BFF']},{name:'lowwing',colors:['#4488FF','#4A9EFF','#87CEEB','#4ADE80']},{name:'body',colors:['#8B4513','#333','#654321','#444']}]},
+  flower:{regions:[{name:'petal',colors:['#FF6B6B','#EC4899','#FF4500','#FFD700']},{name:'center',colors:['#FFD700','#FFB84D','#FFA500','#FFC107']}]},
+  house:{regions:[{name:'roof',colors:['#FF4444','#FF6B6B','#8B0000','#DC143C']},{name:'wall',colors:['#FFD700','#FFB84D','#FFA500','#F5DEB3']},{name:'door',colors:['#8B4513','#654321','#A0522D','#6B3410']}]},
+  tree:{regions:[{name:'leaf',colors:['#4ADE80','#22C55E','#10B981','#008000']},{name:'trunk',colors:['#8B4513','#654321','#A0522D','#6B3410']}]},
+  cat:{regions:[{name:'body',colors:['#FFB84D','#FF8C00','#FFD700','#D2691E']},{name:'ears',colors:['#FF6B6B','#FF6347','#EC4899','#FF69B4']}]},
+  rabbit:{regions:[{name:'body',colors:['#FFFFFF','#F5F5F5','#FFE4E1','#FAFAD2']},{name:'ears',colors:['#FFB6C1','#FFC0CB','#FF69B4','#FF1493']}]},
+  apple:{regions:[{name:'skin',colors:['#FF4444','#FF0000','#DC143C','#8B0000']},{name:'leaf',colors:['#4ADE80','#32CD32','#228B22','#006400']}]},
+  pear:{regions:[{name:'skin',colors:['#A8E06C','#90C95A','#C8F080','#B8D870']},{name:'stem',colors:['#8B4513','#654321','#6B3410','#A0522D']}]}
+};
+
+const SHAPE_NAMES={triangle:'三角形',square:'正方形',pentagon:'五边形',hexagon:'六边形',star:'五角星',pig:'猪',rabbit:'兔',bird:'鸟',turtle:'乌龟',fish:'鱼',butterfly:'蝴蝶',grapes:'葡萄',icecream:'冰淇淋',flower:'花',tree:'树',house:'房子',mushroom:'蘑菇',sun:'太阳'};
+const SHAPE_DIFFICULTY={triangle:1,square:1,pentagon:1,hexagon:1,star:1,sun:1,house:1,tree:2,fish:2,icecream:2,rabbit:2,flower:2,mushroom:2,pig:3,bird:3,turtle:3,grapes:3,butterfly:3};
+
+// 图形元素定义（组合canvas图形 + 简单几何图形）
+const SHAPE_ELEMENTS = {
+  triangle:[
+    {t:'polygon',points:[0.5,0.08,0.92,0.85,0.08,0.85],c:'#FFD700'},
+  ],
+  square:[
+    {t:'rect',x:0.15,y:0.15,w:0.7,h:0.7,c:'#4488FF'},
+  ],
+  pentagon:[
+    {t:'polygon',points:[0.5,0.06,0.9,0.35,0.75,0.85,0.25,0.85,0.1,0.35],c:'#4ADE80'},
+  ],
+  hexagon:[
+    {t:'polygon',points:[0.5,0.06,0.85,0.25,0.85,0.6,0.5,0.85,0.15,0.6,0.15,0.25],c:'#EC4899'},
+  ],
+  star:[
+    {t:'polygon',points:[0.5,0.04,0.58,0.25,0.82,0.3,0.63,0.48,0.68,0.74,0.5,0.6,0.32,0.74,0.37,0.48,0.18,0.3,0.42,0.25],c:'#FFD700'},
+  ],
+  pig:[
+    {t:'circle',x:0.5,y:0.55,r:0.3,c:'#FFB6C1'},{t:'circle',x:0.7,y:0.32,r:0.18,c:'#FFB6C1'},
+    {t:'triangle',points:[0.62,0.18,0.68,0.06,0.78,0.2],c:'#FFB6C1'},{t:'triangle',points:[0.7,0.16,0.8,0.08,0.84,0.2],c:'#FFB6C1'},
+    {t:'ellipse',x:0.74,y:0.36,w:0.1,h:0.06,c:'#FF69B4'},{t:'circle',x:0.72,y:0.36,r:0.015,c:'#333'},{t:'circle',x:0.76,y:0.36,r:0.015,c:'#333'},
+    {t:'circle',x:0.66,y:0.28,r:0.022,c:'#333'},{t:'circle',x:0.73,y:0.28,r:0.022,c:'#333'},{t:'circle',x:0.67,y:0.27,r:0.008,c:'#FFF'},{t:'circle',x:0.74,y:0.27,r:0.008,c:'#FFF'},
+    {t:'rect',x:0.42,y:0.8,w:0.06,h:0.14,c:'#FFB6C1'},{t:'rect',x:0.5,y:0.82,w:0.06,h:0.12,c:'#FFB6C1'},{t:'rect',x:0.58,y:0.8,w:0.06,h:0.14,c:'#FFB6C1'},{t:'rect',x:0.34,y:0.8,w:0.06,h:0.12,c:'#FFB6C1'},
+  ],
+  rabbit:[
+    {t:'ellipse',x:0.5,y:0.58,w:0.32,h:0.26,c:'#F5F5F5'},{t:'circle',x:0.5,y:0.3,r:0.15,c:'#F5F5F5'},
+    {t:'ellipse',x:0.36,y:0.05,w:0.06,h:0.2,c:'#FFB6C1'},{t:'ellipse',x:0.56,y:0.04,w:0.06,h:0.22,c:'#FFB6C1'},
+    {t:'circle',x:0.46,y:0.28,r:0.02,c:'#333'},{t:'circle',x:0.54,y:0.28,r:0.02,c:'#333'},{t:'circle',x:0.465,y:0.275,r:0.007,c:'#FFF'},{t:'circle',x:0.545,y:0.275,r:0.007,c:'#FFF'},
+    {t:'triangle',points:[0.48,0.33,0.5,0.37,0.52,0.33],c:'#FFB6C1'},
+    {t:'rect',x:0.42,y:0.78,w:0.04,h:0.1,c:'#F5F5F5'},{t:'rect',x:0.5,y:0.8,w:0.04,h:0.08,c:'#F5F5F5'},{t:'rect',x:0.58,y:0.78,w:0.04,h:0.1,c:'#F5F5F5'},
+  ],
+  bird:[
+    {t:'ellipse',x:0.48,y:0.55,w:0.32,h:0.24,c:'#FF6B6B'},{t:'circle',x:0.68,y:0.3,r:0.11,c:'#FF6B6B'},
+    {t:'triangle',points:[0.76,0.28,0.9,0.3,0.76,0.34],c:'#FF8C00'},
+    {t:'circle',x:0.72,y:0.28,r:0.018,c:'#333'},{t:'circle',x:0.725,y:0.275,r:0.008,c:'#FFF'},
+    {t:'ellipse',x:0.4,y:0.48,w:0.15,h:0.18,c:'#CC0000'},
+    {t:'triangle',points:[0.22,0.52,0.15,0.7,0.3,0.58],c:'#FF6B6B'},{t:'triangle',points:[0.25,0.5,0.18,0.65,0.32,0.55],c:'#FF6B6B'},
+    {t:'rect',x:0.46,y:0.75,w:0.025,h:0.1,c:'#FF8C00'},{t:'rect',x:0.54,y:0.75,w:0.025,h:0.1,c:'#FF8C00'},
+  ],
+  turtle:[
+    {t:'ellipse',x:0.5,y:0.52,w:0.48,h:0.32,c:'#228B22'},{t:'circle',x:0.7,y:0.25,r:0.09,c:'#90C95A'},
+    {t:'circle',x:0.74,y:0.23,r:0.02,c:'#333'},{t:'circle',x:0.744,y:0.225,r:0.008,c:'#FFF'},
+    {t:'ellipse',x:0.26,y:0.5,w:0.07,h:0.11,c:'#90C95A'},{t:'ellipse',x:0.74,y:0.5,w:0.07,h:0.11,c:'#90C95A'},
+    {t:'ellipse',x:0.26,y:0.68,w:0.07,h:0.11,c:'#90C95A'},{t:'ellipse',x:0.74,y:0.68,w:0.07,h:0.11,c:'#90C95A'},
+    {t:'circle',x:0.18,y:0.74,r:0.03,c:'#90C95A'},
+  ],
+  fish:[
+    {t:'ellipse',x:0.46,y:0.5,w:0.55,h:0.28,c:'#FF8C00'},
+    {t:'triangle',points:[0.72,0.5,0.92,0.32,0.86,0.5],c:'#FF8C00'},{t:'triangle',points:[0.72,0.5,0.92,0.68,0.86,0.5],c:'#FF8C00'},
+    {t:'circle',x:0.66,y:0.44,r:0.028,c:'#333'},{t:'circle',x:0.665,y:0.435,r:0.012,c:'#FFF'},
+    {t:'circle',x:0.35,y:0.5,r:0.04,c:'#FFD700'},
+  ],
+  butterfly:[
+    {t:'ellipse',x:0.5,y:0.52,w:0.06,h:0.22,c:'#333'},{t:'circle',x:0.5,y:0.26,r:0.04,c:'#333'},
+    {t:'ellipse',x:0.3,y:0.28,w:0.24,h:0.28,c:'#FF8C00'},{t:'ellipse',x:0.7,y:0.28,w:0.24,h:0.28,c:'#FF8C00'},
+    {t:'ellipse',x:0.26,y:0.6,w:0.2,h:0.22,c:'#FF8C00'},{t:'ellipse',x:0.74,y:0.6,w:0.2,h:0.22,c:'#FF8C00'},
+    {t:'circle',x:0.3,y:0.25,r:0.05,c:'#FFD700'},{t:'circle',x:0.7,y:0.25,r:0.05,c:'#FFD700'},
+    {t:'circle',x:0.26,y:0.56,r:0.04,c:'#FFD700'},{t:'circle',x:0.74,y:0.56,r:0.04,c:'#FFD700'},
+  ],
+  grapes:[
+    {t:'circle',x:0.5,y:0.18,r:0.09,c:'#8B008B'},{t:'circle',x:0.4,y:0.28,r:0.085,c:'#8B008B'},{t:'circle',x:0.6,y:0.28,r:0.085,c:'#8B008B'},
+    {t:'circle',x:0.35,y:0.4,r:0.08,c:'#8B008B'},{t:'circle',x:0.5,y:0.42,r:0.085,c:'#8B008B'},{t:'circle',x:0.65,y:0.4,r:0.08,c:'#8B008B'},
+    {t:'circle',x:0.32,y:0.54,r:0.075,c:'#8B008B'},{t:'circle',x:0.45,y:0.56,r:0.08,c:'#8B008B'},{t:'circle',x:0.55,y:0.56,r:0.075,c:'#8B008B'},
+    {t:'circle',x:0.4,y:0.68,r:0.07,c:'#8B008B'},{t:'circle',x:0.52,y:0.66,r:0.07,c:'#8B008B'},{t:'rect',x:0.47,y:0.06,w:0.04,h:0.1,c:'#5B005B'},
+  ],
+  icecream:[
+    {t:'circle',x:0.5,y:0.2,r:0.18,c:'#FFB6C1'},{t:'circle',x:0.4,y:0.32,r:0.14,c:'#FF69B4'},{t:'circle',x:0.6,y:0.32,r:0.14,c:'#FF69B4'},
+    {t:'circle',x:0.5,y:0.42,r:0.13,c:'#FFF8DC'},{t:'triangle',points:[0.4,0.52,0.5,0.9,0.6,0.52],c:'#DEB887'},
+    {t:'circle',x:0.36,y:0.16,r:0.03,c:'#FF0000'},
+  ],
+  flower:[
+    {t:'circle',x:0.5,y:0.5,r:0.1,c:'#FFD700'},
+    {t:'ellipse',x:0.5,y:0.26,w:0.14,h:0.22,c:'#FF6B6B'},{t:'ellipse',x:0.5,y:0.74,w:0.14,h:0.22,c:'#FF6B6B'},
+    {t:'ellipse',x:0.26,y:0.5,w:0.22,h:0.14,c:'#FF6B6B'},{t:'ellipse',x:0.74,y:0.5,w:0.22,h:0.14,c:'#FF6B6B'},
+    {t:'ellipse',x:0.33,y:0.33,w:0.16,h:0.16,c:'#FF6B6B'},{t:'ellipse',x:0.67,y:0.33,w:0.16,h:0.16,c:'#FF6B6B'},
+    {t:'ellipse',x:0.33,y:0.67,w:0.16,h:0.16,c:'#FF6B6B'},{t:'ellipse',x:0.67,y:0.67,w:0.16,h:0.16,c:'#FF6B6B'},
+    {t:'rect',x:0.48,y:0.6,w:0.03,h:0.24,c:'#228B22'},
+  ],
+  tree:[
+    {t:'rect',x:0.44,y:0.5,w:0.12,h:0.45,c:'#8B4513'},
+    {t:'circle',x:0.5,y:0.18,r:0.24,c:'#228B22'},{t:'circle',x:0.3,y:0.3,r:0.18,c:'#228B22'},{t:'circle',x:0.7,y:0.3,r:0.18,c:'#228B22'},
+    {t:'circle',x:0.38,y:0.13,r:0.16,c:'#2E8B57'},{t:'circle',x:0.62,y:0.13,r:0.16,c:'#2E8B57'},{t:'circle',x:0.5,y:0.08,r:0.14,c:'#32CD32'},
+  ],
+  house:[
+    {t:'rect',x:0.18,y:0.4,w:0.64,h:0.52,c:'#FFF8DC'},{t:'triangle',points:[0.12,0.4,0.5,0.08,0.88,0.4],c:'#FF4444'},
+    {t:'rect',x:0.42,y:0.6,w:0.16,h:0.32,c:'#8B4513'},{t:'circle',x:0.54,y:0.78,r:0.02,c:'#FFD700'},
+    {t:'rect',x:0.24,y:0.5,w:0.12,h:0.14,c:'#87CEEB'},{t:'rect',x:0.62,y:0.5,w:0.14,h:0.14,c:'#87CEEB'},
+  ],
+  mushroom:[
+    {t:'rect',x:0.44,y:0.45,w:0.12,h:0.42,c:'#FFF8DC'},
+    {t:'ellipse',x:0.5,y:0.35,w:0.55,h:0.38,c:'#FF4444'},{t:'circle',x:0.32,y:0.28,r:0.07,c:'#FFFFFF'},
+    {t:'circle',x:0.55,y:0.2,r:0.06,c:'#FFFFFF'},{t:'circle',x:0.68,y:0.3,r:0.05,c:'#FFFFFF'},
+  ],
+  sun:[
+    {t:'circle',x:0.5,y:0.5,r:0.18,c:'#FFD700'},
+    {t:'rect',x:0.47,y:0.18,w:0.06,h:0.12,c:'#FFD700'},{t:'rect',x:0.47,y:0.7,w:0.06,h:0.12,c:'#FFD700'},
+    {t:'rect',x:0.18,y:0.47,w:0.12,h:0.06,c:'#FFD700'},{t:'rect',x:0.7,y:0.47,w:0.12,h:0.06,c:'#FFD700'},
+    {t:'rect',x:0.28,y:0.26,w:0.1,h:0.05,c:'#FFD700'},{t:'rect',x:0.62,y:0.26,w:0.1,h:0.05,c:'#FFD700'},
+    {t:'rect',x:0.28,y:0.68,w:0.1,h:0.05,c:'#FFD700'},{t:'rect',x:0.62,y:0.68,w:0.1,h:0.05,c:'#FFD700'},
+  ],
+};
+
+function lightenColor(hex, amount) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const lr=Math.min(255,Math.round(r+(255-r)*amount)),lg=Math.min(255,Math.round(g+(255-g)*amount)),lb=Math.min(255,Math.round(b+(255-b)*amount));
+  return '#'+[lr,lg,lb].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function drawShapeElements(ctx, elements, cx, cy, size, mode) {
+  if (mode === 'outline') {
+    // Draw all elements as solid silhouette first (no internal strokes)
+    for (const el of elements) {
+      ctx.beginPath();
+      const ex = cx + (el.x - 0.5) * size * 2;
+      const ey = cy + (el.y - 0.5) * size * 2;
+      const ew = (el.w || 0) * size * 2;
+      const eh = (el.h || 0) * size * 2;
+      const er = (el.r || 0.05) * size;
+      switch (el.t) {
+        case 'rect': ctx.rect(ex - ew/2, ey - eh/2, ew, eh); break;
+        case 'circle': ctx.arc(ex, ey, er, 0, Math.PI * 2); break;
+        case 'ellipse': ctx.ellipse(ex, ey, ew/2, eh/2, 0, 0, Math.PI * 2); break;
+        case 'triangle':
+          ctx.moveTo(cx + (el.points[0] - 0.5) * size * 2, cy + (el.points[1] - 0.5) * size * 2);
+          ctx.lineTo(cx + (el.points[2] - 0.5) * size * 2, cy + (el.points[3] - 0.5) * size * 2);
+          ctx.lineTo(cx + (el.points[4] - 0.5) * size * 2, cy + (el.points[5] - 0.5) * size * 2);
+          ctx.closePath(); break;
+        case 'polygon':
+          ctx.moveTo(cx + (el.points[0] - 0.5) * size * 2, cy + (el.points[1] - 0.5) * size * 2);
+          for (let i = 2; i < el.points.length; i += 2)
+            ctx.lineTo(cx + (el.points[i] - 0.5) * size * 2, cy + (el.points[i+1] - 0.5) * size * 2);
+          ctx.closePath(); break;
+      }
+      ctx.fillStyle='#F8F8F8';ctx.fill();
+    }
+    // Then draw strokes on top for visibility of key features
+    ctx.strokeStyle = '#888';ctx.lineWidth = 2;
+    for (const el of elements) {
+      ctx.beginPath();
+      const ex = cx + (el.x - 0.5) * size * 2;
+      const ey = cy + (el.y - 0.5) * size * 2;
+      const ew = (el.w || 0) * size * 2;
+      const eh = (el.h || 0) * size * 2;
+      const er = (el.r || 0.05) * size;
+      switch (el.t) {
+        case 'rect': ctx.rect(ex - ew/2, ey - eh/2, ew, eh); break;
+        case 'circle': ctx.arc(ex, ey, er, 0, Math.PI * 2); break;
+        case 'ellipse': ctx.ellipse(ex, ey, ew/2, eh/2, 0, 0, Math.PI * 2); break;
+        case 'triangle':
+          ctx.moveTo(cx + (el.points[0] - 0.5) * size * 2, cy + (el.points[1] - 0.5) * size * 2);
+          ctx.lineTo(cx + (el.points[2] - 0.5) * size * 2, cy + (el.points[3] - 0.5) * size * 2);
+          ctx.lineTo(cx + (el.points[4] - 0.5) * size * 2, cy + (el.points[5] - 0.5) * size * 2);
+          ctx.closePath(); break;
+        case 'polygon':
+          ctx.moveTo(cx + (el.points[0] - 0.5) * size * 2, cy + (el.points[1] - 0.5) * size * 2);
+          for (let i = 2; i < el.points.length; i += 2)
+            ctx.lineTo(cx + (el.points[i] - 0.5) * size * 2, cy + (el.points[i+1] - 0.5) * size * 2);
+          ctx.closePath(); break;
+      }
+      ctx.stroke();
+    }
+  } else {
+    for (const el of elements) {
+      ctx.beginPath();
+      const ex = cx + (el.x - 0.5) * size * 2;
+      const ey = cy + (el.y - 0.5) * size * 2;
+      const ew = (el.w || 0) * size * 2;
+      const eh = (el.h || 0) * size * 2;
+      const er = (el.r || 0.05) * size;
+      switch (el.t) {
+        case 'rect': ctx.rect(ex - ew/2, ey - eh/2, ew, eh); break;
+        case 'circle': ctx.arc(ex, ey, er, 0, Math.PI * 2); break;
+        case 'ellipse': ctx.ellipse(ex, ey, ew/2, eh/2, 0, 0, Math.PI * 2); break;
+        case 'triangle':
+          ctx.moveTo(cx + (el.points[0] - 0.5) * size * 2, cy + (el.points[1] - 0.5) * size * 2);
+          ctx.lineTo(cx + (el.points[2] - 0.5) * size * 2, cy + (el.points[3] - 0.5) * size * 2);
+          ctx.lineTo(cx + (el.points[4] - 0.5) * size * 2, cy + (el.points[5] - 0.5) * size * 2);
+          ctx.closePath(); break;
+        case 'polygon':
+          ctx.moveTo(cx + (el.points[0] - 0.5) * size * 2, cy + (el.points[1] - 0.5) * size * 2);
+          for (let i = 2; i < el.points.length; i += 2)
+            ctx.lineTo(cx + (el.points[i] - 0.5) * size * 2, cy + (el.points[i+1] - 0.5) * size * 2);
+          ctx.closePath(); break;
+      }
+      ctx.fillStyle = el.c;ctx.fill();ctx.strokeStyle = '#333';ctx.lineWidth = 1;ctx.stroke();
+    }
+  }
+}
+
+
+
+function getShapeOutline(shapeName,cx,cy,size){
+  const pts=SHAPES[shapeName];if(!pts)return[];
+  return pts.map(p=>({x:cx+(p.x-0.5)*size*2,y:cy+(p.y-0.5)*size*2}));
+}
+
+// 生成虚线点（在轮廓线上均匀采样）
+function generateDottedOutline(outline,n){
+  if(outline.length<2)return[];
+  // 计算总长度
+  let totalLen=0;const segs=[];
+  for(let i=0;i<outline.length;i++){const a=outline[i],b=outline[(i+1)%outline.length];const len=Utils.dist(a.x,a.y,b.x,b.y);segs.push({a,b,len});totalLen+=len}
+  // 均匀采样
+  const dots=[],step=totalLen/n;
+  let cur=0,segIdx=0,segPos=0;
+  for(let i=0;i<n;i++){
+    const target=i*step;
+    while(cur+segs[segIdx].len<target&&segIdx<segs.length-1){cur+=segs[segIdx].len;segIdx++}
+    const t=Math.min(1,Math.max(0,(target-cur)/segs[segIdx].len));
+    const a=segs[segIdx].a,b=segs[segIdx].b;
+    dots.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+  }
+  return dots;
+}
+
+// ============================================================
+// 游戏1：涂色 ColorFillGame
+// ============================================================
+class ColorFillGame extends BaseGame {
+  onStart(){
+    const cfg=GAME_CONFIGS.colorfill.difficulties[this.difficulty];
+    this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
+    this.activeColor=PALETTE_COLORS[0];this.isErasing=false;
+    this.brushMult=0.65;this.currentBrushR=Math.round(cfg.brushR*this.brushMult);
+    this.setupColorSwitchBg();
+    this._initOffscreen();this._genLevel();
+    this._renderPalette();
+  }
+  _initOffscreen(){this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filled=new Uint8Array(Math.floor(this.W)*Math.floor(this.H))}
+  _renderPalette(){
+    const ctrl=document.getElementById('game-controls');if(!ctrl)return;
+    const self=this;
+    const sizes=[{l:'S',m:0.4},{l:'M',m:0.65},{l:'L',m:1.0}];
+    ctrl.innerHTML='<div class="flex justify-center gap-2 p-2 flex-wrap max-w-md mx-auto items-center">'+
+      PALETTE_COLORS.map((c,i)=>'<button data-color="'+c+'" class="color-btn w-10 h-10 rounded-full border-2 '+(c===this.activeColor&&!this.isErasing?'border-gray-800 scale-110':'border-gray-300')+'" style="background:'+c+'"></button>').join('')+
+      '<span class="text-xs text-gray-400 mx-1">笔刷</span>'+
+      sizes.map(s=>'<button data-brush="'+s.m+'" class="w-8 h-8 rounded-full text-xs font-bold border-2 '+(this.brushMult===s.m?'bg-primary text-white border-primary':'bg-white text-gray-500 border-gray-300')+'">'+s.l+'</button>').join('')+
+      '<button id="eraser-btn" class="color-btn w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg '+(this.isErasing?'border-gray-800 scale-110 bg-gray-100':'border-gray-300 bg-white')+'">🧹</button>'+
+      '<button id="skip-btn" class="px-3 py-2 rounded-xl bg-warm text-white text-sm font-bold active:scale-95 transition-transform">下一题 →</button>'+
+      '</div>';
+    ctrl.querySelectorAll('[data-color]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.color;this.isErasing=false;this._renderPalette();Audio.click()})});
+    ctrl.querySelectorAll('[data-brush]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.brushMult=parseFloat(b.dataset.brush);this.currentBrushR=Math.round(this.cfg.brushR*this.brushMult);this._renderPalette();Audio.click()})});
+    const eraserBtn=ctrl.querySelector('#eraser-btn');if(eraserBtn)eraserBtn.addEventListener('pointerdown',e=>{e.preventDefault();this.isErasing=!this.isErasing;this._renderPalette();Audio.click()});
+    const skipBtn=ctrl.querySelector('#skip-btn');if(skipBtn)skipBtn.addEventListener('pointerdown',e=>{e.preventDefault();this._skipLevel();});
+  }
+  _genLevel(){
+    const cfg=this.cfg;this.filled.fill(0);this.filledPixels=0;
+    const ctx=this.octx,w=Math.floor(this.W),h=Math.floor(this.H);
+    ctx.clearRect(0,0,w,h);ctx.fillStyle='#FFF';ctx.fillRect(0,0,w,h);
+    const shapeKeys=Object.keys(SHAPE_ELEMENTS);const availShapes=shapeKeys.filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);this.shapeName=availShapes[Utils.randInt(0,availShapes.length-1)];
+    this.shapeElements=SHAPE_ELEMENTS[this.shapeName];
+    const cx=this.W/2,cy=this.H/2,size=Math.min(this.W,this.H)*0.38;
+    drawShapeElements(ctx,this.shapeElements,cx,cy,size,'outline');
+    const img=ctx.getImageData(0,0,w,h).data;this.totalPixels=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(img[i]<250||img[i+1]<250||img[i+2]<250)this.totalPixels++}
+    this.completion=0;this.isDrawing=false;this.feedback=null;this.feedbackTime=0;this.levelStartTime=performance.now();
+  }
+  onInput(e){
+    if(this.finished||this.feedback)return;
+    if(e.type==='pointerdown')this.isDrawing=true;
+    if(e.type==='up')this.isDrawing=false;
+    if(!this.isDrawing&&e.type!=='move')return;
+    if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
+    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.currentBrushR,w=Math.floor(this.W),h=Math.floor(this.H);
+    if(this.isErasing){
+      for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+        if(dx*dx+dy*dy>br*br)continue;
+        const px=x+dx,py=y+dy;if(px<0||py<0||px>=w||py>=h)continue;
+        const idx=py*w+px;
+        if(this.filled[idx]){this.filled[idx]=0;this.filledPixels--}
+      }
+    }else{
+      for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+        if(dx*dx+dy*dy>br*br)continue;
+        const px=x+dx,py=y+dy;if(px<0||py<0||px>=w||py>=h)continue;
+        const idx=py*w+px;if(this.filled[idx])continue;
+        const pd=ctx.getImageData(px,py,1,1).data;
+        if(pd[0]<250||pd[1]<250||pd[2]<250){this.filled[idx]=1;this.filledPixels++}
+      }
+    }
+    this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
+    if(this.completion>=this.cfg.targetPct&&!this.feedback){
+      const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now();
+    }
+  }
+  _skipLevel(){
+    if(this.finished||this.feedback)return;
+    const rt=performance.now()-this.levelStartTime;this.recordResult(false,rt);
+    this.feedback='done';this.feedbackTime=performance.now();
+  }
+  onUpdate(dt){
+    if(this.finished)return;
+    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+  }
+  onRender(ctx){
+    ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
+    const r=parseInt(this.activeColor.slice(1,3),16),g=parseInt(this.activeColor.slice(3,5),16),b=parseInt(this.activeColor.slice(5,7),16);
+    const imgData=this.octx.getImageData(0,0,Math.floor(this.W),Math.floor(this.H));
+    for(let i=0;i<this.filled.length;i++){if(this.filled[i]){const idx=i*4;imgData.data[idx]=r;imgData.data[idx+1]=g;imgData.data[idx+2]=b}}
+    const tmp=document.createElement('canvas');tmp.width=imgData.width;tmp.height=imgData.height;tmp.getContext('2d').putImageData(imgData,0,0);
+    ctx.drawImage(tmp,0,0);
+    ctx.fillStyle='#FFF';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    const label=SHAPE_NAMES[this.shapeName]||this.shapeName;
+    ctx.strokeText('涂色·'+label+'·'+Math.round(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    ctx.fillText('涂色·'+label+'·'+Math.round(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+  }
+}
+registerGame('colorfill', ColorFillGame);
+
+// ============================================================
+// 游戏2：描线画图 TraceLineGame
+// ============================================================
+class TraceLineGame extends BaseGame {
+  onStart(){
+    const cfg=GAME_CONFIGS.traceline.difficulties[this.difficulty];
+    this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
+    this.bgEnabled=false;this.userPath=[];this.isDrawing=false;this._genLevel();
+  }
+  _genLevel(){
+    const cfg=this.cfg;const availShapes=Object.keys(SHAPES).filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);
+    this.shapeName=availShapes[Utils.randInt(0,availShapes.length-1)];
+    const cx=this.W/2,cy=this.H/2,r=Math.min(this.W,this.H)*0.32;
+    this.outline=getShapeOutline(this.shapeName,cx,cy,r);
+    this.dots=generateDottedOutline(this.outline,Math.max(25,Math.floor(45-this.difficulty*3)));
+    this.startDot=this.outline[0];this.endDot=this.outline[this.outline.length-1];
+    this.userPath=[];this.isDrawing=false;this.hasStarted=false;
+    this.feedback=null;this.feedbackTime=0;this.levelStartTime=performance.now();
+  }
+  onInput(e){
+    if(this.finished||this.feedback)return;
+    if(e.type==='pointerdown'){this.isDrawing=true;this.userPath=[];this.hasStarted=false}
+    if(e.type==='move'&&this.isDrawing){this.userPath.push({x:e.x,y:e.y});if(!this.hasStarted&&this.userPath.length>=2)this.hasStarted=true}
+    if(e.type==='up'&&this.isDrawing){this.isDrawing=false;if(this.userPath.length>=5)this._check()}
+  }
+  _check(){
+    let score=0;const n=Math.min(this.dots.length,40);
+    const sampledDots=[];for(let i=0;i<n;i++)sampledDots.push(this.dots[Math.floor(i/n*this.dots.length)]);
+    for(const dot of sampledDots){let md=Infinity;for(const p of this.userPath){const d=Utils.dist(dot.x,dot.y,p.x,p.y);if(d<md)md=d}if(md<=this.cfg.tolerance*2)score++}
+    const acc=score/sampledDots.length;
+    if(acc>=0.6){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='correct'}
+    else{this.recordResult(false,performance.now()-this.levelStartTime);Audio.mistake();this.feedback='wrong'}
+    this.feedbackTime=performance.now();
+  }
+  onUpdate(dt){
+    if(this.finished)return;
+    if(this.feedback&&performance.now()-this.feedbackTime>800){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+  }
+  onRender(ctx){
+    ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
+    ctx.fillStyle='#FFF';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    ctx.strokeText('描线画图·'+(SHAPE_NAMES[this.shapeName]||this.shapeName)+'·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    ctx.fillText('描线画图·'+(SHAPE_NAMES[this.shapeName]||this.shapeName)+'·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    // 虚线轮廓（虚线+圆点）
+    ctx.strokeStyle='#999';ctx.lineWidth=3;ctx.setLineDash([5,9]);
+    ctx.beginPath();ctx.moveTo(this.outline[0].x,this.outline[0].y);
+    for(let i=1;i<this.outline.length;i++)ctx.lineTo(this.outline[i].x,this.outline[i].y);
+    ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+    this.dots.forEach(d=>{ctx.fillStyle='#777';ctx.beginPath();ctx.arc(d.x,d.y,4,0,Math.PI*2);ctx.fill()});
+    // 起点
+    ctx.fillStyle='#4ADE80';ctx.beginPath();ctx.arc(this.startDot.x,this.startDot.y,9,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#FFF';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('起',this.startDot.x,this.startDot.y);
+    // 终点
+    ctx.fillStyle='#FF6B6B';ctx.beginPath();ctx.arc(this.endDot.x,this.endDot.y,9,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#333';ctx.stroke();
+    ctx.fillStyle='#FFF';ctx.fillText('终',this.endDot.x,this.endDot.y);
+    // 用户描线
+    if(this.userPath.length>1){ctx.strokeStyle='#4A9EFF';ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor='rgba(74,158,255,0.5)';ctx.shadowBlur=6;ctx.beginPath();ctx.moveTo(this.userPath[0].x,this.userPath[0].y);for(let i=1;i<this.userPath.length;i++)ctx.lineTo(this.userPath[i].x,this.userPath[i].y);ctx.stroke();ctx.shadowBlur=0}
+    if(this.feedback){ctx.fillStyle=this.feedback==='correct'?'#4ADE80':'#FF6B6B';ctx.font='bold 30px sans-serif';ctx.textAlign='center';ctx.fillText(this.feedback==='correct'?'✓':'✗',this.W/2,this.H-40)}
+    ctx.fillStyle='#666';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('从绿点"起"开始，沿虚线描到红点"终"',this.W/2,this.H-12);
+  }
+}
+registerGame('traceline', TraceLineGame);
+
+// ============================================================
+// 游戏3：虚线画图 DotDrawGame (左参考+右虚线+涂色)
+// ============================================================
+class DotDrawGame extends BaseGame {
+  onStart(){
+    const cfg=GAME_CONFIGS.dotdraw.difficulties[this.difficulty];
+    this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
+    this.activeColor=PALETTE_COLORS[0];this._colorIdx=0;this.isErasing=false;
+    this.brushMult=0.65;this.currentBrushR=Math.round(cfg.brushR*this.brushMult);
+    this.setupBg('checker',['#FF4444','#44CC44'],40,20,'hstripes',['#222222','#FFFFFF'],35,18);
+    this._initOffscreen();this._genLevel();this._renderPalette();
+  }
+  _initOffscreen(){const sz=Math.floor(this.W)*Math.floor(this.H);this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filledColor=new Uint8Array(sz);this.filledColor.fill(255)}
+  _renderPalette(){
+    const ctrl=document.getElementById('game-controls');if(!ctrl)return;
+    const sizes=[{l:'S',m:0.4},{l:'M',m:0.65},{l:'L',m:1.0}];
+    ctrl.innerHTML='<div class="flex justify-center gap-1 p-2 flex-wrap max-w-md mx-auto items-center">'+
+      PALETTE_COLORS.map((c,i)=>'<button data-dcolor="'+c+'" class="color-btn w-9 h-9 rounded-full border-2 '+(i===this._colorIdx&&!this.isErasing?'border-gray-800 scale-110':'border-gray-300')+'" style="background:'+c+'"></button>').join('')+
+      '<span class="text-xs text-gray-400 mx-1">笔刷</span>'+
+      sizes.map(s=>'<button data-brush="'+s.m+'" class="w-7 h-7 rounded-full text-xs font-bold border-2 '+(this.brushMult===s.m?'bg-primary text-white border-primary':'bg-white text-gray-500 border-gray-300')+'">'+s.l+'</button>').join('')+
+      '<button id="eraser-btn" class="color-btn w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm '+(this.isErasing?'border-gray-800 scale-110 bg-gray-100':'border-gray-300 bg-white')+'">🧹</button>'+
+      '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一题 →</button>'+
+      '</div>';
+    ctrl.querySelectorAll('[data-dcolor]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.dcolor;this._colorIdx=PALETTE_COLORS.indexOf(this.activeColor);this.isErasing=false;this._renderPalette();Audio.click()})});
+    ctrl.querySelectorAll('[data-brush]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.brushMult=parseFloat(b.dataset.brush);this.currentBrushR=Math.round(this.cfg.brushR*this.brushMult);this._renderPalette();Audio.click()})});
+    const eraserBtn=ctrl.querySelector('#eraser-btn');if(eraserBtn)eraserBtn.addEventListener('pointerdown',e=>{e.preventDefault();this.isErasing=!this.isErasing;this._renderPalette();Audio.click()});
+    const skipBtn=ctrl.querySelector('#skip-btn');if(skipBtn)skipBtn.addEventListener('pointerdown',e=>{e.preventDefault();this._skipLevel();});
+  }
+  _genLevel(){
+    const cfg=this.cfg;
+    const regionKeys=Object.keys(SHAPE_REGIONS);const nonRegionKeys=Object.keys(SHAPES).filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);
+    const allKeys=[...new Set([...regionKeys,...nonRegionKeys])];
+    this.shapeName=allKeys[Utils.randInt(0,allKeys.length-1)];
+    const regDef=SHAPE_REGIONS[this.shapeName];
+    const lcx=this.W*0.22,lcy=this.H/2,lr=Math.min(this.W,this.H)*0.17;
+    this.leftOutline=getShapeOutline(this.shapeName,lcx,lcy,lr);
+    const rcx=this.W*0.72,rcy=this.H/2,rr=Math.min(this.W,this.H)*0.22;
+    this.rightOutline=getShapeOutline(this.shapeName,rcx,rcy,rr);
+    if(regDef){this.regions=regDef.regions.map(r=>({...r,color:r.colors[Utils.randInt(0,r.colors.length-1)]}))}
+    else{const c=['#FF4444','#FF8C00','#FFD700','#4ADE80','#4488FF','#9B6BFF','#EC4899','#8B4513'];this.regions=[{name:'all',color:c[Utils.randInt(0,c.length-1)],colors:c}]}
+    this.filledColor.fill(255);this.filledPixels=0;
+    const ctx=this.octx,w=Math.floor(this.W),h=Math.floor(this.H);
+    ctx.clearRect(0,0,w,h);ctx.fillStyle='#FFF';ctx.fillRect(0,0,w,h);
+    ctx.beginPath();ctx.moveTo(this.rightOutline[0].x,this.rightOutline[0].y);
+    for(let i=1;i<this.rightOutline.length;i++)ctx.lineTo(this.rightOutline[i].x,this.rightOutline[i].y);
+    ctx.closePath();ctx.fillStyle='#F0F0F0';ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=3;ctx.stroke();
+    const img=ctx.getImageData(0,0,w,h).data;this.totalPixels=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(img[i]<250||img[i+1]<250||img[i+2]<250)this.totalPixels++}
+    this.completion=0;this.isDrawing=false;
+    this.feedback=null;this.feedbackTime=0;this.levelStartTime=performance.now();
+  }
+  onInput(e){
+    if(this.finished||this.feedback)return;
+    if(e.type==='pointerdown')this.isDrawing=true;
+    if(e.type==='up')this.isDrawing=false;
+    if(!this.isDrawing&&e.type!=='move')return;
+    if(e.x<0||e.y<0||e.x>=this.W||e.y>=this.H)return;
+    const ctx=this.octx,x=Math.floor(e.x),y=Math.floor(e.y),br=this.currentBrushR,w=Math.floor(this.W),h=Math.floor(this.H);
+    if(this.isErasing){
+      for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+        if(dx*dx+dy*dy>br*br)continue;
+        const px=x+dx,py=y+dy;if(px<0||py<0||px>=w||py>=h)continue;
+        const idx=py*w+px;
+        if(this.filledColor[idx]!==255){this.filledColor[idx]=255;this.filledPixels--}
+      }
+    }else{
+      for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+        if(dx*dx+dy*dy>br*br)continue;
+        const px=x+dx,py=y+dy;if(px<0||py<0||px>=w||py>=h)continue;
+        const idx=py*w+px;
+        if(this.filledColor[idx]!==255)continue;
+        const pd=ctx.getImageData(px,py,1,1).data;
+        if(pd[0]<250||pd[1]<250||pd[2]<250){this.filledColor[idx]=this._colorIdx;this.filledPixels++}
+      }
+    }
+    this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
+    if(this.completion>=0.9&&!this.feedback){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now()}
+  }
+  _skipLevel(){
+    if(this.finished||this.feedback)return;
+    const rt=performance.now()-this.levelStartTime;this.recordResult(false,rt);
+    this.feedback='done';this.feedbackTime=performance.now();
+  }
+  onUpdate(dt){
+    if(this.finished)return;
+    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){if(!this.finish()){this.targetTrials+=this.cfg.levels;this.currentLevel=0;this._genLevel()}return}this._genLevel()}
+  }
+  onRender(ctx){
+    ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
+    const midX=this.W*0.47,w=Math.floor(this.W),h=Math.floor(this.H);
+    ctx.strokeStyle='#CCC';ctx.lineWidth=2;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(midX,30);ctx.lineTo(midX,this.H-50);ctx.stroke();ctx.setLineDash([]);
+    ctx.save();ctx.beginPath();ctx.rect(0,0,midX,this.H);ctx.clip();
+    ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillStyle='#333';ctx.fillText('参考图',this.W*0.11,20);
+    this._drawColoredShape(ctx,this.leftOutline,this.regions,true);
+    ctx.restore();
+    ctx.save();ctx.beginPath();ctx.rect(midX,0,this.W-midX,this.H);ctx.clip();
+    ctx.fillStyle='#333';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('填色·'+Math.round(this.completion*100)+'%',this.W*0.73,20);
+    const imgData=this.octx.getImageData(0,0,w,h);
+    for(let i=0;i<this.filledColor.length;i++){
+      const ci=this.filledColor[i];
+      if(ci!==255){const c=PALETTE_COLORS[ci],idx=i*4;imgData.data[idx]=parseInt(c.slice(1,3),16);imgData.data[idx+1]=parseInt(c.slice(3,5),16);imgData.data[idx+2]=parseInt(c.slice(5,7),16)}
+    }
+    const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;tmp.getContext('2d').putImageData(imgData,0,0);ctx.drawImage(tmp,0,0);
+    if(this.regions.length>1){
+      ctx.strokeStyle='#FF4444';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+      const minY=Math.min(...this.rightOutline.map(p=>p.y)),maxY=Math.max(...this.rightOutline.map(p=>p.y));
+      const bandH=(maxY-minY)/this.regions.length;
+      for(let i=1;i<this.regions.length;i++){
+        ctx.beginPath();ctx.moveTo(midX+5,minY+i*bandH);ctx.lineTo(this.W-5,minY+i*bandH);ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+    ctx.fillStyle='#666';ctx.font='11px sans-serif';ctx.textAlign='center';
+    const hints=this.regions.map(r=>r.color).filter((v,i,a)=>a.indexOf(v)===i);
+    ctx.fillText('提示色：',this.W*0.6,this.H-46);
+    hints.forEach((c,i)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(this.W*0.68+i*18,this.H-48,6,0,Math.PI*2);ctx.fill()});
+    ctx.fillStyle='#666';ctx.textAlign='center';ctx.fillText((SHAPE_NAMES[this.shapeName]||this.shapeName)+'·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W*0.73,this.H-15);
+    if(this.feedback){ctx.fillStyle='#4ADE80';ctx.font='bold 30px sans-serif';ctx.fillText('✓',this.W*0.73,this.H-55)}
+  }
+  _drawColoredShape(ctx,outline,regions,drawLines){
+    ctx.save();
+    ctx.beginPath();ctx.moveTo(outline[0].x,outline[0].y);
+    for(let i=1;i<outline.length;i++)ctx.lineTo(outline[i].x,outline[i].y);
+    ctx.closePath();ctx.clip();
+    if(regions.length===1){ctx.fillStyle=regions[0].color;ctx.fillRect(0,0,this.W,this.H)}
+    else{
+      const minY=Math.min(...outline.map(p=>p.y)),maxY=Math.max(...outline.map(p=>p.y));
+      const bandH=(maxY-minY)/regions.length;
+      regions.forEach((reg,i)=>{ctx.fillStyle=reg.color;ctx.fillRect(0,minY+i*bandH,this.W,bandH+1)});
+      if(drawLines){ctx.setLineDash([6,4]);ctx.strokeStyle='#FFF';ctx.lineWidth=2;for(let i=1;i<regions.length;i++){ctx.beginPath();const yy=minY+i*bandH;ctx.moveTo(-10,yy);ctx.lineTo(this.W+10,yy);ctx.stroke()}ctx.setLineDash([])}
+    }
+    ctx.restore();
+    ctx.beginPath();ctx.moveTo(outline[0].x,outline[0].y);
+    for(let i=1;i<outline.length;i++)ctx.lineTo(outline[i].x,outline[i].y);
+    ctx.closePath();ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
+  }
+}
+registerGame('dotdraw', DotDrawGame);const COMPLEX_SCENES = [
+  {
+    name: '一家人在做饭',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#DEB887'},
+      {t:'rect',x:0.04,y:0.04,w:0.22,h:0.2,c:'#87CEEB'},
+      {t:'rect',x:0.04,y:0.04,w:0.22,h:0.02,c:'#8B4513'},
+      {t:'rect',x:0.04,y:0.12,w:0.22,h:0.02,c:'#8B4513'},
+      {t:'rect',x:0.14,y:0.04,w:0.02,h:0.2,c:'#8B4513'},
+      {t:'rect',x:0.32,y:0.32,w:0.28,h:0.23,c:'#696969'},
+      {t:'circle',x:0.4,y:0.37,r:0.035,c:'#FF4444'},
+      {t:'circle',x:0.52,y:0.37,r:0.035,c:'#FF4444'},
+      {t:'ellipse',x:0.46,y:0.26,w:0.14,h:0.09,c:'#A0A0A0'},
+      {t:'circle',x:0.2,y:0.17,r:0.05,c:'#FFDAB9'},
+      {t:'circle',x:0.185,y:0.155,r:0.012,c:'#333'},
+      {t:'circle',x:0.215,y:0.155,r:0.012,c:'#333'},
+      {t:'rect',x:0.15,y:0.22,w:0.1,h:0.18,c:'#FF6347'},
+      {t:'rect',x:0.15,y:0.27,w:0.1,h:0.08,c:'#FFFFFF'},
+      {t:'circle',x:0.7,y:0.14,r:0.04,c:'#FFDAB9'},
+      {t:'circle',x:0.688,y:0.128,r:0.01,c:'#333'},
+      {t:'circle',x:0.712,y:0.128,r:0.01,c:'#333'},
+      {t:'rect',x:0.66,y:0.18,w:0.08,h:0.14,c:'#4682B4'},
+      {t:'rect',x:0.58,y:0.5,w:0.36,h:0.06,c:'#8B4513'},
+      {t:'circle',x:0.72,y:0.45,r:0.03,c:'#FFFFFF'},
+      {t:'circle',x:0.64,y:0.45,r:0.03,c:'#FFFFFF'},
+    ]
+  },
+  {
+    name: '公园',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'circle',x:0.82,y:0.12,r:0.07,c:'#FFD700'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#4ADE80'},
+      {t:'rect',x:0.2,y:0.25,w:0.14,h:0.3,c:'#8B4513'},
+      {t:'circle',x:0.27,y:0.18,r:0.13,c:'#228B22'},
+      {t:'rect',x:0.5,y:0.35,w:0.22,h:0.2,c:'#FFF8DC'},
+      {t:'triangle',points:[0.5,0.35,0.61,0.22,0.72,0.35],c:'#FF4444'},
+      {t:'rect',x:0.57,y:0.44,w:0.06,h:0.11,c:'#8B4513'},
+      {t:'circle',x:0.4,y:0.56,r:0.03,c:'#FF6B6B'},
+      {t:'circle',x:0.45,y:0.58,r:0.03,c:'#EC4899'},
+      {t:'circle',x:0.35,y:0.59,r:0.03,c:'#FFD700'},
+      {t:'circle',x:0.8,y:0.6,r:0.025,c:'#FF6B6B'},
+      {t:'rect',x:0.06,y:0.45,w:0.12,h:0.1,c:'#D2691E'},
+      {t:'circle',x:0.12,y:0.4,r:0.06,c:'#228B22'},
+      {t:'rect',x:0.02,y:0.48,w:0.18,h:0.02,c:'#DEB887'},
+    ]
+  },
+  {
+    name: '海底世界',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.7,c:'#1E90FF'},
+      {t:'rect',x:0,y:0.7,w:1,h:0.3,c:'#F4D03F'},
+      {t:'ellipse',x:0.35,y:0.3,w:0.18,h:0.1,c:'#FF8C00'},
+      {t:'triangle',points:[0.44,0.3,0.56,0.25,0.56,0.35],c:'#FF8C00'},
+      {t:'circle',x:0.32,y:0.28,r:0.015,c:'#333'},
+      {t:'ellipse',x:0.65,y:0.4,w:0.14,h:0.08,c:'#FF6B6B'},
+      {t:'triangle',points:[0.72,0.4,0.82,0.36,0.82,0.44],c:'#FF6B6B'},
+      {t:'circle',x:0.62,y:0.38,r:0.012,c:'#333'},
+      {t:'rect',x:0.1,y:0.5,w:0.03,h:0.2,c:'#228B22'},
+      {t:'rect',x:0.08,y:0.55,w:0.07,h:0.02,c:'#228B22'},
+      {t:'rect',x:0.78,y:0.55,w:0.03,h:0.15,c:'#228B22'},
+      {t:'rect',x:0.76,y:0.58,w:0.07,h:0.02,c:'#228B22'},
+      {t:'star5',x:0.55,y:0.72,r:0.04,c:'#FF6347'},
+      {t:'circle',x:0.3,y:0.2,r:0.018,c:'#FFFFFF'},
+      {t:'circle',x:0.33,y:0.17,r:0.014,c:'#FFFFFF'},
+      {t:'circle',x:0.28,y:0.16,r:0.012,c:'#FFFFFF'},
+      {t:'circle',x:0.7,y:0.25,r:0.015,c:'#FFFFFF'},
+      {t:'circle',x:0.73,y:0.22,r:0.012,c:'#FFFFFF'},
+    ]
+  },
+  {
+    name: '生日派对',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.6,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.6,w:1,h:0.4,c:'#DEB887'},
+      {t:'rect',x:0.3,y:0.42,w:0.4,h:0.18,c:'#8B4513'},
+      {t:'rect',x:0.35,y:0.3,w:0.3,h:0.12,c:'#FFB6C1'},
+      {t:'circle',x:0.4,y:0.27,r:0.02,c:'#FF4444'},
+      {t:'circle',x:0.5,y:0.26,r:0.02,c:'#FFD700'},
+      {t:'circle',x:0.6,y:0.27,r:0.02,c:'#4ADE80'},
+      {t:'rect',x:0.48,y:0.28,w:0.04,h:0.02,c:'#8B4513'},
+      {t:'circle',x:0.2,y:0.08,r:0.05,c:'#FF6B6B'},
+      {t:'circle',x:0.35,y:0.05,r:0.05,c:'#4488FF'},
+      {t:'circle',x:0.5,y:0.06,r:0.05,c:'#4ADE80'},
+      {t:'circle',x:0.65,y:0.05,r:0.05,c:'#FFD700'},
+      {t:'circle',x:0.8,y:0.08,r:0.05,c:'#EC4899'},
+      {t:'rect',x:0.75,y:0.42,w:0.15,h:0.12,c:'#4488FF'},
+      {t:'rect',x:0.77,y:0.35,w:0.11,h:0.07,c:'#FFD700'},
+      {t:'rect',x:0.15,y:0.4,w:0.12,h:0.13,c:'#FF6B6B'},
+      {t:'rect',x:0.17,y:0.33,w:0.08,h:0.07,c:'#4ADE80'},
+    ]
+  },
+  {
+    name: '太空',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:1,c:'#1a1a2e'},
+      {t:'circle',x:0.15,y:0.15,r:0.05,c:'#FFD700'},
+      {t:'circle',x:0.8,y:0.2,r:0.06,c:'#FFD700'},
+      {t:'circle',x:0.5,y:0.3,r:0.08,c:'#4488FF'},
+      {t:'circle',x:0.3,y:0.6,r:0.04,c:'#4ADE80'},
+      {t:'circle',x:0.7,y:0.65,r:0.05,c:'#FF6B6B'},
+      {t:'circle',x:0.1,y:0.45,r:0.03,c:'#FFFFFF'},
+      {t:'circle',x:0.9,y:0.5,r:0.025,c:'#FFFFFF'},
+      {t:'circle',x:0.55,y:0.8,r:0.035,c:'#FFFFFF'},
+      {t:'circle',x:0.25,y:0.8,r:0.02,c:'#FFFFFF'},
+      {t:'ellipse',x:0.5,y:0.55,w:0.2,h:0.12,c:'#FF8C00'},
+      {t:'ellipse',x:0.5,y:0.5,w:0.16,h:0.1,c:'#FFD700'},
+      {t:'rect',x:0.44,y:0.55,w:0.12,h:0.04,c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.65,r:0.03,c:'#FF4444'},
+    ]
+  },
+  {
+    name: '农场',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'rect',x:0.1,y:0.2,w:0.2,h:0.35,c:'#FF4444'},
+      {t:'triangle',points:[0.07,0.2,0.2,0.08,0.33,0.2],c:'#8B4513'},
+      {t:'rect',x:0.14,y:0.35,w:0.06,h:0.2,c:'#8B4513'},
+      {t:'circle',x:0.55,y:0.38,r:0.07,c:'#FFFFFF'},
+      {t:'circle',x:0.53,y:0.36,r:0.015,c:'#333'},
+      {t:'ellipse',x:0.55,y:0.36,w:0.04,h:0.03,c:'#FFB6C1'},
+      {t:'rect',x:0.5,y:0.45,w:0.1,h:0.05,c:'#333'},
+      {t:'rect',x:0.48,y:0.5,w:0.03,h:0.05,c:'#333'},
+      {t:'rect',x:0.59,y:0.5,w:0.03,h:0.05,c:'#333'},
+      {t:'circle',x:0.78,y:0.3,r:0.08,c:'#FFD700'},
+      {t:'rect',x:0.72,y:0.3,w:0.12,h:0.02,c:'#FFA500'},
+      {t:'rect',x:0.7,y:0.35,w:0.04,h:0.2,c:'#228B22'},
+      {t:'circle',x:0.8,y:0.58,r:0.025,c:'#FF6B6B'},
+      {t:'circle',x:0.35,y:0.6,r:0.025,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '游乐场',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'rect',x:0.35,y:0.3,w:0.3,h:0.25,c:'#FF8C00'},
+      {t:'triangle',points:[0.32,0.3,0.5,0.15,0.68,0.3],c:'#FF4444'},
+      {t:'rect',x:0.4,y:0.38,w:0.08,h:0.17,c:'#FFD700'},
+      {t:'rect',x:0.52,y:0.4,w:0.08,h:0.15,c:'#4488FF'},
+      {t:'circle',x:0.15,y:0.4,r:0.08,c:'#FF6B6B'},
+      {t:'rect',x:0.12,y:0.48,w:0.06,h:0.07,c:'#8B4513'},
+      {t:'circle',x:0.8,y:0.38,r:0.07,c:'#4ADE80'},
+      {t:'rect',x:0.77,y:0.45,w:0.06,h:0.1,c:'#8B4513'},
+      {t:'circle',x:0.5,y:0.62,r:0.04,c:'#FFB84D'},
+      {t:'circle',x:0.38,y:0.63,r:0.03,c:'#FFB84D'},
+      {t:'circle',x:0.62,y:0.63,r:0.03,c:'#FFB84D'},
+      {t:'circle',x:0.7,y:0.12,r:0.04,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '海滩',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#87CEEB'},
+      {t:'circle',x:0.85,y:0.1,r:0.06,c:'#FFD700'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.25,c:'#F4D03F'},
+      {t:'rect',x:0,y:0.75,w:1,h:0.25,c:'#1E90FF'},
+      {t:'rect',x:0.1,y:0.47,w:0.15,h:0.03,c:'#8B4513'},
+      {t:'triangle',points:[0.08,0.47,0.175,0.3,0.27,0.47],c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.44,r:0.05,c:'#FFFFFF'},
+      {t:'circle',x:0.55,y:0.42,r:0.03,c:'#FFFFFF'},
+      {t:'circle',x:0.6,y:0.45,r:0.025,c:'#FFFFFF'},
+      {t:'circle',x:0.35,y:0.68,r:0.03,c:'#FF6B6B'},
+      {t:'rect',x:0.7,y:0.6,w:0.04,h:0.15,c:'#228B22'},
+      {t:'circle',x:0.72,y:0.55,r:0.05,c:'#228B22'},
+      {t:'rect',x:0.2,y:0.62,w:0.03,h:0.13,c:'#228B22'},
+      {t:'circle',x:0.215,y:0.58,r:0.04,c:'#228B22'},
+    ]
+  },
+  {
+    name: '动物园',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#4ADE80'},
+      {t:'rect',x:0.05,y:0.25,w:0.18,h:0.3,c:'#696969'},
+      {t:'rect',x:0.07,y:0.28,w:0.04,h:0.24,c:'#DEB887'},
+      {t:'circle',x:0.12,y:0.35,r:0.04,c:'#FFB84D'},
+      {t:'circle',x:0.1,y:0.33,r:0.008,c:'#333'},
+      {t:'circle',x:0.14,y:0.33,r:0.008,c:'#333'},
+      {t:'rect',x:0.3,y:0.35,w:0.16,h:0.2,c:'#696969'},
+      {t:'circle',x:0.38,y:0.42,r:0.04,c:'#8B4513'},
+      {t:'circle',x:0.35,y:0.4,r:0.01,c:'#333'},
+      {t:'circle',x:0.41,y:0.4,r:0.01,c:'#333'},
+      {t:'rect',x:0.55,y:0.4,w:0.14,h:0.15,c:'#696969'},
+      {t:'circle',x:0.62,y:0.45,r:0.035,c:'#FFD700'},
+      {t:'circle',x:0.6,y:0.44,r:0.008,c:'#333'},
+      {t:'circle',x:0.64,y:0.44,r:0.008,c:'#333'},
+      {t:'rect',x:0.75,y:0.35,w:0.15,h:0.2,c:'#696969'},
+      {t:'circle',x:0.82,y:0.42,r:0.04,c:'#4ADE80'},
+      {t:'circle',x:0.8,y:0.4,r:0.01,c:'#333'},
+      {t:'circle',x:0.84,y:0.4,r:0.01,c:'#333'},
+      {t:'rect',x:0.2,y:0.5,w:0.6,h:0.02,c:'#DEB887'},
+    ]
+  },
+  {
+    name: '城堡',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#4ADE80'},
+      {t:'rect',x:0.25,y:0.2,w:0.5,h:0.35,c:'#D3D3D3'},
+      {t:'rect',x:0.3,y:0.08,w:0.1,h:0.47,c:'#A9A9A9'},
+      {t:'triangle',points:[0.27,0.08,0.35,0.0,0.43,0.08],c:'#FF4444'},
+      {t:'rect',x:0.5,y:0.15,w:0.1,h:0.4,c:'#A9A9A9'},
+      {t:'triangle',points:[0.47,0.15,0.55,0.05,0.63,0.15],c:'#FF4444'},
+      {t:'rect',x:0.65,y:0.2,w:0.08,h:0.35,c:'#A9A9A9'},
+      {t:'triangle',points:[0.62,0.2,0.69,0.12,0.76,0.2],c:'#FF4444'},
+      {t:'rect',x:0.42,y:0.35,w:0.16,h:0.2,c:'#8B4513'},
+      {t:'rect',x:0.46,y:0.38,w:0.08,h:0.17,c:'#654321'},
+      {t:'rect',x:0.05,y:0.48,w:0.12,h:0.05,c:'#DEB887'},
+      {t:'circle',x:0.8,y:0.12,r:0.06,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '教室',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.5,c:'#DEB887'},
+      {t:'rect',x:0.1,y:0.06,w:0.8,h:0.35,c:'#2E8B57'},
+      {t:'rect',x:0.12,y:0.08,w:0.76,h:0.31,c:'#3CB371'},
+      {t:'rect',x:0.3,y:0.45,w:0.4,h:0.05,c:'#8B4513'},
+      {t:'rect',x:0.33,y:0.35,w:0.15,h:0.1,c:'#A0522D'},
+      {t:'rect',x:0.5,y:0.35,w:0.15,h:0.1,c:'#A0522D'},
+      {t:'rect',x:0.7,y:0.28,w:0.05,h:0.22,c:'#696969'},
+      {t:'circle',x:0.15,y:0.15,r:0.03,c:'#FFD700'},
+      {t:'circle',x:0.25,y:0.18,r:0.025,c:'#FF6B6B'},
+      {t:'rect',x:0.78,y:0.4,w:0.1,h:0.08,c:'#FFB84D'},
+      {t:'circle',x:0.85,y:0.16,r:0.04,c:'#4488FF'},
+    ]
+  },
+  {
+    name: '一家人吃饭',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.5,c:'#DEB887'},
+      {t:'rect',x:0.2,y:0.38,w:0.6,h:0.14,c:'#8B4513'},
+      {t:'circle',x:0.35,y:0.33,r:0.04,c:'#FFFFFF'},
+      {t:'circle',x:0.5,y:0.33,r:0.04,c:'#FFFFFF'},
+      {t:'circle',x:0.65,y:0.33,r:0.04,c:'#FFFFFF'},
+      {t:'circle',x:0.15,y:0.15,r:0.05,c:'#FFDAB9'},
+      {t:'rect',x:0.1,y:0.2,w:0.1,h:0.18,c:'#4488FF'},
+      {t:'circle',x:0.88,y:0.12,r:0.05,c:'#FFDAB9'},
+      {t:'rect',x:0.83,y:0.17,w:0.1,h:0.21,c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.18,r:0.04,c:'#FFDAB9'},
+      {t:'rect',x:0.46,y:0.22,w:0.08,h:0.16,c:'#4ADE80'},
+      {t:'rect',x:0.05,y:0.45,w:0.12,h:0.06,c:'#A0522D'},
+      {t:'rect',x:0.8,y:0.48,w:0.12,h:0.04,c:'#A0522D'},
+    ]
+  },
+  {
+    name: '小猪佩奇',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'circle',x:0.5,y:0.25,r:0.1,c:'#FFB6C1'},
+      {t:'ellipse',x:0.5,y:0.27,w:0.06,h:0.04,c:'#FF69B4'},
+      {t:'circle',x:0.488,y:0.265,r:0.008,c:'#FF1493'},
+      {t:'circle',x:0.512,y:0.265,r:0.008,c:'#FF1493'},
+      {t:'circle',x:0.5,y:0.23,r:0.012,c:'#333'},
+      {t:'circle',x:0.493,y:0.228,r:0.004,c:'#FFF'},
+      {t:'circle',x:0.507,y:0.228,r:0.004,c:'#FFF'},
+      {t:'triangle',points:[0.43,0.2,0.45,0.12,0.47,0.2],c:'#FFB6C1'},
+      {t:'triangle',points:[0.53,0.2,0.55,0.12,0.57,0.2],c:'#FFB6C1'},
+      {t:'rect',x:0.44,y:0.33,w:0.12,h:0.15,c:'#FF4444'},
+      {t:'rect',x:0.44,y:0.35,w:0.04,h:0.06,c:'#FFB6C1'},
+      {t:'rect',x:0.52,y:0.35,w:0.04,h:0.06,c:'#FFB6C1'},
+      {t:'rect',x:0.47,y:0.48,w:0.02,h:0.07,c:'#FFB6C1'},
+      {t:'rect',x:0.51,y:0.48,w:0.02,h:0.07,c:'#FFB6C1'},
+      {t:'circle',x:0.8,y:0.15,r:0.05,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '爸爸妈妈和宝宝',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#DEB887'},
+      {t:'circle',x:0.3,y:0.12,r:0.055,c:'#FFDAB9'},
+      {t:'rect',x:0.24,y:0.175,w:0.12,h:0.25,c:'#4488FF'},
+      {t:'rect',x:0.26,y:0.22,w:0.08,h:0.12,c:'#FFFFFF'},
+      {t:'circle',x:0.7,y:0.1,r:0.055,c:'#FFDAB9'},
+      {t:'rect',x:0.64,y:0.155,w:0.12,h:0.27,c:'#FF6347'},
+      {t:'circle',x:0.5,y:0.2,r:0.04,c:'#FFDAB9'},
+      {t:'rect',x:0.46,y:0.24,w:0.08,h:0.14,c:'#FFD700'},
+      {t:'circle',x:0.12,y:0.2,r:0.04,c:'#E8D8C8'},
+      {t:'rect',x:0.07,y:0.24,w:0.1,h:0.18,c:'#8B7355'},
+      {t:'circle',x:0.88,y:0.18,r:0.04,c:'#E8D8C8'},
+      {t:'rect',x:0.83,y:0.22,w:0.1,h:0.18,c:'#696969'},
+      {t:'rect',x:0.05,y:0.4,w:0.9,h:0.02,c:'#8B4513'},
+    ]
+  },
+  {
+    name: '恐龙',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'ellipse',x:0.5,y:0.42,w:0.45,h:0.3,c:'#228B22'},
+      {t:'circle',x:0.72,y:0.22,r:0.1,c:'#228B22'},
+      {t:'circle',x:0.75,y:0.2,r:0.025,c:'#333'},
+      {t:'circle',x:0.755,y:0.195,r:0.01,c:'#FFF'},
+      {t:'triangle',points:[0.68,0.15,0.72,0.0,0.8,0.18],c:'#228B22'},
+      {t:'triangle',points:[0.62,0.18,0.64,0.05,0.7,0.2],c:'#228B22'},
+      {t:'rect',x:0.32,y:0.68,w:0.06,h:0.15,c:'#228B22'},
+      {t:'rect',x:0.55,y:0.68,w:0.06,h:0.15,c:'#228B22'},
+      {t:'triangle',points:[0.25,0.68,0.2,0.78,0.3,0.78],c:'#228B22'},
+      {t:'circle',x:0.8,y:0.12,r:0.05,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '彩虹',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.5,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.5,w:1,h:0.5,c:'#90C95A'},
+      {t:'circle',x:0.5,y:0.3,r:0.32,c:'#FF0000'},
+      {t:'circle',x:0.5,y:0.32,r:0.27,c:'#FF8C00'},
+      {t:'circle',x:0.5,y:0.34,r:0.22,c:'#FFD700'},
+      {t:'circle',x:0.5,y:0.36,r:0.17,c:'#4ADE80'},
+      {t:'circle',x:0.5,y:0.38,r:0.12,c:'#4488FF'},
+      {t:'circle',x:0.5,y:0.4,r:0.07,c:'#9B6BFF'},
+      {t:'rect',x:0,y:0.48,w:1,h:0.52,c:'#90C95A'},
+      {t:'circle',x:0.8,y:0.15,r:0.05,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '雪人',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.6,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.6,w:1,h:0.4,c:'#FFFFFF'},
+      {t:'circle',x:0.5,y:0.28,r:0.14,c:'#FFFFFF'},
+      {t:'circle',x:0.5,y:0.48,r:0.2,c:'#FFFFFF'},
+      {t:'circle',x:0.48,y:0.26,r:0.018,c:'#333'},
+      {t:'circle',x:0.53,y:0.26,r:0.018,c:'#333'},
+      {t:'triangle',points:[0.49,0.3,0.5,0.36,0.52,0.3],c:'#FF8C00'},
+      {t:'rect',x:0.47,y:0.06,w:0.06,h:0.12,c:'#333'},
+      {t:'circle',x:0.48,y:0.5,r:0.025,c:'#333'},
+      {t:'circle',x:0.5,y:0.52,r:0.025,c:'#333'},
+      {t:'circle',x:0.52,y:0.5,r:0.025,c:'#333'},
+      {t:'rect',x:0.4,y:0.42,w:0.04,h:0.12,c:'#8B4513'},
+      {t:'rect',x:0.56,y:0.42,w:0.04,h:0.12,c:'#8B4513'},
+      {t:'rect',x:0.46,y:0.18,w:0.08,h:0.04,c:'#FF4444'},
+      {t:'circle',x:0.15,y:0.12,r:0.04,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '花园',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#90C95A'},
+      {t:'circle',x:0.85,y:0.12,r:0.06,c:'#FFD700'},
+      {t:'rect',x:0.08,y:0.45,w:0.03,h:0.1,c:'#228B22'},
+      {t:'circle',x:0.095,y:0.4,r:0.04,c:'#FF6B6B'},
+      {t:'circle',x:0.095,y:0.38,r:0.02,c:'#FFD700'},
+      {t:'rect',x:0.2,y:0.42,w:0.03,h:0.13,c:'#228B22'},
+      {t:'circle',x:0.215,y:0.38,r:0.05,c:'#EC4899'},
+      {t:'circle',x:0.215,y:0.35,r:0.025,c:'#FFD700'},
+      {t:'rect',x:0.35,y:0.43,w:0.03,h:0.12,c:'#228B22'},
+      {t:'circle',x:0.365,y:0.38,r:0.045,c:'#FF8C00'},
+      {t:'circle',x:0.365,y:0.36,r:0.02,c:'#FFD700'},
+      {t:'rect',x:0.5,y:0.44,w:0.03,h:0.11,c:'#228B22'},
+      {t:'circle',x:0.515,y:0.39,r:0.05,c:'#4488FF'},
+      {t:'circle',x:0.515,y:0.37,r:0.02,c:'#FFD700'},
+      {t:'rect',x:0.7,y:0.28,w:0.08,h:0.27,c:'#8B4513'},
+      {t:'circle',x:0.74,y:0.18,r:0.14,c:'#228B22'},
+      {t:'circle',x:0.64,y:0.22,r:0.1,c:'#2E8B57'},
+      {t:'ellipse',x:0.45,y:0.6,w:0.06,h:0.04,c:'#FF6B6B'},
+    ]
+  },
+  {
+    name: '糖果屋',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#FFF8DC'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#DEB887'},
+      {t:'rect',x:0.2,y:0.25,w:0.6,h:0.48,c:'#FFB6C1'},
+      {t:'triangle',points:[0.15,0.25,0.5,0.05,0.85,0.25],c:'#FF69B4'},
+      {t:'rect',x:0.42,y:0.48,w:0.16,h:0.25,c:'#8B4513'},
+      {t:'circle',x:0.54,y:0.62,r:0.02,c:'#FFD700'},
+      {t:'circle',x:0.3,y:0.32,r:0.05,c:'#FF4444'},
+      {t:'circle',x:0.7,y:0.32,r:0.05,c:'#4488FF'},
+      {t:'circle',x:0.3,y:0.5,r:0.04,c:'#4ADE80'},
+      {t:'circle',x:0.7,y:0.5,r:0.04,c:'#FFD700'},
+      {t:'circle',x:0.5,y:0.35,r:0.04,c:'#EC4899'},
+      {t:'rect',x:0.22,y:0.6,w:0.08,h:0.05,c:'#FF8C00'},
+      {t:'rect',x:0.7,y:0.6,w:0.08,h:0.05,c:'#FF8C00'},
+      {t:'circle',x:0.82,y:0.15,r:0.04,c:'#FFD700'},
+    ]
+  },
+  {
+    name: '冰淇淋车',
+    elements: [
+      {t:'rect',x:0,y:0,w:1,h:0.55,c:'#87CEEB'},
+      {t:'rect',x:0,y:0.55,w:1,h:0.45,c:'#A0A0A0'},
+      {t:'rect',x:0.2,y:0.28,w:0.5,h:0.27,c:'#FFB6C1'},
+      {t:'rect',x:0.22,y:0.15,w:0.35,h:0.16,c:'#FFFFFF'},
+      {t:'circle',x:0.26,y:0.46,r:0.07,c:'#333'},
+      {t:'circle',x:0.26,y:0.46,r:0.04,c:'#666'},
+      {t:'circle',x:0.64,y:0.46,r:0.07,c:'#333'},
+      {t:'circle',x:0.64,y:0.46,r:0.04,c:'#666'},
+      {t:'circle',x:0.3,y:0.1,r:0.05,c:'#FF6B6B'},
+      {t:'circle',x:0.42,y:0.08,r:0.05,c:'#FFD700'},
+      {t:'circle',x:0.54,y:0.1,r:0.05,c:'#4ADE80'},
+      {t:'triangle',points:[0.28,0.08,0.34,0.02,0.4,0.08],c:'#FF6B6B'},
+      {t:'rect',x:0.75,y:0.32,w:0.1,h:0.18,c:'#FFB6C1'},
+      {t:'circle',x:0.72,y:0.08,r:0.04,c:'#FFD700'},
+    ]
+  },
+];
+
+function drawSceneElements(ctx, elements, ox, oy, sw, sh, mode) {
+  for (const el of elements) {
+    ctx.beginPath();
+    const ex = ox + el.x * sw, ey = oy + el.y * sh;
+    const ew = (el.w || 0) * sw, eh = (el.h || 0) * sh;
+    const er = (el.r || 0.05) * Math.min(sw, sh);
+    switch (el.t) {
+      case 'rect':
+        ctx.rect(ex, ey, ew, eh);
+        break;
+      case 'circle':
+        ctx.arc(ex, ey, er, 0, Math.PI * 2);
+        break;
+      case 'ellipse':
+        ctx.ellipse(ex, ey, ew / 2, eh / 2, 0, 0, Math.PI * 2);
+        break;
+      case 'triangle':
+        ctx.moveTo(ox + el.points[0] * sw, oy + el.points[1] * sh);
+        ctx.lineTo(ox + el.points[2] * sw, oy + el.points[3] * sh);
+        ctx.lineTo(ox + el.points[4] * sw, oy + el.points[5] * sh);
+        ctx.closePath();
+        break;
+      case 'star5':
+        const cx2 = ex, cy2 = ey, outerR = er, innerR = er * 0.4;
+        for (let i = 0; i < 5; i++) {
+          const angle = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+          const ox2 = cx2 + Math.cos(angle) * outerR;
+          const oy2 = cy2 + Math.sin(angle) * outerR;
+          const ix = cx2 + Math.cos(angle + Math.PI / 5) * innerR;
+          const iy = cy2 + Math.sin(angle + Math.PI / 5) * innerR;
+          if (i === 0) ctx.moveTo(ox2, oy2);
+          else ctx.lineTo(ox2, oy2);
+          ctx.lineTo(ix, iy);
+        }
+        ctx.closePath();
+        break;
+    }
+    if (mode === 'filled') {
+      ctx.fillStyle = el.c;
+      ctx.fill();
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#F0F0F0';
+      ctx.fill();
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+}
+
+function getSceneColors(scene) {
+  const colors = [];
+  const seen = new Set();
+  for (const el of scene.elements) {
+    if (!seen.has(el.c)) {
+      seen.add(el.c);
+      colors.push(el.c);
+    }
+  }
+  return colors.slice(0, 8);
+}
+
+const SCENE_DIFFICULTY = {
+  '公园':1,'小猪佩奇':1,'彩虹':1,'农场':2,'游乐场':2,'一家人吃饭':2,'雪人':2,'海底世界':3,'爸爸妈妈和宝宝':3,'恐龙':3,'花园':3,'生日派对':4,'海滩':4,'太空':4,'动物园':4,'糖果屋':4,'冰淇淋车':4,'一家人在做饭':5,'城堡':5,'教室':5
+};
+
+
+// ============================================================
+// 游戏4：参考填色 ComplexColorGame（无时间限制）
+// ============================================================
+// 游戏4：参考填色 ComplexColorGame（无时间限制）
+// ============================================================
+class ComplexColorGame extends BaseGame {
+  onStart() {
+    const cfg = GAME_CONFIGS.complexcolor.difficulties[this.difficulty];
+    this.cfg = cfg;
+    this.targetTrials = cfg.scenes;
+    this.currentLevel = 0;
+    this.activeColor = PALETTE_COLORS[0];
+    this.isErasing = false;
+    this.brushMult = 0.65;
+    this.currentBrushR = Math.round(cfg.brushR * this.brushMult);
+    this.bgEnabled = false;
+    this._initOffscreen();
+    const eligibleScenes = COMPLEX_SCENES.map((s,i)=>i).filter(i=>(SCENE_DIFFICULTY[COMPLEX_SCENES[i].name]||3)<=this.difficulty+2);
+    this._sceneIndices = Utils.shuffle(eligibleScenes.length>=cfg.scenes?eligibleScenes:[...Array(COMPLEX_SCENES.length).keys()]).slice(0, cfg.scenes);
+    this._sceneIdx = 0;
+    this._genLevel();
+    this._renderPalette();
+  }
+
+  _initOffscreen() {
+    const w = Math.floor(this.W), h = Math.floor(this.H);
+    this.offscreen = document.createElement('canvas');
+    this.offscreen.width = w;
+    this.offscreen.height = h;
+    this.octx = this.offscreen.getContext('2d');
+    this.filledColor = new Uint8Array(w * h);
+    this.filledColor.fill(255);
+  }
+
+  _renderPalette() {
+    const ctrl = document.getElementById('game-controls');
+    if (!ctrl) return;
+    const sceneColors = getSceneColors(this.scene);
+    this._allColors = [...new Set([...sceneColors, ...PALETTE_COLORS])];
+    const sizes = [{l:'S',m:0.4},{l:'M',m:0.65},{l:'L',m:1.0}];
+    ctrl.innerHTML = '<div class="flex justify-center gap-1 p-2 flex-wrap max-w-md mx-auto items-center">' +
+      this._allColors.map((c, i) =>
+        '<button data-ccolor="' + c + '" class="color-btn w-9 h-9 rounded-full border-2 ' +
+        (c === this.activeColor && !this.isErasing ? 'border-gray-800 scale-110' : 'border-gray-300') +
+        '" style="background:' + c + '"></button>'
+      ).join('') +
+      '<span class="text-xs text-gray-400 mx-1">笔刷</span>' +
+      sizes.map(s => '<button data-brush="' + s.m + '" class="w-7 h-7 rounded-full text-xs font-bold border-2 ' + (this.brushMult === s.m ? 'bg-primary text-white border-primary' : 'bg-white text-gray-500 border-gray-300') + '">' + s.l + '</button>').join('') +
+      '<button id="eraser-btn" class="color-btn w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm ' + (this.isErasing ? 'border-gray-800 scale-110 bg-gray-100' : 'border-gray-300 bg-white') + '">🧹</button>' +
+      '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一题 →</button>' +
+      '</div>';
+    ctrl.querySelectorAll('[data-ccolor]').forEach(b => {
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        this.activeColor = b.dataset.ccolor;
+        this.isErasing = false;
+        this._renderPalette();
+        Audio.click();
+      });
+    });
+    ctrl.querySelectorAll('[data-brush]').forEach(b => {
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        this.brushMult = parseFloat(b.dataset.brush);
+        this.currentBrushR = Math.round(this.cfg.brushR * this.brushMult);
+        this._renderPalette();
+        Audio.click();
+      });
+    });
+    const eraserBtn = ctrl.querySelector('#eraser-btn');
+    if (eraserBtn) eraserBtn.addEventListener('pointerdown', e => {
+      e.preventDefault(); this.isErasing = !this.isErasing; this._renderPalette(); Audio.click();
+    });
+    const skipBtn = ctrl.querySelector('#skip-btn');
+    if (skipBtn) skipBtn.addEventListener('pointerdown', e => {
+      e.preventDefault(); this._skipLevel();
+    });
+  }
+
+  _genLevel() {
+    const cfg = this.cfg;
+    this.scene = COMPLEX_SCENES[this._sceneIndices[this._sceneIdx]];
+    this.filledColor.fill(255);
+    this.filledPixels = 0;
+    const w = Math.floor(this.W), h = Math.floor(this.H);
+    const ctx = this.octx;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, w, h);
+
+    // Draw outline on the RIGHT side (where user fills)
+    const midX = this.W * 0.47;
+    const rsw = (this.W - midX) * 0.82;
+    const rsh = this.H - 90;
+    const rox = midX + (this.W - midX - rsw) / 2;
+    const roy = 45;
+    drawSceneElements(ctx, this.scene.elements, rox + rsw * 0.05, roy, rsw * 0.9, rsh, 'outline');
+
+    const img = ctx.getImageData(0, 0, w, h).data;
+    this.totalPixels = 0;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        if (img[i] < 250 || img[i + 1] < 250 || img[i + 2] < 250) this.totalPixels++;
+      }
+    }
+    this.completion = 0;
+    this.isDrawing = false;
+    this.feedback = null;
+    this.feedbackTime = 0;
+    this.levelStartTime = performance.now();
+  }
+
+  onInput(e) {
+    if (this.finished || this.feedback) return;
+    if (e.type === 'pointerdown') this.isDrawing = true;
+    if (e.type === 'up') this.isDrawing = false;
+    if (!this.isDrawing && e.type !== 'move') return;
+    if (e.x < 0 || e.y < 0 || e.x >= this.W || e.y >= this.H) return;
+    const ctx = this.octx, x = Math.floor(e.x), y = Math.floor(e.y);
+    const br = this.currentBrushR, w = Math.floor(this.W), h = Math.floor(this.H);
+    const colorIdx = this._allColors.indexOf(this.activeColor);
+    if (this.isErasing) {
+      for (let dy = -br; dy <= br; dy++) {
+        for (let dx = -br; dx <= br; dx++) {
+          if (dx * dx + dy * dy > br * br) continue;
+          const px = x + dx, py = y + dy;
+          if (px < 0 || py < 0 || px >= w || py >= h) continue;
+          const idx = py * w + px;
+          if (this.filledColor[idx] !== 255) { this.filledColor[idx] = 255; this.filledPixels--; }
+        }
+      }
+    } else {
+      for (let dy = -br; dy <= br; dy++) {
+        for (let dx = -br; dx <= br; dx++) {
+          if (dx * dx + dy * dy > br * br) continue;
+          const px = x + dx, py = y + dy;
+          if (px < 0 || py < 0 || px >= w || py >= h) continue;
+          const idx = py * w + px;
+          if (this.filledColor[idx] !== 255) continue;
+          const pd = ctx.getImageData(px, py, 1, 1).data;
+          if (pd[0] < 250 || pd[1] < 250 || pd[2] < 250) {
+            this.filledColor[idx] = colorIdx;
+            this.filledPixels++;
+          }
+        }
+      }
+    }
+    this.completion = this.totalPixels ? this.filledPixels / this.totalPixels : 0;
+    if (this.completion >= this.cfg.targetPct && !this.feedback) {
+      const rt = performance.now() - this.levelStartTime;
+      this.recordResult(true, rt);
+      Audio.success();
+      this.feedback = 'done';
+      this.feedbackTime = performance.now();
+    }
+  }
+  _skipLevel() {
+    if (this.finished || this.feedback) return;
+    const rt = performance.now() - this.levelStartTime;
+    this.recordResult(false, rt);
+    this.feedback = 'done';
+    this.feedbackTime = performance.now();
+  }
+
+  onUpdate(dt) {
+    if (this.finished) return;
+    if (this.feedback && performance.now() - this.feedbackTime > 800) {
+      this.currentLevel++;
+      if (this.currentLevel >= this.cfg.scenes) {
+        if (!this.finish()) {
+          this.targetTrials += this.cfg.scenes;
+          this.currentLevel = 0;
+          const eligScenes=COMPLEX_SCENES.map((s,i)=>i).filter(i=>(SCENE_DIFFICULTY[COMPLEX_SCENES[i].name]||3)<=this.difficulty+2);
+          this._sceneIndices = Utils.shuffle(eligScenes.length>=this.cfg.scenes?eligScenes:[...Array(COMPLEX_SCENES.length).keys()]).slice(0, this.cfg.scenes);
+          this._sceneIdx = 0;
+          this._genLevel();
+        }
+        return;
+      }
+      this._sceneIdx++;
+      this._genLevel();
+    }
+  }
+
+  onRender(ctx) {
+    ctx.clearRect(0, 0, this.W, this.H);
+    ctx.fillStyle = '#FFF8F0';
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    const midX = this.W * 0.47;
+    const rsw = midX - 10, rsh = this.H - 70;
+    const rox = 5, roy = 35;
+
+    // Left side: reference (filled)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, midX, this.H);
+    ctx.clip();
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(0, 0, midX, this.H);
+    drawSceneElements(ctx, this.scene.elements, rox + rsw * 0.05, roy, rsw * 0.9, rsh, 'filled');
+    ctx.restore();
+
+    // Divider line
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(midX, 30);
+    ctx.lineTo(midX, this.H - 50);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Right side: fill area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(midX, 0, this.W - midX, this.H);
+    ctx.clip();
+
+    // Draw filled pixels with their stored colors
+    const w = Math.floor(this.W), h = Math.floor(this.H);
+    const imgData = this.octx.getImageData(0, 0, w, h);
+    for (let i = 0; i < this.filledColor.length; i++) {
+      const ci = this.filledColor[i];
+      if (ci !== 255) {
+        const c = this._allColors[ci] || PALETTE_COLORS[0];
+        const idx = i * 4;
+        imgData.data[idx] = parseInt(c.slice(1, 3), 16);
+        imgData.data[idx + 1] = parseInt(c.slice(3, 5), 16);
+        imgData.data[idx + 2] = parseInt(c.slice(5, 7), 16);
+        imgData.data[idx + 3] = 255;
+      }
+    }
+    const tmp = document.createElement('canvas');
+    tmp.width = w;
+    tmp.height = h;
+    tmp.getContext('2d').putImageData(imgData, 0, 0);
+    ctx.drawImage(tmp, 0, 0);
+
+    // Feedback checkmark
+    if (this.feedback) {
+      ctx.fillStyle = '#4ADE80';
+      ctx.font = 'bold 40px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✓', this.W * 0.73, this.H / 2);
+    }
+    ctx.restore();
+
+    // Labels
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('参考图', this.W * 0.12, 22);
+    ctx.fillText('填色 · ' + Math.round(this.completion * 100) + '%', this.W * 0.73, 22);
+
+    // Hint colors - larger display with background
+    const sceneColors = getSceneColors(this.scene);
+    const hintY = this.H - 52;
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    const hintW = Math.max(120, sceneColors.length * 26 + 40);
+    ctx.roundRect(this.W * 0.73 - hintW/2, hintY - 8, hintW, 30, 12);
+    ctx.fill();
+    ctx.fillStyle = '#444';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('参考色', this.W * 0.73, hintY - 12);
+    sceneColors.forEach((c, i) => {
+      const sx = this.W * 0.73 - (sceneColors.length - 1) * 13 + i * 26;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(sx, hintY + 10, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = '#666';
+    ctx.fillText(this.scene.name + ' · ' + (this._sceneIdx + 1) + '/' + this.cfg.scenes, this.W * 0.73, this.H - 15);
+
+    // No time limit indicator
+    ctx.fillStyle = '#999';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('不限时间', this.W * 0.9, this.H - 5);
+  }
+
+  finish() {
+    if (this.finished) return true;
+    this.finished = true;
+    this.callbacks.onEnd(this.getStats());
+    return true;
+  }
+}
+registerGame('complexcolor', ComplexColorGame);
 })();
 </script>
 </body>
 </html>
-
