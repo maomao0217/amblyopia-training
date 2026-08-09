@@ -6168,7 +6168,7 @@ class FruitNinjaGame extends TimedGame {
         if (d < f.r * 0.9) {
           f.sliced = true;
           if (f.isBomb) {
-            // 切到炸弹，爆炸！游戏结束
+            // 切到炸弹，扣分但不结束游戏
             for (let k = 0; k < 30; k++) {
               const ang = (k / 30) * Math.PI * 2;
               this.particles.push({
@@ -6179,8 +6179,7 @@ class FruitNinjaGame extends TimedGame {
               });
             }
             this.recordResult(false, 0);
-            Audio.mistake();
-            this.finish();
+            Audio.alarm();
             return;
           } else {
             this.recordResult(true, 0);
@@ -7612,11 +7611,12 @@ class RacingGame extends TimedGame {
       if (o.y > this.H + 100) { this.obstacles.splice(i, 1); this.recordResult(true, 0); continue; }
       if (Math.abs(o.x - this.carX) < (this.carW + o.w) / 2 &&
           Math.abs(o.y - this.carY) < (this.carH + o.h) / 2) {
-        // 撞车！游戏结束
+        // 撞车！扣分但不结束游戏
         this.recordResult(false, 0);
-        Audio.mistake();
+        Audio.alarm();
         this.crashed = true;
-        this.finish();
+        // 短暂闪烁后恢复
+        setTimeout(() => { this.crashed = false; }, 800);
         return;
       }
     }
@@ -7743,8 +7743,8 @@ class TankShooterGame extends BaseGame {
           this.particles.push({ x: this.tankX, y: tankY, vx: (Math.random()-0.5)*300, vy: (Math.random()-0.5)*300, life: 0.6, color: '#FF4444' });
         }
         this.enemies.splice(i, 1);
-        Audio.mistake();
-        this.finish();
+        Audio.alarm();
+        this.recordResult(false, 0);
         return;
       }
     }
