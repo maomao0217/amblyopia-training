@@ -2959,9 +2959,10 @@ const GameEngine = {
     const maxSec = (settings.maxPlayMinutes || 30) * 60;
     return `
     <div class="fixed inset-0 bg-cream z-50 flex flex-col">
-      <!-- 倒计时（隐藏，逻辑仍运行） -->
-      <div id="countdown-timer" class="hidden" data-max="${maxSec}" data-remaining="${maxSec}">
-        <span id="countdown-display"></span>
+      <!-- 训练倒计时 -->
+      <div id="countdown-timer" class="fixed top-4 right-4 z-[100] bg-white/90 backdrop-blur rounded-2xl shadow-lg px-3 py-2 flex items-center gap-2 text-sm" style="top:calc(env(safe-area-inset-top, 16px) + 4px)" data-max="${maxSec}" data-remaining="${maxSec}">
+        <span>⏱️</span>
+        <span id="countdown-display" class="font-bold text-gray-700">${Utils.fmtMMSS(maxSec)}</span>
       </div>
       <!-- 顶部栏 -->
       <div class="flex items-center justify-between px-4 py-3 pt-safe">
@@ -3374,14 +3375,15 @@ class BaseGame {
 
   finish() {
     if (this.finished) return true;
+    const minTime = (Store.getSettings().maxPlayMinutes || 30) * 60;
     const elapsed = (performance.now() - this.startTime) / 1000;
-    if (elapsed < 120 && !this._forceFinish) {
+    if (elapsed < minTime && !this._forceFinish) {
       if (!this._pendingFinish) {
         this._pendingFinish = true;
         setTimeout(() => {
           this._forceFinish = true;
           this.finish();
-        }, Math.ceil((120 - elapsed) * 1000));
+        }, Math.ceil((minTime - elapsed) * 1000));
       }
       this.onContinuePlaying();
       return false;
@@ -3392,7 +3394,7 @@ class BaseGame {
   }
 
   // 当finish被延迟时调用，子类可重写来继续生成游戏内容
-  onContinuePlaying() { this.totalTrials = 0; this.correctTrials = 0; this.targetTrials += this.targetTrials || 10; }
+  onContinuePlaying() {}
 }
 
 // ============================================================
@@ -5660,7 +5662,12 @@ class FindNumGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
-            if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
+            if (this.currentLevel >= this.cfg.levels) {
+              this.currentLevel = 0;
+              this.targetTrials += this.cfg.levels;
+              this._genLevel();
+              return;
+            }
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
@@ -5779,7 +5786,12 @@ class FindLetterGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
-            if (this.currentLevel >= this.cfg.levels) { if (!this.finish()) { this.targetTrials += this.cfg.levels; this._genLevel(); } return; }
+            if (this.currentLevel >= this.cfg.levels) {
+              this.currentLevel = 0;
+              this.targetTrials += this.cfg.levels;
+              this._genLevel();
+              return;
+            }
             setTimeout(() => this._genLevel(), 500);
           }
         } else {
