@@ -5309,6 +5309,7 @@ class MazeGame extends BaseGame {
     this.cfg = cfg;
     this.targetTrials = cfg.levels;
     this.currentLevel = 0;
+    console.log('[DEBUG-d4f2] FindNum onStart: levels='+cfg.levels+' targets='+cfg.targets+' count='+cfg.count+' targetTrials='+this.targetTrials);
     this.setupColorSwitchBg();
     this._genLevel();
   }
@@ -5652,7 +5653,9 @@ class FindNumGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
+            console.log('[DEBUG-d4f2] FindNum level complete: currentLevel='+this.currentLevel+' levels='+this.cfg.levels+' targetTrials='+this.targetTrials);
             if (this.currentLevel >= this.cfg.levels) {
+              console.log('[DEBUG-d4f2] FindNum ALL LEVELS DONE - calling finish()');
               this.finish();
               return;
             }
@@ -5774,7 +5777,9 @@ class FindLetterGame extends BaseGame {
             const rt = performance.now() - this.levelStartTime;
             this.recordResult(true, rt);
             this.currentLevel++;
+            console.log('[DEBUG-d4f2] FindNum level complete: currentLevel='+this.currentLevel+' levels='+this.cfg.levels+' targetTrials='+this.targetTrials);
             if (this.currentLevel >= this.cfg.levels) {
+              console.log('[DEBUG-d4f2] FindNum ALL LEVELS DONE - calling finish()');
               this.finish();
               return;
             }
