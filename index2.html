@@ -1150,22 +1150,26 @@ const GAME_CONFIGS = {
   colorfill: {
     id: 'colorfill', name: '涂色', icon: '🎨', color: '#EC4899',
     desc: '选择颜色给图案涂色', clinical: '精细控制+颜色辨别',
+    needsMoveEvents: true,
     difficulties: {1:{targetPct:1.0,brushR:30,levels:9},2:{targetPct:1.0,brushR:22,levels:8},3:{targetPct:1.0,brushR:16,levels:10},4:{targetPct:1.0,brushR:11,levels:6},5:{targetPct:1.0,brushR:7,levels:7}}
   },
   traceline: {
     id: 'traceline', name: '描线画图', icon: '✏️', color: '#4A9EFF',
     desc: '沿虚线描出动物轮廓', clinical: '手眼协调+精细运动',
+    needsMoveEvents: true,
     difficulties: {1:{tolerance:36,levels:9},2:{tolerance:26,levels:8},3:{tolerance:18,levels:10},4:{tolerance:12,levels:6},5:{tolerance:8,levels:7}}
   },
   dotdraw: {
     id: 'dotdraw', name: '虚线画图', icon: '🖼️', color: '#10B981',
     desc: '参考左图描右图并涂色', clinical: '空间感知+精细运动+颜色辨别',
+    needsMoveEvents: true,
     difficulties: {1:{tolerance:36,brushR:24,levels:9},2:{tolerance:26,brushR:18,levels:8},3:{tolerance:18,brushR:13,levels:10},4:{tolerance:12,brushR:9,levels:6},5:{tolerance:8,brushR:6,levels:7}}
   },
   complexcolor: {
     id: 'complexcolor', name: '参考填色', icon: '🖼️', color: '#F59E0B',
     desc: '参考左图给复杂场景填色', clinical: '颜色辨别+精细控制+空间感知',
     noTimeLimit: true,
+    needsMoveEvents: true,
     difficulties: {1:{targetPct:1.0,brushR:30,scenes:2},2:{targetPct:1.0,brushR:22,scenes:3},3:{targetPct:1.0,brushR:16,scenes:4},4:{targetPct:1.0,brushR:11,scenes:5},5:{targetPct:1.0,brushR:7,scenes:6}}
   }
 };
@@ -2660,18 +2664,20 @@ const GameEngine = {
 
       // 绑定输入
       canvas.addEventListener('pointerdown', (e) => this._handleInput(e));
-      canvas.addEventListener('pointermove', (e) => {
-        if (!this._currentGame || this._currentGame.isFinished()) return;
-        const r = canvas.getBoundingClientRect();
-        const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
-        this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'move' });
-      });
-      canvas.addEventListener('pointerup', (e) => {
-        if (!this._currentGame || this._currentGame.isFinished()) return;
-        const r = canvas.getBoundingClientRect();
-        const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
-        this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'up' });
-      });
+      if (config.needsMoveEvents) {
+        canvas.addEventListener('pointermove', (e) => {
+          if (!this._currentGame || this._currentGame.isFinished()) return;
+          const r = canvas.getBoundingClientRect();
+          const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
+          this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'move' });
+        });
+        canvas.addEventListener('pointerup', (e) => {
+          if (!this._currentGame || this._currentGame.isFinished()) return;
+          const r = canvas.getBoundingClientRect();
+          const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
+          this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'up' });
+        });
+      }
 
       // 方向按钮（E字游戏）
       const dirBtns = document.querySelectorAll('[data-direction]');
