@@ -8716,7 +8716,7 @@ class ColorFillGame extends BaseGame {
       '<span class="text-xs text-gray-400 mx-1">笔刷</span>'+
       sizes.map(s=>'<button data-brush="'+s.m+'" class="w-8 h-8 rounded-full text-xs font-bold border-2 '+(this.brushMult===s.m?'bg-primary text-white border-primary':'bg-white text-gray-500 border-gray-300')+'">'+s.l+'</button>').join('')+
       '<button id="eraser-btn" class="color-btn w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg '+(this.isErasing?'border-gray-800 scale-110 bg-gray-100':'border-gray-300 bg-white')+'">🧹</button>'+
-      '<button id="skip-btn" class="px-3 py-2 rounded-xl bg-warm text-white text-sm font-bold active:scale-95 transition-transform">下一题 →</button>'+
+      '<button id="skip-btn" class="px-3 py-2 rounded-xl bg-warm text-white text-sm font-bold active:scale-95 transition-transform">下一关 →</button>'+
       '</div>';
     ctrl.querySelectorAll('[data-color]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.color;this.isErasing=false;this._renderPalette();Audio.click()})});
     ctrl.querySelectorAll('[data-brush]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.brushMult=parseFloat(b.dataset.brush);this.currentBrushR=Math.round(this.cfg.brushR*this.brushMult);this._renderPalette();Audio.click()})});
@@ -8759,7 +8759,7 @@ class ColorFillGame extends BaseGame {
       }
     }
     this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
-    if(this.completion>=this.cfg.targetPct&&!this.feedback){
+    if(this.completion>=0.995&&!this.feedback){
       const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now();
     }
   }
@@ -8781,8 +8781,8 @@ class ColorFillGame extends BaseGame {
     ctx.drawImage(tmp,0,0);
     ctx.fillStyle='#FFF';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
     const label=SHAPE_NAMES[this.shapeName]||this.shapeName;
-    ctx.strokeText('涂色·'+label+'·'+Math.round(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
-    ctx.fillText('涂色·'+label+'·'+Math.round(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    ctx.strokeText('涂色·'+label+'·'+Math.floor(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
+    ctx.fillText('涂色·'+label+'·'+Math.floor(this.completion*100)+'%·'+(this.currentLevel+1)+'/'+this.cfg.levels,this.W/2,20);
   }
 }
 registerGame('colorfill', ColorFillGame);
@@ -8871,7 +8871,7 @@ class DotDrawGame extends BaseGame {
       '<span class="text-xs text-gray-400 mx-1">笔刷</span>'+
       sizes.map(s=>'<button data-brush="'+s.m+'" class="w-7 h-7 rounded-full text-xs font-bold border-2 '+(this.brushMult===s.m?'bg-primary text-white border-primary':'bg-white text-gray-500 border-gray-300')+'">'+s.l+'</button>').join('')+
       '<button id="eraser-btn" class="color-btn w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm '+(this.isErasing?'border-gray-800 scale-110 bg-gray-100':'border-gray-300 bg-white')+'">🧹</button>'+
-      '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一题 →</button>'+
+      '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一关 →</button>'+
       '</div>';
     ctrl.querySelectorAll('[data-dcolor]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.activeColor=b.dataset.dcolor;this._colorIdx=PALETTE_COLORS.indexOf(this.activeColor);this.isErasing=false;this._renderPalette();Audio.click()})});
     ctrl.querySelectorAll('[data-brush]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();this.brushMult=parseFloat(b.dataset.brush);this.currentBrushR=Math.round(this.cfg.brushR*this.brushMult);this._renderPalette();Audio.click()})});
@@ -8926,7 +8926,7 @@ class DotDrawGame extends BaseGame {
       }
     }
     this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
-    if(this.completion>=0.9&&!this.feedback){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now()}
+    if(this.completion>=0.995&&!this.feedback){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now()}
   }
   _skipLevel(){
     if(this.finished||this.feedback)return;
@@ -8947,7 +8947,7 @@ class DotDrawGame extends BaseGame {
     this._drawColoredShape(ctx,this.leftOutline,this.regions,true);
     ctx.restore();
     ctx.save();ctx.beginPath();ctx.rect(midX,0,this.W-midX,this.H);ctx.clip();
-    ctx.fillStyle='#333';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('填色·'+Math.round(this.completion*100)+'%',this.W*0.73,20);
+    ctx.fillStyle='#333';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('填色·'+Math.floor(this.completion*100)+'%',this.W*0.73,20);
     const imgData=this.octx.getImageData(0,0,w,h);
     for(let i=0;i<this.filledColor.length;i++){
       const ci=this.filledColor[i];
@@ -9516,7 +9516,7 @@ class ComplexColorGame extends BaseGame {
       '<span class="text-xs text-gray-400 mx-1">笔刷</span>' +
       sizes.map(s => '<button data-brush="' + s.m + '" class="w-7 h-7 rounded-full text-xs font-bold border-2 ' + (this.brushMult === s.m ? 'bg-primary text-white border-primary' : 'bg-white text-gray-500 border-gray-300') + '">' + s.l + '</button>').join('') +
       '<button id="eraser-btn" class="color-btn w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm ' + (this.isErasing ? 'border-gray-800 scale-110 bg-gray-100' : 'border-gray-300 bg-white') + '">🧹</button>' +
-      '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一题 →</button>' +
+      '<button id="skip-btn" class="px-2 py-2 rounded-xl bg-warm text-white text-xs font-bold active:scale-95 transition-transform">下一关 →</button>' +
       '</div>';
     ctrl.querySelectorAll('[data-ccolor]').forEach(b => {
       b.addEventListener('pointerdown', e => {
@@ -9616,7 +9616,7 @@ class ComplexColorGame extends BaseGame {
       }
     }
     this.completion = this.totalPixels ? this.filledPixels / this.totalPixels : 0;
-    if (this.completion >= this.cfg.targetPct && !this.feedback) {
+    if (this.completion >= 0.995 && !this.feedback) {
       const rt = performance.now() - this.levelStartTime;
       this.recordResult(true, rt);
       Audio.success();
