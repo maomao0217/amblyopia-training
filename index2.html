@@ -198,7 +198,7 @@ const Store = {
         dailyPatchingGoal: 120,
         reminderTime: '19:00',
         soundEnabled: true,
-        maxPlayMinutes: 20,
+        maxPlayMinutes: 10,
 
         difficultyOverride: null,
         lastDifficultyAdjust: {},
@@ -260,7 +260,7 @@ const Store = {
     });
     // 补全 maxPlayMinutes (v2→v3)
     if (this._state.settings.maxPlayMinutes === undefined) {
-      this._state.settings.maxPlayMinutes = 20;
+      this._state.settings.maxPlayMinutes = 10;
     }
     // 补全 enabledGames
     if (!Array.isArray(this._state.settings.enabledGames)) {
@@ -2488,7 +2488,7 @@ const Renderer = {
             <div>
               <label class="text-sm text-gray-500 block mb-1">每天训练时间（分钟）</label>
               <div class="flex gap-2">
-                ${[10,15,20,25,30].map(m => `
+                ${[20,30,40,60,120].map(m => `
                   <button onclick="document.getElementById('set-train').value=${m};Audio.click();window._updateBtnGroup('set-train-btns',${m})" id="set-train-btns-${m}" class="flex-1 py-2 rounded-xl font-medium ${s.dailyTrainingGoal===m?'bg-primary text-white':'bg-gray-50 text-gray-600'}">${m}分</button>
                 `).join('')}
               </div>
@@ -2497,8 +2497,8 @@ const Renderer = {
             <div>
               <label class="text-sm text-gray-500 block mb-1">单次游玩最长时间（分钟）⏱️</label>
               <div class="flex gap-2">
-                ${[20,30,40,60,120].map(m => `
-                  <button onclick="document.getElementById('set-maxplay').value=${m};Audio.click();window._updateBtnGroup('set-maxplay-btns',${m})" id="set-maxplay-btns-${m}" class="flex-1 py-2 rounded-xl font-medium ${(s.maxPlayMinutes||20)===m?'bg-soft-red text-white':'bg-gray-50 text-gray-600'}">${m}分</button>
+                ${[2,5,10,15,30].map(m => `
+                  <button onclick="document.getElementById('set-maxplay').value=${m};Audio.click();window._updateBtnGroup('set-maxplay-btns',${m})" id="set-maxplay-btns-${m}" class="flex-1 py-2 rounded-xl font-medium ${(s.maxPlayMinutes||10)===m?'bg-soft-red text-white':'bg-gray-50 text-gray-600'}">${m}分</button>
                 `).join('')}
               </div>
               <p class="text-xs text-gray-400 mt-1">时间到后会自动关闭游戏，保护小朋友的眼睛</p>
@@ -2737,7 +2737,7 @@ const GameEngine = {
 
     // 记录训练时间
     const elapsed = this._countdownRemaining <= 0 ?
-      (Store.getSettings().maxPlayMinutes || 30) * 60 : 0;
+      (Store.getSettings().maxPlayMinutes || 10) * 60 : 0;
     if (elapsed > 0) Store.addTrainingTime(elapsed);
 
     // 显示时间到弹窗
@@ -2956,7 +2956,7 @@ const GameEngine = {
 
   tplGameShell(config, diff) {
     const settings = Store.getSettings();
-    const maxSec = (settings.maxPlayMinutes || 30) * 60;
+    const maxSec = (settings.maxPlayMinutes || 10) * 60;
     return `
     <div class="fixed inset-0 bg-cream z-50 flex flex-col">
       <!-- 训练倒计时 -->
@@ -3375,7 +3375,7 @@ class BaseGame {
 
   finish() {
     if (this.finished) return true;
-    const minTime = (Store.getSettings().maxPlayMinutes || 30) * 60;
+    const minTime = (Store.getSettings().maxPlayMinutes || 10) * 60;
     const elapsed = (performance.now() - this.startTime) / 1000;
     if (elapsed < minTime && !this._forceFinish) {
       if (!this._pendingFinish) {
