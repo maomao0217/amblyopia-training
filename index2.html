@@ -2793,6 +2793,7 @@ const GameEngine = {
   },
 
   stop() {
+    console.log('[DEBUG-d4f2] GameEngine.stop() called, _rafId:', this._rafId);
     if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
     if (this._countdownTimerId) { clearInterval(this._countdownTimerId); this._countdownTimerId = null; }
     this._currentGame = null;
@@ -2808,7 +2809,9 @@ const GameEngine = {
   },
 
   _onGameEnd(stats) {
+    console.log('[DEBUG-d4f2] _onGameEnd called, stopping game');
     this.stop();
+    console.log('[DEBUG-d4f2] stop() completed, _currentGame:', this._currentGame);
     const gameId = this._gameId;
     const isDaily = this._isDailyTask;
 
@@ -3373,8 +3376,10 @@ class BaseGame {
 
   finish() {
     if (this.finished) return true;
+    console.log('[DEBUG-d4f2] finish() called, stats:', this.getStats());
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
+    console.log('[DEBUG-d4f2] onEnd callback completed');
     return true;
   }
 
@@ -9754,8 +9759,10 @@ class ComplexColorGame extends BaseGame {
 
   finish() {
     if (this.finished) return true;
+    console.log('[DEBUG-d4f2] finish() called, stats:', this.getStats());
     this.finished = true;
     this.callbacks.onEnd(this.getStats());
+    console.log('[DEBUG-d4f2] onEnd callback completed');
     return true;
   }
 }
