@@ -199,8 +199,6 @@ const Store = {
         reminderTime: '19:00',
         soundEnabled: true,
         maxPlayMinutes: 30,
-        gameMode: 'level',
-        dailyTrainingMinutes: 20,
         sessionMinutes: 10,
         difficultyOverride: null,
         lastDifficultyAdjust: {},
@@ -758,7 +756,7 @@ const GAME_NAMES = {
   starhold:'星星保持', fadeout:'消失目标', seqmemory:'顺序记忆', connectline:'连线',
   shadowmatch:'阴影匹配', fillpiece:'拼完整图形', whichfaster:'哪个更快',
   linkmatch:'连连看', roping:'套牛', racing:'赛车', tankshooter:'坦克射击',
-  brickbreak:'弹球打砖', fishing:'钓鱼', colorsort:'颜色分类', rotatepuz:'旋转拼图'
+  brickbreak:'弹球打砖', fishing:'钓鱼', colorsort:'颜色分类', rotatepuz:'旋转拼图', colorfill:'涂色', traceline:'描线画图', dotdraw:'虚线画图', complexcolor:'参考填色'
 };
 
 const GAME_CONFIGS = {
@@ -2594,21 +2592,7 @@ const Renderer = {
           </div>
         </div>
 
-        <button onclick="saveSettings();Audio.click()" class="w-full bg-primary text-white rounded-2xl py-4 font-bold text-lg active:scale-95 transition-transform mb-4">
-    <div class="mb-4">
-      <label class="block text-sm font-bold text-gray-700 mb-2">🎮 游戏模式</label>
-      <div class="flex gap-2">
-        <button onclick="Store.updateSettings({gameMode:'level'});this.classList.replace('bg-gray-200','bg-primary');this.classList.replace('text-gray-700','text-white');this.nextElementSibling.classList.replace('bg-primary','bg-gray-200');this.nextElementSibling.classList.replace('text-white','text-gray-700')" class="px-4 py-2 rounded-xl text-sm font-bold ${s.gameMode==='level'?'bg-primary text-white':'bg-gray-200 text-gray-700'}">闯关模式</button>
-        <button onclick="Store.updateSettings({gameMode:'time'});this.classList.replace('bg-gray-200','bg-primary');this.classList.replace('text-gray-700','text-white');this.previousElementSibling.classList.replace('bg-primary','bg-gray-200');this.previousElementSibling.classList.replace('text-white','text-gray-700')" class="px-4 py-2 rounded-xl text-sm font-bold ${s.gameMode==='time'?'bg-primary text-white':'bg-gray-200 text-gray-700'}">分钟模式</button>
-      </div>
-    </div>
-    <div class="mb-4">
-      <label class="block text-sm font-bold text-gray-700 mb-2">📅 每天训练时间（分钟）</label>
-      <select onchange="Store.updateSettings({dailyTrainingMinutes:parseInt(this.value)})" class="w-full p-3 border border-gray-300 rounded-xl text-sm">
-        ${[10,15,20,25,30,45,60].map(m=>'<option value="'+m+'"'+(s.dailyTrainingMinutes===m?' selected':'')+'>'+m+' 分钟</option>').join('')}
-      </select>
-    </div>
-    <div class="mb-4">
+        <button onclick="saveSettings();Audio.click()" class="w-full bg-primary text-white rounded-2xl py-4 font-bold text-lg active:scale-95 transition-transform mb-4">    <div class="mb-4">
       <label class="block text-sm font-bold text-gray-700 mb-2">⏱️ 单次游玩最长时间（分钟）</label>
       <select onchange="Store.updateSettings({sessionMinutes:parseInt(this.value)})" class="w-full p-3 border border-gray-300 rounded-xl text-sm">
         ${[2,5,10,15,30].map(m=>'<option value="'+m+'"'+(s.sessionMinutes===m?' selected':'')+'>'+m+' 分钟</option>').join('')}
@@ -2741,7 +2725,7 @@ const GameEngine = {
 
     // 记录训练时间
     const elapsed = this._countdownRemaining <= 0 ?
-      (Store.getSettings().maxPlayMinutes || 30) * 60 : 0;
+      (Store.getSettings().sessionMinutes || 10) * 60 : 0;
     if (elapsed > 0) Store.addTrainingTime(elapsed);
 
     // 显示时间到弹窗
@@ -3397,7 +3381,7 @@ class BaseGame {
   }
 
   // 当finish被延迟时调用，子类可重写来继续生成游戏内容
-  onContinuePlaying() {}
+  onContinuePlaying() { this.targetTrials += Math.max(10, this.targetTrials); }
 }
 
 // ============================================================
@@ -9009,7 +8993,8 @@ class DotDrawGame extends BaseGame {
     ctx.closePath();ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
   }
 }
-registerGame('dotdraw', DotDrawGame);const COMPLEX_SCENES = [
+registerGame('dotdraw', DotDrawGame);
+const COMPLEX_SCENES = [
   {
     name: '一家人在做饭',
     elements: [
