@@ -2493,7 +2493,7 @@ const Renderer = {
             <div>
               <label class="text-sm text-gray-500 block mb-1">单次游玩最长时间（分钟）⏱️</label>
               <div class="flex gap-2">
-                ${[15,20,25,30,45].map(m => `
+                ${[2,5,10,15,30].map(m => `
                   <button onclick="document.getElementById('set-maxplay').value=${m};Audio.click();window._updateBtnGroup('set-maxplay-btns',${m})" id="set-maxplay-btns-${m}" class="flex-1 py-2 rounded-xl font-medium ${(s.maxPlayMinutes||30)===m?'bg-soft-red text-white':'bg-gray-50 text-gray-600'}">${m}分</button>
                 `).join('')}
               </div>
@@ -2660,6 +2660,18 @@ const GameEngine = {
 
       // 绑定输入
       canvas.addEventListener('pointerdown', (e) => this._handleInput(e));
+      canvas.addEventListener('pointermove', (e) => {
+        if (!this._currentGame || this._currentGame.isFinished()) return;
+        const r = canvas.getBoundingClientRect();
+        const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
+        this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'move' });
+      });
+      canvas.addEventListener('pointerup', (e) => {
+        if (!this._currentGame || this._currentGame.isFinished()) return;
+        const r = canvas.getBoundingClientRect();
+        const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
+        this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'up' });
+      });
 
       // 方向按钮（E字游戏）
       const dirBtns = document.querySelectorAll('[data-direction]');
@@ -2941,10 +2953,9 @@ const GameEngine = {
     const maxSec = (settings.maxPlayMinutes || 30) * 60;
     return `
     <div class="fixed inset-0 bg-cream z-50 flex flex-col">
-      <!-- 倒计时悬浮 -->
-      <div id="countdown-timer" class="fixed top-4 right-4 z-[100] bg-white/90 backdrop-blur rounded-2xl shadow-lg px-3 py-2 flex items-center gap-2 text-sm" style="top:calc(env(safe-area-inset-top, 16px) + 4px)" data-max="${maxSec}" data-remaining="${maxSec}">
-        <span class="text-base">⏱️</span>
-        <span id="countdown-display" class="font-bold text-gray-700">${Utils.fmtMMSS(maxSec)}</span>
+      <!-- 倒计时（隐藏，逻辑仍运行） -->
+      <div id="countdown-timer" class="hidden" data-max="${maxSec}" data-remaining="${maxSec}">
+        <span id="countdown-display"></span>
       </div>
       <!-- 顶部栏 -->
       <div class="flex items-center justify-between px-4 py-3 pt-safe">
