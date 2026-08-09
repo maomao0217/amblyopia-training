@@ -3386,7 +3386,7 @@ class BaseGame {
   }
 
   // 当finish被延迟时调用，子类可重写来继续生成游戏内容
-  onContinuePlaying() { this.targetTrials += Math.max(10, this.targetTrials); }
+  onContinuePlaying() { this.totalTrials = 0; this.correctTrials = 0; this.targetTrials += this.targetTrials || 10; }
 }
 
 // ============================================================
