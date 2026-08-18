@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>弱视训练小助手 - 登录</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        cream: '#FFF8F0',
+        primary: '#6366F1',
+        'soft-red': '#EF4444',
+        warm: '#F59E0B',
+      }
+    }
+  }
+}
+</script>
+<style>
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.5s ease-out; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .shake { animation: shake 0.3s ease-in-out; }
+</style>
+</head>
+<body class="bg-cream min-h-screen flex items-center justify-center p-4">
+<div class="fade-in w-full max-w-sm">
+  <!-- Logo -->
+  <div class="text-center mb-8">
+    <div class="text-6xl mb-3">👁️</div>
+    <h1 class="text-2xl font-bold text-gray-800">弱视训练小助手</h1>
+    <p class="text-sm text-gray-400 mt-1">请登录以开始训练</p>
+  </div>
+
+  <!-- Login Card -->
+  <div class="bg-white rounded-3xl shadow-lg p-8">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1.5">账号</label>
+        <input id="username" type="text" placeholder="请输入账号"
+          class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-gray-800 text-base transition-colors"
+          autocomplete="username">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1.5">密码</label>
+        <input id="password" type="password" placeholder="请输入密码"
+          class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-gray-800 text-base transition-colors"
+          autocomplete="current-password">
+      </div>
+    </div>
+
+    <button id="login-btn" onclick="doLogin()"
+      class="w-full mt-6 py-3.5 bg-primary text-white font-bold text-lg rounded-xl active:scale-95 transition-transform shadow-md hover:shadow-lg">
+      登 录
+    </button>
+
+    <p id="error-msg" class="text-center text-soft-red text-sm mt-4 hidden">账号或密码错误</p>
+  </div>
+
+  <p class="text-center text-xs text-gray-300 mt-6">
+    弱视训练小助手 v1.0 · <a href="javascript:void(0)" onclick="showPrivacy()" class="underline hover:text-gray-500">隐私声明</a>
+  </p>
+</div>
+
+<!-- Privacy Modal -->
+<div id="privacy-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40" style="display:none">
+  <div class="bg-white rounded-3xl shadow-2xl mx-6 max-w-sm w-full p-6">
+    <h3 class="text-xl font-bold text-center mb-3 text-gray-800">🔒 隐私声明</h3>
+    <div class="text-sm text-gray-600 leading-relaxed max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+      <p><b>弱视训练小助手</b>尊重并保护您的隐私。</p>
+      <p><b>数据存储：</b>本应用所有数据均存储在您设备的本地浏览器中，<b>不会上传至任何服务器</b>。</p>
+      <p><b>收集信息：</b>孩子昵称、年龄、弱视眼别、训练成绩等，仅保存在本地。</p>
+      <p><b>数据删除：</b>您可在应用设置中随时使用"重置所有数据"清除所有本地数据。</p>
+      <p><b>数据导出：</b>您可随时导出训练数据备份为 JSON 文件。</p>
+      <p><b>免责声明：</b>本应用仅作为家庭训练辅助工具，不替代专业医疗诊断与治疗。</p>
+      <p class="text-gray-400 text-xs mt-2">最后更新：2026年8月</p>
+    </div>
+    <button onclick="document.getElementById('privacy-modal').style.display='none'" class="w-full mt-4 py-3 bg-indigo-500 text-white font-bold rounded-2xl">我知道了</button>
+  </div>
+</div>
+
+<script>
+// Credentials database (100 accounts)
+const ACCOUNTS = {
+"user001":"xaji0y","user002":"6dpbhs","user003":"ahxthv","user004":"3a3zmf","user005":"8mdd4v",
+"user006":"30t9nt","user007":"3w5uzb","user008":"ikcidk","user009":"wnnhj7","user010":"xvg0fn",
+"user011":"9xuy41","user012":"ibljh7","user013":"5lxo6q","user014":"jiujv6","user015":"oh9sdb",
+"user016":"dw2pcn","user017":"9t84az","user018":"ytjxep","user019":"q85jsg","user020":"65kxvf",
+"user021":"1t2tal","user022":"a753lc","user023":"58drc1","user024":"1ertj5","user025":"pht0hl",
+"user026":"9xpsei","user027":"mvihcw","user028":"i64ciy","user029":"he7ur2","user030":"3gdppq",
+"user031":"0y9dom","user032":"5igqpk","user033":"i7p5tb","user034":"94874f","user035":"rhocn9",
+"user036":"j2qp89","user037":"uzfk8u","user038":"t0cvs4","user039":"f8cgvy","user040":"ie6ivw",
+"user041":"pvs7hz","user042":"ioykl1","user043":"cq99ch","user044":"j755nf","user045":"4zw9xa",
+"user046":"3kx7ee","user047":"dtjvzh","user048":"wjr64d","user049":"pja1wj","user050":"0tpac5",
+"user051":"6t4ufe","user052":"l6246h","user053":"id25ow","user054":"f75935","user055":"a0l725",
+"user056":"3j2d54","user057":"i3qk2i","user058":"agl58k","user059":"xo9t7e","user060":"8g8jdp",
+"user061":"0lvsnu","user062":"jza7tz","user063":"0yncxl","user064":"l4zklo","user065":"okep7y",
+"user066":"6wktak","user067":"puxqph","user068":"r62gds","user069":"wm31yi","user070":"hair4c",
+"user071":"owgzri","user072":"xa11dp","user073":"g8sbi4","user074":"q2y9v8","user075":"6wzs3t",
+"user076":"60rjiw","user077":"1swjck","user078":"jlteiy","user079":"zcotoh","user080":"p6vz41",
+"user081":"nam148","user082":"p0tvhh","user083":"pbmyof","user084":"qewaou","user085":"axeqbn",
+"user086":"hl1n13","user087":"jcat9m","user088":"x2x18h","user089":"afeyuh","user090":"z1gv0e",
+"user091":"38daly","user092":"8ozcyw","user093":"d14ve9","user094":"2mpnsm","user095":"43d8w3",
+"user096":"zp08j3","user097":"trp0j4","user098":"3d5iqv","user099":"nb4gh2","user100":"m5zja8"
+};
+
+// Enter key to login
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogin() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  const errEl = document.getElementById('error-msg');
+  const card = document.querySelector('.bg-white');
+
+  if (ACCOUNTS[u] && ACCOUNTS[u] === p) {
+    sessionStorage.setItem('loggedIn', '1');
+    sessionStorage.setItem('currentUser', u);
+    window.location.href = 'index2.html';
+  } else {
+    errEl.classList.remove('hidden');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 300);
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  }
+}
+
+function showPrivacy() {
+  document.getElementById('privacy-modal').style.display = 'flex';
+}
+
+// If already logged in, skip login
+if (sessionStorage.getItem('loggedIn') === '1') {
+  window.location.href = 'index2.html';
+}
+</script>
+</body>
+</html>
