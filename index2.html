@@ -2654,25 +2654,27 @@ const GameEngine = {
       });
       this._currentGame.onStart();
 
-      // After onStart(), game controls (e.g. palette) may have rendered,
-      // changing the canvas host size. Re-capture correct canvas dimensions.
-      const rect2 = canvas.getBoundingClientRect();
-      if (Math.abs(rect2.height - this._canvasH) > 5) {
-        const dpr2 = window.devicePixelRatio || 1;
-        canvas.width = rect2.width * dpr2;
-        canvas.height = rect2.height * dpr2;
-        const ctx2 = canvas.getContext('2d');
-        ctx2.scale(dpr2, dpr2);
-        this._ctx2d = ctx2;
-        this._canvasW = rect2.width;
-        this._canvasH = rect2.height;
-        this._currentGame.W = rect2.width;
-        this._currentGame.H = rect2.height;
-        if (this._currentGame._initOffscreen) {
-          this._currentGame._initOffscreen();
-          this._currentGame._genLevel();
+      // After onStart(), game controls may have rendered, changing canvas host size.
+      // Wait for browser layout to settle, then re-capture correct canvas dimensions.
+      requestAnimationFrame(() => {
+        const rect2 = canvas.getBoundingClientRect();
+        if (Math.abs(rect2.height - this._canvasH) > 5) {
+          const dpr2 = window.devicePixelRatio || 1;
+          canvas.width = rect2.width * dpr2;
+          canvas.height = rect2.height * dpr2;
+          const ctx2 = canvas.getContext('2d');
+          ctx2.scale(dpr2, dpr2);
+          this._ctx2d = ctx2;
+          this._canvasW = rect2.width;
+          this._canvasH = rect2.height;
+          this._currentGame.W = rect2.width;
+          this._currentGame.H = rect2.height;
+          if (this._currentGame._initOffscreen) {
+            this._currentGame._initOffscreen();
+            this._currentGame._genLevel();
+          }
         }
-      }
+      });
 
       // 绑定输入
       canvas.addEventListener('pointerdown', (e) => this._handleInput(e));
