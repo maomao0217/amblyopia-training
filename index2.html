@@ -2680,12 +2680,14 @@ const GameEngine = {
         canvas.addEventListener('pointermove', (e) => {
           if (!this._currentGame || this._currentGame.isFinished()) return;
           const r = canvas.getBoundingClientRect();
-          this._currentGame.onInput({ x: e.clientX - r.left, y: e.clientY - r.top, type: 'move' });
+          const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
+          this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'move' });
         });
         canvas.addEventListener('pointerup', (e) => {
           if (!this._currentGame || this._currentGame.isFinished()) return;
           const r = canvas.getBoundingClientRect();
-          this._currentGame.onInput({ x: e.clientX - r.left, y: e.clientY - r.top, type: 'up' });
+          const sx = this._canvasW / r.width, sy = this._canvasH / r.height;
+          this._currentGame.onInput({ x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, type: 'up' });
         });
       }
 
@@ -2799,10 +2801,9 @@ const GameEngine = {
 
   _handleInput(e) {
     if (!this._currentGame) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    this._currentGame.onInput({ x, y, type: e.type });
+    const rect = this._canvas.getBoundingClientRect();
+    const sx = this._canvasW / rect.width, sy = this._canvasH / rect.height;
+    this._currentGame.onInput({ x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy, type: e.type });
   },
 
   _updateProgress(p) {
