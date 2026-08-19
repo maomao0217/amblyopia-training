@@ -3643,8 +3643,7 @@ class PursuitGame extends BaseGame {
       // 超时
       if (this.pauseElapsed > this.cfg.pauseDur) {
         this.missCount++;
-        this.totalTrials++;
-        this.callbacks.onProgress(this.getProgress());
+        this.recordResult(false, this.cfg.pauseDur);
         Audio.mistake();
         if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
         this.isPaused = false;
@@ -3718,6 +3717,9 @@ class DiffSpotGame extends BaseGame {
     this.wrongClicks = 0;
     this.setupColorSwitchBg();
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -3822,8 +3824,8 @@ class DiffSpotGame extends BaseGame {
     // 检查是否全部找到
     if (this.diffs.every(d => d.found)) {
       const rt = performance.now() - this.levelStartTime;
-      this.recordResult(true, rt / this.cfg.diffs);
       this.currentLevel++;
+      this.recordResult(true, rt / this.cfg.diffs);
       if (this.currentLevel >= this.cfg.levels) {
         this.finish();
       } else {
@@ -3837,6 +3839,7 @@ class DiffSpotGame extends BaseGame {
     // 超时
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
+      this.recordResult(false, this.cfg.timeout * 1000);
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
     }
@@ -3922,6 +3925,9 @@ class PuzzleGame extends BaseGame {
     this.correctPlacements = 0;
     this.levelStartTime = 0;
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -4029,8 +4035,8 @@ class PuzzleGame extends BaseGame {
         Audio.success();
         if (this.correctPlacements >= this.totalPieces) {
           const rt = performance.now() - this.levelStartTime;
-          this.recordResult(true, rt / this.totalPieces);
           this.currentLevel++;
+          this.recordResult(true, rt / this.totalPieces);
           if (this.currentLevel >= this.cfg.levels) {
             this.finish();
           } else {
@@ -4490,6 +4496,9 @@ class HiddenTargetGame extends BaseGame {
     this.setupBg('circles', ['#FFB84D', '#FFFFFF'], 40, 20);
     this._genLevel();
   }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
+  }
 
   _genLevel() {
     this.targetAnimal = this.animals[Utils.randInt(0, this.animals.length-1)];
@@ -4540,8 +4549,8 @@ class HiddenTargetGame extends BaseGame {
       Audio.success();
       if (this.foundCount >= this.targets.length) {
         const rt = performance.now() - this.levelStartTime;
-        this.recordResult(true, rt);
         this.currentLevel++;
+        this.recordResult(true, rt);
         if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
         setTimeout(() => this._genLevel(), 500);
       }
@@ -4562,6 +4571,7 @@ class HiddenTargetGame extends BaseGame {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
+      this.recordResult(false, this.cfg.timeout * 1000);
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
     }
@@ -4606,6 +4616,9 @@ class ContrastColorGame extends BaseGame {
     this.levelStartTime = 0;
     this.setupBg('diagonal', ['#222222', '#FFFFFF'], 40, 30);
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -4654,6 +4667,7 @@ class ContrastColorGame extends BaseGame {
     }
     if (!hit) return;
     const rt = performance.now() - this.levelStartTime;
+    this.currentLevel++;
     if (hit.isDiff) {
       this.recordResult(true, rt);
       Audio.success();
@@ -4662,7 +4676,6 @@ class ContrastColorGame extends BaseGame {
       Audio.mistake();
     }
     this.answered = true;
-    this.currentLevel++;
     if (this.currentLevel >= this.cfg.levels) {
       setTimeout(() => this.finish(), 400);
     } else {
@@ -4736,7 +4749,7 @@ class BalloonGame extends TimedGame {
       b.y -= b.speed * dt;
       b.sway += b.swaySpeed * dt;
       b.x += Math.sin(b.sway) * 20 * dt;
-      if (b.y + b.r < 0) this.balloons.splice(i, 1);
+      if (b.y + b.r < 0) { this.recordResult(false, 0); this.balloons.splice(i, 1); }
     }
     // 粒子
     for (let i = this.particles.length - 1; i >= 0; i--) {
@@ -4906,8 +4919,7 @@ class WhackMoleGame extends TimedGame {
         if (m._hole) m._hole.mole = null;
         if (m.type === 'mole') {
           // 漏掉地鼠算miss
-          this.totalTrials++;
-          this.callbacks.onProgress(this.getProgress());
+          this.recordResult(false, 0);
         }
         this.moles.splice(i, 1);
       }
@@ -5036,6 +5048,9 @@ class MemoryCardGame extends BaseGame {
     this.setupBg('dots', ['#9B6BFF', '#FFFFFF'], 35, 25);
     this._genLevel();
   }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
+  }
 
   _genLevel() {
     const cfg = this.cfg;
@@ -5089,8 +5104,8 @@ class MemoryCardGame extends BaseGame {
               Audio.success();
               if (this.cards.every(c => c.matched)) {
                 const rt = performance.now() - this.levelStartTime;
-                this.recordResult(true, rt);
                 this.currentLevel++;
+                this.recordResult(true, rt);
                 if (this.currentLevel >= this.cfg.levels) {
                   this.finish();
                 } else {
@@ -5174,6 +5189,9 @@ class TracingGame extends BaseGame {
     this.completion = 0;
     this._successPending = false;
   }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
+  }
 
   _genPath() {
     const padX = 60, padY = 80;
@@ -5246,13 +5264,22 @@ class TracingGame extends BaseGame {
       if (this.completion >= 0.95) {
         this._successPending = true;
         const rt = performance.now() - this.trialStartTime;
+        this.currentTrial++;
         this.recordResult(true, rt);
         Audio.success();
-        this.currentTrial++;
         if (this.currentTrial >= this.cfg.trials) {
           setTimeout(() => this.finish(), 500);
         } else {
           setTimeout(() => { this._successPending = false; this._genPath(); }, 800);
+        }
+      } else if (this.userPath.length > 0) {
+        this.currentTrial++;
+        this.recordResult(false, performance.now() - this.trialStartTime);
+        Audio.mistake();
+        if (this.currentTrial >= this.cfg.trials) {
+          setTimeout(() => this.finish(), 500);
+        } else {
+          setTimeout(() => this._genPath(), 800);
         }
       }
     };
@@ -5303,10 +5330,10 @@ class TracingGame extends BaseGame {
     // 完成度判断
     if (this.isDrawing && this.completion >= 0.95) {
       const rt = performance.now() - this.trialStartTime;
+      this.currentTrial++;
       this.recordResult(true, rt);
       Audio.success();
       this.isDrawing = false;
-      this.currentTrial++;
       if (this.currentTrial >= this.cfg.trials) {
         setTimeout(() => this.finish(), 500);
       } else {
@@ -5391,6 +5418,9 @@ class MazeGame extends BaseGame {
     this.currentLevel = 0;
 this.setupColorSwitchBg();
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -5478,9 +5508,9 @@ this.setupColorSwitchBg();
     // 检查是否到终点
     if (Utils.dist(this.ball.x, this.ball.y, this.endX, this.endY) < this.cellSize * 0.3) {
       const rt = performance.now() - this.levelStartTime;
+      this.currentLevel++;
       this.recordResult(true, rt);
       Audio.success();
-      this.currentLevel++;
       if (this.currentLevel >= this.cfg.levels) {
         setTimeout(() => this.finish(), 500);
       } else {
@@ -5527,6 +5557,7 @@ this.setupColorSwitchBg();
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
+      this.recordResult(false, this.cfg.timeout * 1000);
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
     }
@@ -5679,10 +5710,13 @@ class FindNumGame extends BaseGame {
   onStart() {
     const cfg = GAME_CONFIGS.findnum.difficulties[this.difficulty];
     this.cfg = cfg;
-    this.targetTrials = cfg.levels * cfg.targets * 3;
+    this.targetTrials = cfg.levels;
     this.currentLevel = 0;
     this.setupColorSwitchBg();
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -5729,8 +5763,8 @@ class FindNumGame extends BaseGame {
           Audio.success();
           if (this.foundCount >= this.cfg.targets) {
             const rt = performance.now() - this.levelStartTime;
-            this.recordResult(true, rt);
             this.currentLevel++;
+            this.recordResult(true, rt);
 if (this.currentLevel >= this.cfg.levels) {
 this.finish();
               return;
@@ -5750,6 +5784,7 @@ this.finish();
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
+      this.recordResult(false, this.cfg.timeout * 1000);
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
     }
@@ -5799,11 +5834,14 @@ class FindLetterGame extends BaseGame {
   onStart() {
     const cfg = GAME_CONFIGS.findletter.difficulties[this.difficulty];
     this.cfg = cfg;
-    this.targetTrials = cfg.levels * cfg.targets * 3;
+    this.targetTrials = cfg.levels;
     this.currentLevel = 0;
     this.letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     this.setupBg('zigzag', ['#FF4444', '#4488FF'], 40, 30);
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -5850,8 +5888,8 @@ class FindLetterGame extends BaseGame {
           Audio.success();
           if (this.foundCount >= this.cfg.targets) {
             const rt = performance.now() - this.levelStartTime;
-            this.recordResult(true, rt);
             this.currentLevel++;
+            this.recordResult(true, rt);
 if (this.currentLevel >= this.cfg.levels) {
 this.finish();
               return;
@@ -5871,6 +5909,7 @@ this.finish();
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
+      this.recordResult(false, this.cfg.timeout * 1000);
       if (this.currentLevel >= this.cfg.levels) { this.finish(); return; }
       this._genLevel();
     }
@@ -5915,6 +5954,9 @@ class FindColorGame extends BaseGame {
     this.currentLevel = 0;
     this.setupBg('wavy', ['#222222', '#FFFFFF'], 50, 20);
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -5964,6 +6006,7 @@ class FindColorGame extends BaseGame {
     }
     if (!hit) return;
     const rt = performance.now() - this.levelStartTime;
+    this.currentLevel++;
     if (hit.isDiff) {
       this.recordResult(true, rt);
       Audio.success();
@@ -5972,7 +6015,6 @@ class FindColorGame extends BaseGame {
       Audio.mistake();
     }
     this.answered = true;
-    this.currentLevel++;
     if (this.currentLevel >= this.cfg.levels) {
       setTimeout(() => this.finish(), 400);
     } else {
@@ -6044,6 +6086,10 @@ class ButterflyGame extends BaseGame {
         if (this.totalTrials >= this.targetTrials) { this.finish(); return; }
         this.trialStartTime = performance.now();
       }
+    } else if (performance.now() - this.trialStartTime > 3000) {
+      this.recordResult(false, 3000);
+      Audio.mistake();
+      this.feedback = 0.4;
     }
   }
 
@@ -6393,9 +6439,8 @@ class CatchCoinGame extends TimedGame {
       it.y += it.vy * dt;
       if (it.y > this.H + 30) {
         if (!it.isBomb && !it.caught) {
-          // 漏掉金币不算对
-          this.totalTrials++;
-          this.callbacks.onProgress(this.getProgress());
+          // 漏掉金币算miss
+          this.recordResult(false, 0);
         }
         this.items.splice(i, 1);
         continue;
@@ -6477,6 +6522,9 @@ class StarHoldGame extends BaseGame {
     this.setupBg('diagonal', ['#222222', '#FFFFFF'], 40, 25);
     this._genTrial();
   }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
+  }
 
   _genTrial() {
     this.alpha = 1;
@@ -6517,9 +6565,9 @@ class StarHoldGame extends BaseGame {
     // 达到holdTime则成功
     if (this.holdTime >= this.cfg.holdTime) {
       const rt = performance.now() - this.trialStartTime;
+      this.currentTrial++;
       this.recordResult(true, rt);
       Audio.success();
-      this.currentTrial++;
       if (this.currentTrial >= this.cfg.trials) {
         setTimeout(() => this.finish(), 500);
       } else {
@@ -6596,6 +6644,9 @@ class FadeOutGame extends BaseGame {
     this.currentTrial = 0;
     this.setupBg('wavy', ['#222222', '#FFFFFF'], 40, 20);
     this._genTrial();
+  }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
   }
 
   _genTrial() {
@@ -6703,6 +6754,9 @@ class SeqMemoryGame extends BaseGame {
     this._genSequence();
     this._startShow();
   }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
+  }
 
   _initPads() {
     const n = this.cfg.pads;
@@ -6781,9 +6835,9 @@ class SeqMemoryGame extends BaseGame {
           if (this.userIdx >= this.sequence.length) {
             // 完成本关
             const rt = performance.now() - this.startTime;
+            this.currentTrial++;
             this.recordResult(true, rt);
             Audio.success();
-            this.currentTrial++;
             if (this.currentTrial >= this.cfg.trials) {
               setTimeout(() => this.finish(), 500);
             } else {
@@ -6793,9 +6847,9 @@ class SeqMemoryGame extends BaseGame {
           }
         } else {
           // 错误
+          this.currentTrial++;
           this.recordResult(false, performance.now() - this.startTime);
           Audio.mistake();
-          this.currentTrial++;
           if (this.currentTrial >= this.cfg.trials) {
             setTimeout(() => this.finish(), 500);
           } else {
@@ -6846,6 +6900,9 @@ class ConnectLineGame extends BaseGame {
     this.currentLevel = 0;
     this.setupBg('dots', ['#F0FDF4', '#BBF7D0'], 40, 15, 'hstripes', ['#FF4444', '#44CC44'], 45, 12);
     this._genLevel();
+  }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.levels, pct: this.cfg.levels ? this.currentLevel / this.cfg.levels : 0 };
   }
 
   _genLevel() {
@@ -6923,8 +6980,8 @@ class ConnectLineGame extends BaseGame {
           Audio.success();
           if (this.matchedCount >= this.cfg.pairs) {
             const rt = performance.now() - this.levelStartTime;
-            this.recordResult(true, rt);
             this.currentLevel++;
+            this.recordResult(true, rt);
             if (this.currentLevel >= this.cfg.levels) {
               setTimeout(() => this.finish(), 500);
             } else {
@@ -7017,6 +7074,9 @@ class ShadowMatchGame extends BaseGame {
     this.emojis = ['🍎','🍌','🍇','🍓','🐱','🐶','🐰','🦊','🐻','🐼','🚗','⚽','🌸','⭐','🌈'];
     this.setupBg('radial', ['#666666', '#FFFFFF'], 30, 15);
     this._genTrial();
+  }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
   }
 
   _genTrial() {
@@ -7133,6 +7193,9 @@ class FillPieceGame extends BaseGame {
     this.currentTrial = 0;
     this.emojis = ['🍎','🐱','🚗','⭐','🌈','🌸','🐻','⚽'];
     this._genTrial();
+  }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
   }
 
   _genTrial() {
@@ -7294,6 +7357,9 @@ class WhichFasterGame extends BaseGame {
     this.currentTrial = 0;
     this.setupBg('checker', ['#FF4444', '#44CC44'], 60, 20);
     this._genTrial();
+  }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
   }
 
   _genTrial() {
@@ -7489,14 +7555,16 @@ class LinkMatchGame extends BaseGame {
     if (this.finished) return;
     if (this.cfg.timeout > 0 && performance.now() - this.levelStartTime > this.cfg.timeout * 1000) {
       this.currentLevel++;
-      if (this.currentLevel >= this.targetTrials) { this.currentLevel = 0; this.targetTrials += this.cfg.levels || this.cfg.trials; return; }
+      this.recordResult(false, this.cfg.timeout * 1000);
+      if (this.currentLevel >= this.targetTrials) { this.finish(); return; }
       this._genLevel(); return;
     }
     if (this.feedbackTimer > 0) {
       this.feedbackTimer -= dt;
       if (this.feedbackTimer <= 0 && this.matchedInLevel >= this.cfg.pairs) {
         this.currentLevel++;
-        if (this.currentLevel >= this.targetTrials) { this.currentLevel = 0; this.targetTrials += this.cfg.levels || this.cfg.trials; return; }
+        this.recordResult(true, performance.now() - this.levelStartTime);
+        if (this.currentLevel >= this.targetTrials) { this.finish(); return; }
         this._genLevel();
       }
     }
@@ -7564,6 +7632,9 @@ class RopingGame extends BaseGame {
     this.setupBg('hstripes', ['#222222', '#FFFFFF'], 45, 25, 'dots', ['#ECFDF5', '#A7F3D0'], 40, 20);
     this._spawnCows();
   }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
+  }
   _spawnCows() {
     this.cows = [];
     for (let i = 0; i < this.cfg.cows; i++) {
@@ -7591,13 +7662,15 @@ class RopingGame extends BaseGame {
       this.lasso.life -= dt;
       if (this.lasso.life <= 0) {
         this.currentTrial++;
-        if (this.currentTrial >= this.targetTrials) { this.currentTrial = 0; this.targetTrials += this.cfg.trials; return; }
+        this.recordResult(false, 0);
+        if (this.currentTrial >= this.targetTrials) { this.finish(); return; }
         this._spawnCows();
       }
     }
     if (allDone && !this.lasso) {
       this.currentTrial++;
-      if (this.currentTrial >= this.targetTrials) { this.currentTrial = 0; this.targetTrials += this.cfg.trials; return; }
+      this.recordResult(true, 0);
+      if (this.currentTrial >= this.targetTrials) { this.finish(); return; }
       this._spawnCows();
     }
   }
@@ -7981,8 +8054,6 @@ class BrickBreakGame extends TimedGame {
         });
       }
     }
-    this.totalTrials = cfg.rows * cfg.cols;
-    this.correctTrials = 0;
     this._bindPaddle();
     this.setupBg('radial', ['#1E1B4B', '#6366F1'], 50, 10, 'dots', ['#312E81', '#818CF8'], 45, 15);
   }
@@ -8119,6 +8190,9 @@ class FishingGame extends BaseGame {
     this.setupBg('wavy', ['#FF4444', '#4488FF'], 40, 15, 'hstripes', ['#FF4444', '#44CC44'], 45, 18);
     this._newRound();
   }
+  getProgress() {
+    return { trials: this.correctTrials, targetTrials: this.cfg.targets, pct: this.cfg.targets ? this.correctTrials / this.cfg.targets : 0 };
+  }
   _newRound() {
     const cfg = this.cfg;
     this.fish = [];
@@ -8238,6 +8312,9 @@ class ColorSortGame extends BaseGame {
     this.dragItem = null;
     this.setupBg('vstripes', ['#222222', '#FFFFFF'], 40, 25, 'dots', ['#F0F9FF', '#BAE6FD'], 35, 20);
     this._bindDrag();
+  }
+  getProgress() {
+    return { trials: Math.round(this._elapsedSec || 0), targetTrials: this.cfg.duration, pct: this.cfg.duration ? (this._elapsedSec || 0) / this.cfg.duration : 0 };
   }
   _bindDrag() {
     const canvas = document.getElementById('game-canvas');
@@ -8377,6 +8454,9 @@ class RotatePuzGame extends BaseGame {
     this.setupBg('circles', ['#F5F3FF', '#C4B5FD'], 50, 12, 'radial', ['#F5F3FF', '#A78BFA'], 40, 8);
     this._genTrial();
   }
+  getProgress() {
+    return { trials: this.currentTrial, targetTrials: this.cfg.trials, pct: this.cfg.trials ? this.currentTrial / this.cfg.trials : 0 };
+  }
   _genTrial() {
     const shapes = Utils.shuffle(this.shapes).slice(0, this.cfg.shapes);
     const targetIdx = Utils.randInt(0, shapes.length - 1);
@@ -8419,8 +8499,7 @@ class RotatePuzGame extends BaseGame {
     if (this.feedback > 0) {
       this.feedback -= dt;
       if (this.feedback <= 0) {
-        this.currentTrial++;
-        if (this.currentTrial >= this.targetTrials) { this.currentTrial = 0; this.targetTrials += this.cfg.trials; return; }
+        if (this.currentTrial >= this.targetTrials) { this.finish(); return; }
         this._genTrial();
       }
     }
@@ -8431,10 +8510,12 @@ class RotatePuzGame extends BaseGame {
       const p = this.btnPositions[i];
       if (Math.abs(e.x - p.x) < 80 && Math.abs(e.y - p.y) < 80) {
         if (this.candidates[i] && this.candidates[i].isCorrect) {
+          this.currentTrial++;
           this.recordResult(true, 0);
           Audio.success();
           this.feedbackCorrect = true;
         } else {
+          this.currentTrial++;
           this.recordResult(false, 0);
           Audio.mistake();
           this.feedbackCorrect = false;
@@ -8796,6 +8877,9 @@ class ColorFillGame extends BaseGame {
     this._initOffscreen();this._genLevel();
     this._renderPalette();
   }
+  getProgress(){
+    return {trials:this.currentLevel,targetTrials:this.cfg.levels,pct:this.cfg.levels?this.currentLevel/this.cfg.levels:0};
+  }
   _initOffscreen(){this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filled=new Uint8Array(Math.floor(this.W)*Math.floor(this.H));this.filled.fill(255)}
   _renderPalette(){
     const ctrl=document.getElementById('game-controls');if(!ctrl)return;
@@ -8851,17 +8935,17 @@ class ColorFillGame extends BaseGame {
     }
     this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
     if(this.completion>=0.995&&!this.feedback){
-      const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now();
+      const rt=performance.now()-this.levelStartTime;this.currentLevel++;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now();
     }
   }
   _skipLevel(){
     if(this.finished||this.feedback)return;
-    const rt=performance.now()-this.levelStartTime;this.recordResult(false,rt);
+    const rt=performance.now()-this.levelStartTime;this.currentLevel++;this.recordResult(false,rt);
     this.feedback='done';this.feedbackTime=performance.now();
   }
   onUpdate(dt){
     if(this.finished)return;
-    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
+    if(this.feedback&&performance.now()-this.feedbackTime>600){if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
   }
   onRender(ctx){
     ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
@@ -8886,6 +8970,9 @@ class TraceLineGame extends BaseGame {
     this.cfg=cfg;this.targetTrials=cfg.levels;this.currentLevel=0;
     this.bgEnabled=false;this.userPath=[];this.isDrawing=false;this._genLevel();
   }
+  getProgress(){
+    return {trials:this.currentLevel,targetTrials:this.cfg.levels,pct:this.cfg.levels?this.currentLevel/this.cfg.levels:0};
+  }
   _genLevel(){
     const cfg=this.cfg;const availShapes=Object.keys(SHAPES).filter(k=>(SHAPE_DIFFICULTY[k]||3)<=this.difficulty+2);
     this.shapeName=availShapes[Utils.randInt(0,availShapes.length-1)];
@@ -8907,13 +8994,13 @@ class TraceLineGame extends BaseGame {
     const sampledDots=[];for(let i=0;i<n;i++)sampledDots.push(this.dots[Math.floor(i/n*this.dots.length)]);
     for(const dot of sampledDots){let md=Infinity;for(const p of this.userPath){const d=Utils.dist(dot.x,dot.y,p.x,p.y);if(d<md)md=d}if(md<=this.cfg.tolerance*2)score++}
     const acc=score/sampledDots.length;
-    if(acc>=0.6){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='correct'}
-    else{this.recordResult(false,performance.now()-this.levelStartTime);Audio.mistake();this.feedback='wrong'}
+    if(acc>=0.6){this.currentLevel++;const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='correct'}
+    else{this.currentLevel++;this.recordResult(false,performance.now()-this.levelStartTime);Audio.mistake();this.feedback='wrong'}
     this.feedbackTime=performance.now();
   }
   onUpdate(dt){
     if(this.finished)return;
-    if(this.feedback&&performance.now()-this.feedbackTime>800){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
+    if(this.feedback&&performance.now()-this.feedbackTime>800){if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
   }
   onRender(ctx){
     ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
@@ -8951,6 +9038,9 @@ class DotDrawGame extends BaseGame {
     this.brushMult=0.65;this.currentBrushR=Math.round(cfg.brushR*this.brushMult);
     this.setupBg('checker',['#FF4444','#44CC44'],40,20,'hstripes',['#222222','#FFFFFF'],35,18);
     this._initOffscreen();this._genLevel();this._renderPalette();
+  }
+  getProgress(){
+    return {trials:this.currentLevel,targetTrials:this.cfg.levels,pct:this.cfg.levels?this.currentLevel/this.cfg.levels:0};
   }
   _initOffscreen(){const sz=Math.floor(this.W)*Math.floor(this.H);this.offscreen=document.createElement('canvas');this.offscreen.width=Math.floor(this.W);this.offscreen.height=Math.floor(this.H);this.octx=this.offscreen.getContext('2d');this.filledColor=new Uint8Array(sz);this.filledColor.fill(255)}
   _renderPalette(){
@@ -9016,16 +9106,16 @@ class DotDrawGame extends BaseGame {
       }
     }
     this.completion=this.totalPixels?this.filledPixels/this.totalPixels:0;
-    if(this.completion>=0.995&&!this.feedback){const rt=performance.now()-this.levelStartTime;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now()}
+    if(this.completion>=0.995&&!this.feedback){const rt=performance.now()-this.levelStartTime;this.currentLevel++;this.recordResult(true,rt);Audio.success();this.feedback='done';this.feedbackTime=performance.now()}
   }
   _skipLevel(){
     if(this.finished||this.feedback)return;
-    const rt=performance.now()-this.levelStartTime;this.recordResult(false,rt);
+    const rt=performance.now()-this.levelStartTime;this.currentLevel++;this.recordResult(false,rt);
     this.feedback='done';this.feedbackTime=performance.now();
   }
   onUpdate(dt){
     if(this.finished)return;
-    if(this.feedback&&performance.now()-this.feedbackTime>600){this.currentLevel++;if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
+    if(this.feedback&&performance.now()-this.feedbackTime>600){if(this.currentLevel>=this.cfg.levels){this.finish();return}this._genLevel()}
   }
   onRender(ctx){
     ctx.clearRect(0,0,this.W,this.H);this.drawScrollingBg(ctx);
@@ -9580,6 +9670,9 @@ class ComplexColorGame extends BaseGame {
     this._genLevel();
     this._renderPalette();
   }
+  getProgress() {
+    return { trials: this.currentLevel, targetTrials: this.cfg.scenes, pct: this.cfg.scenes ? this.currentLevel / this.cfg.scenes : 0 };
+  }
 
   _initOffscreen() {
     const w = Math.floor(this.W), h = Math.floor(this.H);
@@ -9708,6 +9801,7 @@ class ComplexColorGame extends BaseGame {
     this.completion = this.totalPixels ? this.filledPixels / this.totalPixels : 0;
     if (this.completion >= 0.995 && !this.feedback) {
       const rt = performance.now() - this.levelStartTime;
+      this.currentLevel++;
       this.recordResult(true, rt);
       Audio.success();
       this.feedback = 'done';
@@ -9717,6 +9811,7 @@ class ComplexColorGame extends BaseGame {
   _skipLevel() {
     if (this.finished || this.feedback) return;
     const rt = performance.now() - this.levelStartTime;
+    this.currentLevel++;
     this.recordResult(false, rt);
     this.feedback = 'done';
     this.feedbackTime = performance.now();
@@ -9725,7 +9820,6 @@ class ComplexColorGame extends BaseGame {
   onUpdate(dt) {
     if (this.finished) return;
     if (this.feedback && performance.now() - this.feedbackTime > 800) {
-      this.currentLevel++;
       if (this.currentLevel >= this.cfg.scenes) {
         this.finish();
         return;
